@@ -470,7 +470,1020 @@ function App(){
               {/* Price + CTA */}
               <div style={{background:"rgba(233,30,140,.08)",border:"1px solid rgba(233,30,140,.2)",borderRadius:18,padding:"16px",marginBottom:14,textAlign:"center"}}>
                 <div style={{display:"flex",alignItems:"baseline",justifyContent:"center",gap:4,marginBottom:4}}>
-                  <span style={{fontFamily:"'Fraunces',serif",fontSize:40,fontWeight:900,color:"white",lineHeight:1}}>£3.89</span>
+                  <span style={{fontFamily:"'Fraunces',serif",fontSize:40,fontWeight:900,color:"white",lineHeight:1}}>£3.98</span>
+                  <span style={{fontSize:14,color:"rgba(255,255,255,.5)"}}>/month</span>
+                </div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.4)"}}>That's just 13p a day — less than a sip of coffee ☕</div>
+              </div>
+
+              <button onClick={activatePremium} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:18,padding:"18px",fontSize:17,fontWeight:900,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 8px 40px rgba(233,30,140,.5)",letterSpacing:-.3}}>
+                Start Premium Now 🩷
+              </button>
+
+              <div style={{display:"flex",justifyContent:"center",gap:20,marginTop:14}}>
+                {["✓ Cancel anytime","✓ Instant access","✓ No hidden fees"].map((t,i)=>(
+                  <div key={i} style={{fontSize:10,color:"rgba(255,255,255,.4)",fontWeight:600}}>{t}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1}}>
+
+        {/* TOP BAR */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 0 8px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontFamily:"'Fraunces',serif",fontSize:30,fontWeight:900,letterSpacing:-1,textShadow:"0 2px 16px rgba(0,0,0,.12)"}}>Skyla</span>
+            {stage==="done"&&<div style={{...G,padding:"4px 11px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}><span>🔥</span><span style={{fontSize:13,fontWeight:800,color:S.acc}}>{streak}d</span></div>}
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:18,fontWeight:700}}>{h12}:{mn} <span style={{fontSize:11,opacity:.6}}>{ap}</span></div>
+            <div style={{fontSize:10,opacity:.55}}>{city}</div>
+          </div>
+        </div>
+
+        {/* LOADING */}
+        {stage==="loading"&&(
+          <div style={{marginTop:8}}>
+            <div style={{display:"flex",alignItems:"flex-end",gap:8,marginBottom:16}}>
+              <Character type="partly" gender={gender}/>
+              <div style={{flex:1,paddingBottom:20,fontSize:14,opacity:.8,display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:16,height:16,border:"2.5px solid #2563EB",borderTopColor:"transparent",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>
+                Loading your weather…
+              </div>
+            </div>
+            {[96,80,80,70].map((h,i)=><div key={i} style={{height:h,borderRadius:22,marginBottom:12,background:"rgba(255,255,255,.2)",animation:"shimmer 1.5s infinite linear",backgroundSize:"600px 100%"}}/>)}
+          </div>
+        )}
+
+        {stage==="done"&&DWX&&ai&&(
+          <>
+            {viewMode!=="now"&&(
+              <div style={{...G,padding:"8px 16px",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"space-between",borderRadius:100}}>
+                <span style={{fontSize:13,fontWeight:700,color:S.acc}}>📍 {viewLabel}</span>
+                <button onClick={()=>{setViewMode("now");setPickedH(null);setPickedD(0);}} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:S.sub}}>✕</button>
+              </div>
+            )}
+
+            {/* CHARACTER + TEMP */}
+            <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:6}}>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                <Character type={type} gender={gender}/>
+                <div style={{display:"flex",gap:4,background:"rgba(255,255,255,.18)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,padding:"4px"}}>
+                  {[{id:"female",label:"👧 Girl"},{id:"male",label:"👦 Boy"}].map(opt=>(
+                    <button key={opt.id} onClick={()=>toggleGender(opt.id)} style={{background:gender===opt.id?S.acc:"transparent",border:"none",borderRadius:100,padding:"6px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:800,color:gender===opt.id?"white":S.sub,transition:"all .2s",whiteSpace:"nowrap"}}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{flex:1,paddingBottom:22}}>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:64,fontWeight:900,lineHeight:1,letterSpacing:-4,textShadow:"0 2px 24px rgba(0,0,0,.13)"}}>{DWX.temp}°</div>
+                <div style={{fontSize:14,fontWeight:600,opacity:.7,marginTop:3}}>{S.em} {S.name}</div>
+                <div style={{marginTop:10,...G,padding:"12px 14px",borderRadius:16,border:PE.deceiving?`1px solid #F59E0B80`:G.border,background:PE.deceiving?"rgba(245,158,11,.15)":G.background}}>
+                  <div style={{fontSize:14,fontWeight:700,lineHeight:1.55,color:PE.deceiving?"#92400E":S.text}}>{PE.verdict}</div>
+                </div>
+                <button onClick={speak} style={{marginTop:10,display:"flex",alignItems:"center",gap:6,background:`${S.acc}20`,border:`1px solid ${S.acc}45`,borderRadius:100,padding:"7px 16px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:S.acc}}>
+                  {talking?<span style={{display:"flex",gap:2,alignItems:"center"}}>{[0,1,2,3].map(i=><span key={i} style={{display:"inline-block",width:3,height:16,background:S.acc,borderRadius:2,animation:`wave .7s ease-in-out infinite ${i*.15}s`}}/>)}</span>:"🎙️"}
+                  <span>{talking?"Speaking…":"Hear Skyla's briefing"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* GREETING */}
+            <div style={{...G,padding:"14px 18px",marginBottom:12,borderRadius:"8px 24px 24px 24px"}}>
+              <div style={{fontSize:14,fontWeight:600,lineHeight:1.6}}>{ai.msg}</div>
+            </div>
+
+            {/* TABS */}
+            <div style={{...G,padding:"6px",marginBottom:14,display:"flex",gap:4,borderRadius:20,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+              {TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:tab===t.id?S.acc:"transparent",border:"none",borderRadius:14,padding:"8px 2px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:10,fontWeight:800,color:tab===t.id?"white":S.sub,transition:"all .2s",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:14}}>{t.icon}</span>{t.label}</button>)}
+            </div>
+
+            {/* HOME */}
+            {tab==="home"&&(
+              <div>
+            {/* STICKY TOP PREMIUM BANNER - always visible for free users */}
+            {!isPremium&&(
+              <div onClick={()=>setShowPaywall(true)} style={{marginBottom:10,borderRadius:16,background:"linear-gradient(135deg,#1a0533,#7C3AED)",border:"1px solid rgba(233,30,140,.5)",padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 20px rgba(233,30,140,.3)"}}>
+                <div style={{fontSize:26,filter:"drop-shadow(0 0 8px rgba(233,30,140,.8))"}}>🩷</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:900,color:"white"}}>Unlock Skyla Premium</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:1}}>AI chat · Any city · Events · Holidays · No ads</div>
+                </div>
+                <div style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",borderRadius:10,padding:"8px 14px",boxShadow:"0 4px 12px rgba(233,30,140,.4)"}}>
+                  <div style={{fontSize:12,fontWeight:900,color:"white"}}>£3.98/mo</div>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,.7)",textAlign:"center"}}>13p a day</div>
+                </div>
+              </div>
+            )}
+                <Card style={{border:`1px solid ${S.acc}35`}}>
+                  <Lbl>What it actually feels like outside</Lbl>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                    {[{icon:"🌡️",label:"Outside",val:PE.feel},{icon:"💨",label:"Wind",val:PE.windWord},{icon:"🌧️",label:"Rain",val:PE.rainWord}].map((item,i)=>(
+                      <div key={i} style={{background:"rgba(255,255,255,.16)",borderRadius:16,padding:"14px 10px",textAlign:"center"}}>
+                        <div style={{fontSize:22,marginBottom:5}}>{item.icon}</div>
+                        <div style={{fontSize:9,opacity:.55,letterSpacing:2,textTransform:"uppercase",fontWeight:700,marginBottom:4}}>{item.label}</div>
+                        <div style={{fontSize:11,fontWeight:700,lineHeight:1.35}}>{item.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                  <div style={{...G,padding:"20px 16px"}}><Lbl>Wear</Lbl><div style={{fontSize:36,marginBottom:10}}>👕</div><div style={{fontSize:14,fontWeight:700,lineHeight:1.4}}>{ai.wear}</div></div>
+                  <div style={{...G,padding:"20px 16px",background:ai.umbrella?`${S.acc}20`:G.background,border:ai.umbrella?`1px solid ${S.acc}50`:G.border}}><Lbl>Take</Lbl><div style={{fontSize:36,marginBottom:10}}>{ai.umbrella?"☔":"🎒"}</div><div style={{fontSize:14,fontWeight:700,lineHeight:1.4,color:ai.umbrella?S.acc:"inherit"}}>{ai.take}</div></div>
+                </div>
+                <Card>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                    <div><Lbl>Today Feels</Lbl><div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontStyle:"italic",color:S.acc}}>{ai.feel}</div></div>
+                    <div style={{fontSize:44}}>{S.em}</div>
+                  </div>
+                  <div style={{height:1,background:"rgba(255,255,255,.18)",margin:"10px 0"}}/>
+                  <div style={{fontSize:13,lineHeight:1.7,fontWeight:500}}>✦ {ai.tip}</div>
+                </Card>
+            {/* PREMIUM PROMO CARD — gorgeous, central, unmissable */}
+            {!isPremium&&(
+              <div onClick={()=>setShowPaywall(true)} style={{marginBottom:14,borderRadius:22,background:"linear-gradient(135deg,#120026 0%,#4c1d95 50%,#120026 100%)",border:"1px solid rgba(233,30,140,.45)",padding:"22px 20px",cursor:"pointer",boxShadow:"0 8px 40px rgba(233,30,140,.25), 0 2px 8px rgba(0,0,0,.3)",position:"relative",overflow:"hidden"}}>
+                <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:"rgba(233,30,140,.18)",filter:"blur(35px)"}}/>
+                <div style={{position:"absolute",bottom:-20,left:-10,width:90,height:90,borderRadius:"50%",background:"rgba(124,58,237,.25)",filter:"blur(28px)"}}/>
+                <div style={{position:"relative",zIndex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+                    <div style={{fontSize:38,filter:"drop-shadow(0 0 12px rgba(233,30,140,.8))"}}>🩷</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:16,fontWeight:900,color:"white",letterSpacing:-.3}}>Unlock Skyla Premium</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>Everything you need — never caught out again</div>
+                    </div>
+                    <div style={{background:"rgba(233,30,140,.22)",border:"1px solid rgba(233,30,140,.45)",borderRadius:12,padding:"6px 12px",textAlign:"center",flexShrink:0}}>
+                      <div style={{fontSize:15,fontWeight:900,color:"#F48FB1",lineHeight:1}}>£3.98</div>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,.38)",marginTop:1}}>/month</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
+                    {["🤖 Ask Skyla","🔍 Any city","🗓️ Events","✈️ Holidays","📵 No ads","🌅 Morning brief"].map((f,i)=>(
+                      <div key={i} style={{background:"rgba(255,255,255,.1)",borderRadius:100,padding:"5px 11px",fontSize:11,fontWeight:700,color:"rgba(255,255,255,.75)"}}>{f}</div>
+                    ))}
+                  </div>
+                  <div style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",borderRadius:16,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 4px 24px rgba(233,30,140,.45)"}}>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:900,color:"white"}}>Start Premium — just 13p a day ☕</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2}}>Cancel anytime · Instant access</div>
+                    </div>
+                    <div style={{fontSize:22,color:"white"}}>→</div>
+                  </div>
+                </div>
+              </div>
+            )}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                  <div style={{...G,padding:"18px 14px",textAlign:"center"}}><Lbl>Skyla Score</Lbl><Arc score={ai.score} acc={S.acc}/><div style={{fontSize:11,opacity:.6,marginTop:4}}>{ai.why}</div></div>
+                  <div style={{...G,padding:"18px 14px"}}><Lbl>Rain Chance</Lbl><div style={{fontFamily:"'Fraunces',serif",fontSize:40,fontWeight:900,color:DWX.rain>50?S.acc:"inherit",lineHeight:1}}>{DWX.rain}%</div><div style={{background:"rgba(0,0,0,.1)",borderRadius:100,height:5,margin:"10px 0",overflow:"hidden"}}><div style={{height:"100%",width:`${DWX.rain}%`,background:S.acc,borderRadius:100,transition:"width 1.4s ease"}}/></div><div style={{display:"flex",gap:6,marginTop:8}}>{[{e:"💧",v:`${DWX.humid||wx.humid}%`},{e:"💨",v:`${DWX.wind}km/h`}].map((s,i)=><div key={i} style={{flex:1,textAlign:"center"}}><div style={{fontSize:16}}>{s.e}</div><div style={{fontSize:10,fontWeight:700,marginTop:2}}>{s.v}</div></div>)}</div></div>
+                </div>
+                <Card style={{border:"1px solid rgba(16,185,129,.45)"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:14}}>
+                    <div style={{fontSize:38}}>🌱</div>
+                    <div style={{flex:1}}><Lbl>Plant Care</Lbl><div style={{fontSize:13,fontWeight:500,lineHeight:1.55}}>{ai.plant}</div><div style={{marginTop:8,display:"inline-block",background:"rgba(16,185,129,.2)",border:"1px solid rgba(16,185,129,.4)",borderRadius:100,padding:"4px 14px",fontSize:11,fontWeight:700,color:"#059669"}}>{ai.plantAction}</div></div>
+                  </div>
+                </Card>
+                <Card><Lbl>👗 Full Outfit</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{(ai.items||[]).map((item,i)=><div key={i} style={{background:"rgba(255,255,255,.18)",borderRadius:14,padding:"11px 12px",fontSize:13,fontWeight:600,lineHeight:1.3}}>{item}</div>)}</div></Card>
+              </div>
+            )}
+
+            {/* HOURLY */}
+            {tab==="hourly"&&(
+              <Card>
+                <Lbl>⏱️ Hour by Hour — Today</Lbl>
+                <div style={{fontSize:12,opacity:.6,marginBottom:12}}>Tap any hour — Skyla dresses for that time!</div>
+                {wx.hourly.map((h,i)=>{
+                  const isNow=i===new Date().getHours(),isPicked=viewMode==="hour"&&pickedH===i;
+                  const htype=wxType(h.code,i>=6&&i<20?1:0);
+                  const hpe=plainEnglish({...wx,temp:h.temp,feels:h.feels,rain:h.rain,wind:h.wind,code:h.code});
+                  return <div key={i} onClick={()=>{setPickedH(i);setViewMode("hour");setPickedD(0);setTab("home");}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px",borderRadius:14,cursor:"pointer",background:isPicked?`${S.acc}28`:isNow?"rgba(255,255,255,.22)":"transparent",border:isPicked?`1px solid ${S.acc}55`:isNow?"1px solid rgba(255,255,255,.3)":"1px solid transparent",marginBottom:2}}>
+                    <div style={{width:44,textAlign:"right"}}><div style={{fontSize:12,fontWeight:isPicked||isNow?800:500,color:isPicked?S.acc:"inherit",opacity:isNow||isPicked?1:.7}}>{h.lbl}</div>{isNow&&<div style={{fontSize:9,color:S.acc,fontWeight:800}}>NOW</div>}</div>
+                    <div style={{fontSize:20}}>{SC[htype]?.em||"🌤️"}</div>
+                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{h.temp}° <span style={{fontSize:11,opacity:.55,fontWeight:400}}>feels {h.feels}°</span></div><div style={{fontSize:11,opacity:.6,marginTop:1}}>{hpe.feel}</div></div>
+                    <div style={{textAlign:"right"}}><div style={{fontSize:12,color:h.rain>50?S.acc:"inherit",opacity:h.rain>50?1:.55,fontWeight:h.rain>50?700:400}}>💧{h.rain}%</div></div>
+                    {isPicked&&<span style={{fontSize:14,color:S.acc}}>→</span>}
+                  </div>;
+                })}
+              </Card>
+            )}
+
+            {/* WEEK */}
+            {tab==="week"&&(
+              <Card>
+                <Lbl>📅 7-Day Forecast</Lbl>
+                <div style={{fontSize:12,opacity:.6,marginBottom:12}}>Tap a day — Skyla dresses for that forecast!</div>
+                {wx.week.map((d,i)=>{
+                  const isPicked=viewMode==="day"&&pickedD===i,dtype=wxType(d.code,1);
+                  const dpe=plainEnglish({...wx,temp:d.max,feels:d.feels,rain:d.rain,wind:wx.wind,code:d.code});
+                  return <div key={i} onClick={()=>{setPickedD(i);setViewMode(i===0?"now":"day");setPickedH(null);setTab("home");}} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 10px",borderRadius:14,cursor:"pointer",background:isPicked?`${S.acc}28`:i===0?"rgba(255,255,255,.18)":"transparent",border:isPicked?`1px solid ${S.acc}55`:i===0?"1px solid rgba(255,255,255,.22)":"1px solid transparent",marginBottom:4}}>
+                    <div style={{width:54}}><div style={{fontSize:13,fontWeight:isPicked?800:i===0?700:500,color:isPicked?S.acc:"inherit",opacity:isPicked||i===0?1:.8}}>{d.short}</div></div>
+                    <div style={{fontSize:24}}>{SC[dtype]?.em||"🌤️"}</div>
+                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{wmoDesc(d.code)}</div><div style={{fontSize:11,opacity:.6,marginTop:1}}>{dpe.feel}</div></div>
+                    <div style={{textAlign:"right"}}><div style={{fontSize:14,fontWeight:800}}>{d.max}°<span style={{opacity:.5,fontWeight:400,fontSize:12}}>/{d.min}°</span></div><div style={{fontSize:11,color:d.rain>50?S.acc:"inherit",opacity:d.rain>50?1:.55}}>💧{d.rain}%</div></div>
+                    {isPicked&&<span style={{fontSize:14,color:S.acc}}>→</span>}
+                  </div>;
+                })}
+              </Card>
+            )}
+
+            {/* CHAT TAB */}
+            {tab==="chat"&&(
+              <div>
+                {!isPremium?(
+                  <div style={{...G,padding:"32px 24px",textAlign:"center",marginBottom:12}}>
+                    <div style={{fontSize:52,marginBottom:12}}>🤖</div>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Ask Skyla Anything</div>
+                    <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>"Shall I wear a coat today?"<br/>"Will it rain on Tuesday?"<br/>"What's the weather like in Paris?"</div>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock AI Chat — £3.98/mo</button>
+                  </div>
+                ):(
+                  <div>
+                    <div style={{...G,padding:"16px",marginBottom:12,minHeight:300,maxHeight:420,overflowY:"auto",display:"flex",flexDirection:"column",gap:10}}>
+                      {chatMsgs.map((m,i)=>(
+                        <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+                          {m.role==="skyla"&&<div style={{fontSize:20,marginRight:8,flexShrink:0}}>🩷</div>}
+                          <div style={{maxWidth:"80%",background:m.role==="user"?S.acc:"rgba(255,255,255,.18)",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",padding:"10px 14px",fontSize:13,fontWeight:500,lineHeight:1.55,color:m.role==="user"?"white":S.text}}>
+                            {m.text}
+                          </div>
+                        </div>
+                      ))}
+                      {chatLoading&&<div style={{display:"flex",alignItems:"center",gap:8}}><div style={{fontSize:20}}>🩷</div><div style={{...G,padding:"10px 14px",borderRadius:"18px 18px 18px 4px",fontSize:13,opacity:.7}}>Skyla is thinking…</div></div>}
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask Skyla anything…" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+                      <button onClick={sendChat} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>→</button>
+                    </div>
+                    <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
+                      {["Coat today?","Rain Tuesday?","Best day this week?","Hot weekend?"].map((q,i)=>(
+                        <button key={i} onClick={()=>{setChatInput(q);}} style={{...G,padding:"6px 12px",fontSize:11,fontWeight:700,color:S.acc,border:`1px solid ${S.acc}40`,borderRadius:100,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",background:`${S.acc}15`}}>{q}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* SEARCH TAB */}
+            {tab==="search"&&(
+              <div>
+                {!isPremium?(
+                  <div style={{...G,padding:"32px 24px",textAlign:"center",marginBottom:12}}>
+                    <div style={{fontSize:52,marginBottom:12}}>🔍</div>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Search Any City</div>
+                    <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>Check the weather anywhere in the world — Paris, New York, Tokyo, anywhere.</div>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock City Search — £3.98/mo</button>
+                  </div>
+                ):(
+                  <div>
+                    <div style={{display:"flex",gap:8,marginBottom:14}}>
+                      <input value={searchCity} onChange={e=>setSearchCity(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchCityWeather()} placeholder="Search any city…" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+                      <button onClick={searchCityWeather} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
+                    </div>
+                    {searching&&<div style={{...G,padding:"20px",textAlign:"center",opacity:.6}}>Searching…</div>}
+                    {searchWx&&(()=>{
+                      const stype=wxType(searchWx.code,searchWx.isDay);
+                      const sse=SC[stype];
+                      const spe=plainEnglish({...searchWx,humid:70});
+                      return(
+                        <div style={{...G,padding:"22px"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+                            <div>
+                              <div style={{fontSize:16,fontWeight:800}}>{searchWx.name}</div>
+                              <div style={{fontSize:13,opacity:.6,marginTop:3}}>{sse.em} {sse.name}</div>
+                            </div>
+                            <div style={{textAlign:"right"}}>
+                              <div style={{fontFamily:"'Fraunces',serif",fontSize:52,fontWeight:900,lineHeight:1}}>{searchWx.temp}°</div>
+                              <div style={{fontSize:12,opacity:.6}}>feels {searchWx.feels}°</div>
+                            </div>
+                          </div>
+                          <div style={{background:"rgba(255,255,255,.15)",borderRadius:16,padding:"14px"}}>
+                            <div style={{fontSize:14,fontWeight:700,lineHeight:1.55}}>{spe.verdict}</div>
+                          </div>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:12}}>
+                            {[{e:"🌡️",l:"Outside",v:spe.feel},{e:"💨",l:"Wind",v:spe.windWord},{e:"🌧️",l:"Rain",v:spe.rainWord}].map((item,i)=>(
+                              <div key={i} style={{background:"rgba(255,255,255,.12)",borderRadius:14,padding:"12px 8px",textAlign:"center"}}>
+                                <div style={{fontSize:18,marginBottom:4}}>{item.e}</div>
+                                <div style={{fontSize:9,opacity:.5,letterSpacing:2,textTransform:"uppercase",fontWeight:700,marginBottom:3}}>{item.l}</div>
+                                <div style={{fontSize:10,fontWeight:700,lineHeight:1.3}}>{item.v}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {!searchWx&&!searching&&(
+                      <div style={{...G,padding:"20px",opacity:.5,textAlign:"center",fontSize:13}}>Type a city name above and tap 🔍</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* EVENT PLANNER TAB */}
+            {tab==="event"&&(
+              <div>
+                {!isPremium?(
+                  <div style={{...G,padding:"32px 24px",textAlign:"center",marginBottom:12}}>
+                    <div style={{fontSize:52,marginBottom:12}}>🗓️</div>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Event Planner</div>
+                    <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>"Will it be dry for my BBQ on Saturday?"<br/>"Is it good weather for the school sports day?"<br/>"Should I book an outdoor wedding?"</div>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock Event Planner — £3.98/mo</button>
+                  </div>
+                ):(
+                  <div>
+                    <div style={{...G,padding:"22px",marginBottom:12}}>
+                      <div style={{fontFamily:"'Fraunces',serif",fontSize:20,fontWeight:900,marginBottom:16}}>🗓️ Plan your event</div>
+                      <div style={{fontSize:12,opacity:.6,marginBottom:8}}>What's the event?</div>
+                      <input value={eventName} onChange={e=>setEventName(e.target.value)} placeholder="e.g. BBQ, Wedding, Sports Day, Party" style={{width:"100%",background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
+                      <div style={{fontSize:12,opacity:.6,marginBottom:8}}>What date?</div>
+                      <input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:16,boxSizing:"border-box"}}/>
+                      <button onClick={checkEvent} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                        {eventLoading?"Checking forecast…":"Ask Skyla 🩷"}
+                      </button>
+                    </div>
+                    {eventResult&&(
+                      <div style={{...G,padding:"22px"}}>
+                        <div style={{display:"flex",gap:12,marginBottom:14,alignItems:"center"}}>
+                          <div style={{fontSize:36}}>{SC[wxType(eventResult.code,1)]?.em||"🌤️"}</div>
+                          <div>
+                            <div style={{fontSize:14,fontWeight:800}}>{eventName}</div>
+                            <div style={{fontSize:12,opacity:.6}}>{eventDate} · {eventResult.max}° high / {eventResult.min}° low · 💧{eventResult.rain}%</div>
+                          </div>
+                        </div>
+                        <div style={{background:"rgba(255,255,255,.15)",borderRadius:16,padding:"16px",fontSize:14,lineHeight:1.7,fontWeight:500}}>{eventResult.text}</div>
+                      </div>
+                    )}
+                    <div style={{...G,padding:"16px",marginTop:12}}>
+                      <div style={{fontSize:11,opacity:.5,marginBottom:8}}>💡 Try asking about</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {["BBQ","Wedding","School Sports Day","Garden Party","Camping","Outdoor Concert","Birthday Party","Marathon"].map((e,i)=>(
+                          <button key={i} onClick={()=>setEventName(e)} style={{background:`${S.acc}18`,border:`1px solid ${S.acc}35`,borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:700,color:S.acc,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{e}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* HOLIDAY MODE TAB */}
+            {tab==="holiday"&&(
+              <div>
+                {!isPremium?(
+                  <div style={{...G,padding:"32px 24px",textAlign:"center",marginBottom:12}}>
+                    <div style={{fontSize:52,marginBottom:12}}>✈️</div>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Holiday Mode</div>
+                    <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>Tell Skyla where you're going and she'll tell you exactly what to pack — from flip flops to raincoats.</div>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock Holiday Mode — £3.98/mo</button>
+                  </div>
+                ):(
+                  <div>
+                    <div style={{...G,padding:"22px",marginBottom:12}}>
+                      <div style={{fontFamily:"'Fraunces',serif",fontSize:20,fontWeight:900,marginBottom:16}}>✈️ Plan your holiday</div>
+                      <div style={{fontSize:12,opacity:.6,marginBottom:8}}>Where are you going?</div>
+                      <input value={holidayCity} onChange={e=>setHolidayCity(e.target.value)} placeholder="e.g. Tenerife, Paris, New York" style={{width:"100%",background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                        <div>
+                          <div style={{fontSize:12,opacity:.6,marginBottom:6}}>From</div>
+                          <input type="date" value={holidayFrom} onChange={e=>setHolidayFrom(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"11px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                        </div>
+                        <div>
+                          <div style={{fontSize:12,opacity:.6,marginBottom:6}}>To</div>
+                          <input type="date" value={holidayTo} onChange={e=>setHolidayTo(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"11px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                        </div>
+                      </div>
+                      <button onClick={checkHoliday} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                        {holidayLoading?"Checking destination…":"What should I pack? 🧳"}
+                      </button>
+                    </div>
+                    {holidayResult&&(
+                      <div style={{...G,padding:"22px"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+                          <div>
+                            <div style={{fontSize:16,fontWeight:800}}>{holidayResult.city}</div>
+                            <div style={{fontSize:12,opacity:.6,marginTop:3}}>Next 7 days forecast</div>
+                          </div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:28}}>{SC[wxType(holidayResult.code,1)]?.em||"🌤️"}</div>
+                            <div style={{fontSize:12,fontWeight:700,marginTop:2}}>{holidayResult.avgMax}° / {holidayResult.avgMin}°</div>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:8,marginBottom:14}}>
+                          <div style={{...G,flex:1,padding:"10px",textAlign:"center",borderRadius:14}}>
+                            <div style={{fontSize:18}}>🌡️</div>
+                            <div style={{fontSize:11,fontWeight:700,marginTop:4}}>Up to {holidayResult.avgMax}°</div>
+                            <div style={{fontSize:10,opacity:.5}}>daytime high</div>
+                          </div>
+                          <div style={{...G,flex:1,padding:"10px",textAlign:"center",borderRadius:14}}>
+                            <div style={{fontSize:18}}>🌧️</div>
+                            <div style={{fontSize:11,fontWeight:700,marginTop:4}}>{holidayResult.rainDays} rainy days</div>
+                            <div style={{fontSize:10,opacity:.5}}>out of 7</div>
+                          </div>
+                          <div style={{...G,flex:1,padding:"10px",textAlign:"center",borderRadius:14}}>
+                            <div style={{fontSize:18}}>🧳</div>
+                            <div style={{fontSize:11,fontWeight:700,marginTop:4}}>Pack check</div>
+                            <div style={{fontSize:10,opacity:.5}}>below ↓</div>
+                          </div>
+                        </div>
+                        <div style={{background:"rgba(255,255,255,.15)",borderRadius:16,padding:"16px",fontSize:14,lineHeight:1.7,fontWeight:500}}>{holidayResult.text}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* MORNING BRIEFING TAB — inside More tab now, accessed via More */}
+
+            {/* FAMILY */}
+            {tab==="family"&&(
+              <Card>
+                <Lbl>👨‍👩‍👧 Family Weather</Lbl>
+                <div style={{fontSize:12,opacity:.6,marginBottom:14}}>See weather for everyone, wherever they are</div>
+                <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${S.bdr}`}}>
+                  <div style={{width:44,height:44,borderRadius:14,background:`${S.acc}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>🧑</div>
+                  <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700}}>Me</div><div style={{fontSize:11,opacity:.5}}>{city} · {PE.feel}</div></div>
+                  <div style={{textAlign:"right"}}><div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900}}>{wx.temp}°</div><div style={{fontSize:12,opacity:.6}}>{S.em}</div></div>
+                </div>
+                {fam.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${S.bdr}`}}>
+                  <div style={{width:44,height:44,borderRadius:14,background:`${S.acc}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{m.emoji}</div>
+                  <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700}}>{m.name}</div><div style={{fontSize:11,opacity:.5}}>{m.city}</div></div>
+                  <div style={{textAlign:"right"}}><div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900}}>{m.temp}°</div><div style={{fontSize:12,opacity:.6}}>{SC[wxType(m.code,m.isDay)]?.em||"🌤️"}{m.rain>60?" ☔":""}</div></div>
+                </div>)}
+                {addFam?(<div style={{marginTop:14,display:"flex",flexDirection:"column",gap:10}}>
+                  <input value={famName} onChange={e=>setFamName(e.target.value)} placeholder="Name (e.g. Mum)" style={{background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                  <input value={famCity} onChange={e=>setFamCity(e.target.value)} placeholder="Their city (e.g. Manchester)" style={{background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={addFamMember} style={{flex:1,background:S.acc,border:"none",borderRadius:14,padding:"12px",color:"white",fontFamily:"'DM Sans',sans-serif",fontWeight:800,fontSize:14,cursor:"pointer"}}>Add ✓</button>
+                    <button onClick={()=>setAddFam(false)} style={{flex:1,background:"rgba(255,255,255,.14)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"12px",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer"}}>Cancel</button>
+                  </div>
+                </div>):(<button onClick={()=>setAddFam(true)} style={{width:"100%",marginTop:14,background:"rgba(255,255,255,.1)",border:`1px dashed ${S.bdr}`,borderRadius:14,padding:"13px",color:S.acc,fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer"}}>+ Add family member</button>)}
+              </Card>
+            )}
+
+            {/* MORE */}
+            {tab==="more"&&(
+              <div>
+                <Card style={{border:`1px solid ${S.acc}35`}}>
+                  <Lbl>🎨 Personalise Skyla</Lbl>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    {[{id:"female",icon:"👧",label:"Skyla Girl",desc:"Pink girl 🩷"},{id:"male",icon:"👦",label:"Skyla Boy",desc:"Cool boy 💙"}].map(opt=>(
+                      <button key={opt.id} onClick={()=>toggleGender(opt.id)} style={{background:gender===opt.id?`${S.acc}25`:"rgba(255,255,255,.12)",border:gender===opt.id?`2px solid ${S.acc}`:`1px solid ${S.bdr}`,borderRadius:18,padding:"16px 12px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textAlign:"center",transition:"all .2s"}}>
+                        <div style={{fontSize:36,marginBottom:8}}>{opt.icon}</div>
+                        <div style={{fontSize:13,fontWeight:800,color:gender===opt.id?S.acc:"inherit"}}>{opt.label}</div>
+                        <div style={{fontSize:11,opacity:.6,marginTop:3}}>{opt.desc}</div>
+                        {gender===opt.id&&<div style={{fontSize:10,color:S.acc,fontWeight:700,marginTop:6}}>✓ Active</div>}
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+                {isPremium&&(
+                  <div style={{...G,padding:"22px",marginBottom:12,border:`1px solid ${S.acc}35`}}>
+                    <Lbl>🌅 Morning Briefing</Lbl>
+                    <div style={{fontSize:13,opacity:.7,marginBottom:14,lineHeight:1.6}}>Skyla sends you a weather briefing every morning. Set your wake-up time below.</div>
+                    <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                      <input type="time" value={briefingTime} onChange={e=>setBriefingTime(e.target.value)} style={{flex:1,background:"rgba(255,255,255,.18)",border:`1px solid ${S.bdr}`,borderRadius:14,padding:"12px 16px",fontSize:18,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                      <button onClick={saveBriefing} style={{background:briefingSaved?"#10B981":S.acc,border:"none",borderRadius:14,padding:"12px 18px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"background .3s"}}>
+                        {briefingSaved?"✓ Saved!":"Set Time"}
+                      </button>
+                    </div>
+                    {briefingSaved&&<div style={{fontSize:12,color:"#10B981",fontWeight:600,marginTop:10}}>✓ Briefing set for {briefingTime} every morning!</div>}
+                    <div style={{fontSize:11,opacity:.45,marginTop:10}}>You'll get Skyla's weather summary each morning at this time.</div>
+                  </div>
+                )}
+                {!isPremium&&(
+                  <div style={{...G,padding:"16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}} onClick={()=>setShowPaywall(true)}>
+                    <div style={{fontSize:28}}>🌅</div>
+                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>Morning Briefing</div><div style={{fontSize:11,opacity:.5}}>Wake up to Skyla's daily forecast</div></div>
+                    <div style={{background:"#E91E8C",borderRadius:10,padding:"5px 10px",fontSize:10,fontWeight:800,color:"white"}}>PREMIUM</div>
+                  </div>
+                )}
+                <Card>
+                  <Lbl>🔔 Today's Alerts</Lbl>
+                  {alerts.length===0?<div style={{textAlign:"center",padding:"16px 0",opacity:.55,fontSize:14}}>✓ All clear today!</div>:alerts.map((a,i)=>(
+                    <div key={i} style={{display:"flex",gap:12,padding:"12px 0",borderBottom:i<alerts.length-1?`1px solid ${S.bdr}`:"none"}}>
+                      <div style={{width:40,height:40,borderRadius:12,background:`${a.c}22`,border:`1px solid ${a.c}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{a.i}</div>
+                      <div><div style={{fontSize:13,fontWeight:700,marginBottom:3}}>{a.t}</div><div style={{fontSize:12,opacity:.65,lineHeight:1.5}}>{a.m}</div></div>
+                    </div>
+                  ))}
+                </Card>
+                <Card>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                    <Lbl>⭐ Score History</Lbl>
+                    {avg&&<div style={{fontSize:13,fontWeight:800,color:S.acc,paddingBottom:10}}>7-day avg: {avg}/10</div>}
+                  </div>
+                  {hist.length===0?<div style={{textAlign:"center",padding:"16px 0",opacity:.5}}>Open Skyla daily to build history!</div>:(
+                    <div>
+                      <div style={{display:"flex",gap:5,alignItems:"flex-end",height:68,marginBottom:14}}>
+                        {hist.slice(0,7).reverse().map((s,i)=><div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}><div style={{fontSize:9,opacity:.6,fontWeight:600}}>{s.score}</div><div style={{width:"100%",background:`linear-gradient(180deg,${S.acc},${S.acc}70)`,borderRadius:"4px 4px 0 0",height:`${(s.score/10)*52}px`,minHeight:4}}/></div>)}
+                      </div>
+                      {hist.slice(0,7).map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<Math.min(hist.length,7)-1?`1px solid ${S.bdr}`:"none"}}><span style={{fontSize:16}}>{s.emoji}</span><div style={{flex:1,fontSize:12,opacity:.55}}>{s.date}</div><div style={{fontSize:15,fontWeight:800,color:s.score>=7?S.acc:s.score>=5?"#F59E0B":"#EF4444"}}>{s.score}/10</div></div>)}
+                    </div>
+                  )}
+                </Card>
+                <Card>
+                  <Lbl>🔥 Your Streak</Lbl>
+                  <div style={{display:"flex",alignItems:"center",gap:16}}>
+                    <div style={{fontSize:52}}>🔥</div>
+                    <div>
+                      <div style={{fontFamily:"'Fraunces',serif",fontSize:46,fontWeight:900,color:S.acc,lineHeight:1}}>{streak}</div>
+                      <div style={{fontSize:13,opacity:.6,marginTop:4}}>day{streak!==1?"s":""} in a row</div>
+                      <div style={{fontSize:12,opacity:.5,marginTop:3}}>{streak<3?"Keep going!":streak<7?"Building a habit 🎯":streak<30?"On fire! 🔥":"Legendary! 👑"}</div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            <button onClick={load} style={{width:"100%",marginTop:4,...G,borderRadius:100,padding:"15px",color:S.sub,fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:700,cursor:"pointer",transition:"all .25s"}}
+              onMouseEnter={e=>{e.currentTarget.style.background=S.acc;e.currentTarget.style.color="white";}}
+              onMouseLeave={e=>{e.currentTarget.style.background=G.background;e.currentTarget.style.color=S.sub;}}>
+              ↻ &nbsp;Refresh Skyla
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#FFB7C5">
+<meta name="description" content="Skyla - Your AI Weather Decision Assistant">
+<title>Skyla 🩷 AI Weather</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes eyeBlink{0%,85%,100%{transform:scaleY(1)}90%,96%{transform:scaleY(0.04)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+@keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes sunRot{to{transform:rotate(360deg)}}
+@keyframes cloudSail{from{transform:translateX(-350px)}to{transform:translateX(110vw)}}
+@keyframes rainFall{0%{opacity:0;transform:translateY(-30px)}8%{opacity:1}92%{opacity:.7}100%{opacity:0;transform:translateY(105vh)}}
+@keyframes snowDrift{0%{opacity:0;transform:translateY(-20px) rotate(0deg)}8%{opacity:.9}100%{opacity:0;transform:translateY(105vh) rotate(720deg)}}
+@keyframes bolt{0%,88%,100%{opacity:0}89%,93%{opacity:1}91%{opacity:.2}95%{opacity:.8}97%{opacity:0}}
+@keyframes thunderBg{0%,88%,100%{background:transparent}89%,95%{background:rgba(160,130,255,.1)}96%{background:transparent}}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.3)}}
+@keyframes slideTab{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes popIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect}=React;
+
+function wxType(c,d){if(!d)return"night";if(c===0)return"sunny";if(c<=2)return"partly";if(c<=3)return"cloudy";if(c<=67)return"rainy";if(c<=77)return"snowy";if(c<=82)return"showery";return"stormy"}
+function wmoDesc(c){const m={0:"Clear sky",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",45:"Foggy",51:"Drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",71:"Snow",73:"Snow",75:"Heavy snow",80:"Showers",81:"Showers",95:"Thunderstorm"};return m[c]??"Cloudy"}
+
+const SC={
+  sunny:  {acc:"#D97706",text:"#1C0A00",sub:"rgba(28,10,0,.5)",  glass:"rgba(255,255,255,.22)",bdr:"rgba(255,255,255,.45)",em:"☀️",name:"Sunny"},
+  partly: {acc:"#2563EB",text:"#0C1A3D",sub:"rgba(12,26,61,.5)", glass:"rgba(255,255,255,.25)",bdr:"rgba(255,255,255,.5)", em:"⛅",name:"Partly Cloudy"},
+  cloudy: {acc:"#475569",text:"#0F172A",sub:"rgba(15,23,42,.5)", glass:"rgba(255,255,255,.2)", bdr:"rgba(255,255,255,.38)",em:"☁️",name:"Overcast"},
+  rainy:  {acc:"#60A5FA",text:"#EFF6FF",sub:"rgba(239,246,255,.55)",glass:"rgba(255,255,255,.1)",bdr:"rgba(255,255,255,.18)",em:"🌧️",name:"Rainy"},
+  snowy:  {acc:"#0369A1",text:"#082F49",sub:"rgba(8,47,73,.5)",  glass:"rgba(255,255,255,.28)",bdr:"rgba(255,255,255,.5)", em:"❄️",name:"Snowy"},
+  showery:{acc:"#7C3AED",text:"#1E1B4B",sub:"rgba(30,27,75,.5)", glass:"rgba(255,255,255,.15)",bdr:"rgba(255,255,255,.25)",em:"🌦️",name:"Showery"},
+  stormy: {acc:"#A78BFA",text:"#EEF2FF",sub:"rgba(238,242,255,.5)",glass:"rgba(255,255,255,.07)",bdr:"rgba(255,255,255,.12)",em:"⛈️",name:"Thunderstorm"},
+  night:  {acc:"#818CF8",text:"#F0F4FF",sub:"rgba(240,244,255,.5)",glass:"rgba(255,255,255,.06)",bdr:"rgba(255,255,255,.12)",em:"🌙",name:"Night"},
+};
+
+function BG({type}){
+  const s={position:"fixed",inset:0,zIndex:0,overflow:"hidden",pointerEvents:"none"};
+  if(type==="sunny")return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#1a6fa8 0%,#38a8e0 15%,#7dcef5 35%,#b5e4f9 55%,#ffedb5 75%,#ffd166 88%,#ffb347 100%)"}}/><div style={{position:"absolute",top:30,right:35,width:155,height:155}}><div style={{position:"absolute",inset:-55,animation:"sunRot 28s linear infinite"}}>{[...Array(18)].map((_,i)=><div key={i} style={{position:"absolute",top:"50%",left:"50%",width:"3px",height:"58px",background:"linear-gradient(180deg,rgba(255,210,0,.85),transparent)",transformOrigin:"top center",transform:`rotate(${i*20}deg) translateX(-50%)`,borderRadius:"2px"}}/>)}</div><div style={{position:"absolute",inset:50,borderRadius:"50%",background:"radial-gradient(circle at 38% 34%,#FFFDE0,#FFE566,#FFC200,#FF9500)",boxShadow:"0 0 0 18px rgba(255,210,0,.12),0 0 80px 40px rgba(255,160,0,.28)"}}/></div><div style={{position:"absolute",bottom:0,left:0,right:0,height:"38%",background:"linear-gradient(0deg,rgba(255,165,50,.22),transparent)"}}/></div>);
+  if(type==="partly")return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#1565c0 0%,#1e88e5 20%,#42a5f5 42%,#90caf9 68%,#e3f2fd 100%)"}}/>{[[72,1.5,42,0,.96],[158,1.1,56,-22,.87],[38,.85,34,-38,.72]].map(([top,sc,dur,del,op],i)=><div key={i} style={{position:"absolute",top,left:-300,animation:`cloudSail ${dur}s linear infinite ${del}s`,opacity:op}}><svg width="240" height="88" viewBox="0 0 240 88" style={{transform:`scale(${sc})`}}><ellipse cx="120" cy="62" rx="106" ry="30" fill="white"/><ellipse cx="82" cy="50" rx="60" ry="40" fill="white"/><ellipse cx="155" cy="47" rx="55" ry="36" fill="white"/><ellipse cx="120" cy="40" rx="44" ry="30" fill="white"/></svg></div>)}</div>);
+  if(type==="cloudy")return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#374151 0%,#4b5563 28%,#6b7280 58%,#9ca3af 100%)"}}/>{[[8,2.1,62,0,.9,"#374151"],[82,1.7,48,-18,.85,"#2d3748"],[48,1.4,40,-32,.8,"#3d4a59"]].map(([top,sc,dur,del,op,col],i)=><div key={i} style={{position:"absolute",top,left:-320,animation:`cloudSail ${dur}s linear infinite ${del}s`,opacity:op}}><svg width="280" height="100" viewBox="0 0 280 100" style={{transform:`scale(${sc})`}}><ellipse cx="140" cy="70" rx="126" ry="33" fill={col}/><ellipse cx="100" cy="55" rx="76" ry="48" fill={col}/><ellipse cx="182" cy="52" rx="70" ry="44" fill={col}/><ellipse cx="140" cy="44" rx="58" ry="38" fill={col}/></svg></div>)}<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.16)"}}/></div>);
+  if(type==="rainy")return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#0d1b3e 0%,#1a2f6a 20%,#1e3a8a 46%,#2563eb 76%,#3b82f6 100%)"}}/>{[[0,2.3,.95,"#0a1628"],[72,1.85,.9,"#0d1f3c"],[32,1.55,.86,"#111f40"]].map(([top,sc,op,col],i)=><div key={i} style={{position:"absolute",top,left:-350,animation:`cloudSail ${58+i*10}s linear infinite ${i*-22}s`,opacity:op}}><svg width="320" height="118" viewBox="0 0 320 118" style={{transform:`scale(${sc})`}}><ellipse cx="160" cy="84" rx="146" ry="38" fill={col}/><ellipse cx="115" cy="65" rx="88" ry="56" fill={col}/><ellipse cx="210" cy="62" rx="82" ry="52" fill={col}/><ellipse cx="160" cy="53" rx="66" ry="42" fill={col}/></svg></div>)}{[...Array(60)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*6.3+i*i*.1)%100}%`,top:-40,width:i%5===0?"2.5px":i%3===0?"2px":"1.5px",height:i%4===0?"26px":i%3===0?"20px":"15px",background:`linear-gradient(180deg,transparent,rgba(150,210,255,${.32+i%4*.1}),rgba(150,210,255,.08))`,borderRadius:"3px",animation:`rainFall ${.52+i%6*.11}s linear infinite ${(i*.07)%2}s`,transform:`rotate(${10+i%8}deg)`}}/>)}<div style={{position:"absolute",bottom:0,left:0,right:0,height:68,background:"linear-gradient(0deg,rgba(60,140,220,.32),transparent)"}}/></div>);
+  if(type==="snowy")return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#90a4ae 0%,#b0bec5 25%,#d0dde2 55%,#e8edf0 78%,#f4f8fa 100%)"}}/>{[[0,1.85,.86,"rgba(207,216,220,.94)"],[78,1.5,.8,"rgba(200,210,215,.9)"]].map(([top,sc,op,col],i)=><div key={i} style={{position:"absolute",top,left:-300,animation:`cloudSail ${50+i*12}s linear infinite ${i*-16}s`,opacity:op}}><svg width="268" height="93" viewBox="0 0 268 93" style={{transform:`scale(${sc})`}}><ellipse cx="134" cy="66" rx="122" ry="30" fill={col}/><ellipse cx="97" cy="52" rx="70" ry="44" fill={col}/><ellipse cx="172" cy="50" rx="65" ry="42" fill={col}/></svg></div>)}{[...Array(50)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*9.7+i)%100}%`,top:-25,fontSize:i%6===0?"22px":i%4===0?"16px":i%3===0?"12px":"9px",color:`rgba(200,230,255,${.5+i%3*.2})`,animation:`snowDrift ${2.2+i%7*.5}s linear infinite ${(i*.17)%4.5}s`,userSelect:"none"}}>{i%5===0?"❄":i%4===0?"❅":i%3===0?"✦":"·"}</div>)}</div>);
+  if(type==="showery")return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#1a0533 0%,#2d1b69 25%,#4c1d95 50%,#5b21b6 75%,#7c3aed 100%)"}}/><div style={{position:"absolute",top:"22%",left:"-5%",width:"110%",opacity:.6}}>{[["#ff6b6b",30],["#ff9f43",23],["#feca57",16],["#48dbfb",9]].map(([col,b],i)=><div key={i} style={{position:"absolute",left:0,right:0,top:0,height:195+i*14,border:`5px solid ${col}`,borderRadius:"50% 50% 0 0",opacity:.65,borderBottom:"none"}}/>)}</div>{[...Array(32)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*9.8)%100}%`,top:-25,width:"1.5px",height:"12px",background:`rgba(180,150,255,${.38+i%3*.14})`,borderRadius:"3px",animation:`rainFall ${.85+i%4*.2}s linear infinite ${(i*.11)%2.5}s`,transform:"rotate(6deg)"}}/>)}</div>);
+  if(type==="stormy")return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#04020f 0%,#0a0520 18%,#1a0f3d 40%,#2a1660 65%,#3730a3 100%)",animation:"thunderBg 8s ease-in-out infinite"}}/>{[[0,2.7,.97,"#04020f"],[52,2.15,.93,"#070412"]].map(([top,sc,op,col],i)=><div key={i} style={{position:"absolute",top,left:-400,animation:`cloudSail ${70+i*8}s linear infinite ${i*-24}s`,opacity:op}}><svg width="360" height="128" viewBox="0 0 360 128" style={{transform:`scale(${sc})`}}><ellipse cx="180" cy="90" rx="165" ry="42" fill={col}/><ellipse cx="130" cy="70" rx="98" ry="62" fill={col}/><ellipse cx="235" cy="67" rx="92" ry="58" fill={col}/></svg></div>)}{[...Array(70)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*4.7+i*.3)%100}%`,top:-35,width:i%4===0?"2.5px":i%3===0?"2px":"1.5px",height:i%3===0?"27px":i%2===0?"21px":"16px",background:`rgba(120,120,200,${.28+i%5*.09})`,borderRadius:"3px",animation:`rainFall ${.44+i%5*.1}s linear infinite ${(i*.055)%1.8}s`,transform:`rotate(${14+i%10}deg)`}}/>)}{[[18,14],[66,22],[42,8]].map(([l,t],i)=><div key={i} style={{position:"absolute",left:`${l}%`,top:`${t}%`,animation:`bolt 8s ease-in-out infinite ${i*2.5}s`,zIndex:3}}><svg width="44" height="128" viewBox="0 0 44 128"><polyline points="28,0 12,57 26,57 6,128" stroke="#FDE68A" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg></div>)}<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.28)"}}/></div>);
+  return(<div style={s}><div style={{position:"absolute",inset:0,background:"linear-gradient(175deg,#020617 0%,#0F172A 40%,#1E293B 75%,#162a4a 100%)"}}/>{[...Array(90)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*41.3+i*.7)%99}%`,top:`${(i*23.9+i*.4)%82}%`,width:i%8===0?"3px":"1.5px",height:i%8===0?"3px":"1.5px",borderRadius:"50%",background:"white",opacity:0.6}}/>)}<div style={{position:"absolute",top:45,right:55,width:88,height:88}}><div style={{width:88,height:88,borderRadius:"50%",background:"radial-gradient(circle at 36% 33%,#FFFEF0,#FFF9C4,#FFE082,#FFD54F)",boxShadow:"0 0 50px 14px rgba(220,200,100,.22)"}}/></div></div>);
+}
+
+function SkylaGirl({type}){
+  const skin="#FFB7C5",skinDark="#F48FAA",skinBlush="#E91E8C";
+  const HC={sunny:{h:"#E91E8C",h2:"#F06292"},partly:{h:"#C2185B",h2:"#E91E8C"},cloudy:{h:"#AD1457",h2:"#C2185B"},rainy:{h:"#880E4F",h2:"#AD1457"},snowy:{h:"#FCE4EC",h2:"#F8BBD0"},showery:{h:"#D81B60",h2:"#E91E8C"},stormy:{h:"#880E4F",h2:"#AD1457"},night:{h:"#C2185B",h2:"#AD1457"}}[type]||{h:"#E91E8C",h2:"#F06292"};
+  const eyeC="#880E4F";
+  const outfits={
+    sunny:(<g><path d="M34 85 Q50 80 66 85 L72 130 Q50 136 28 130 Z" fill="#FCD34D"/><path d="M34 85 Q50 80 66 85 L64 97 Q50 93 36 97 Z" fill="#F59E0B"/><rect x="30" y="93" width="40" height="5" rx="2.5" fill="#F59E0B"/><rect x="41" y="74" width="5" height="14" rx="2.5" fill="#F59E0B"/><rect x="54" y="74" width="5" height="14" rx="2.5" fill="#F59E0B"/><path d="M30 128 Q39 124 44 130 L44 135 Q38 137 30 134 Z" fill="#C2770A"/><path d="M56 128 Q65 124 70 130 L70 135 Q64 137 56 134 Z" fill="#C2770A"/></g>),
+    partly:(<g><rect x="30" y="80" width="40" height="22" rx="10" fill="#BFDBFE"/><rect x="30" y="80" width="40" height="11" rx="7" fill="#93C5FD"/><path d="M28 99 Q50 95 72 99 L76 130 Q50 136 24 130 Z" fill="white" opacity=".9"/><path d="M28 99 Q50 95 72 99 L70 108 Q50 105 30 108 Z" fill="#DBEAFE" opacity=".8"/><path d="M30 128 Q39 124 44 130 L44 135 Q38 137 30 134 Z" fill="#1D4ED8"/><path d="M56 128 Q65 124 70 130 L70 135 Q64 137 56 134 Z" fill="#1D4ED8"/></g>),
+    cloudy:(<g><rect x="28" y="79" width="44" height="26" rx="11" fill="#94A3B8"/><rect x="28" y="79" width="44" height="13" rx="8" fill="#78909C"/><rect x="21" y="90" width="9" height="8" rx="4" fill="#78909C"/><rect x="70" y="90" width="9" height="8" rx="4" fill="#78909C"/><rect x="32" y="103" width="14" height="26" rx="6" fill="#334155"/><rect x="54" y="103" width="14" height="26" rx="6" fill="#334155"/><path d="M30 126 Q39 122 44 128 L44 135 Q38 137 30 134 Z" fill="#1E293B"/><path d="M56 126 Q65 122 70 128 L70 135 Q64 137 56 134 Z" fill="#1E293B"/></g>),
+    rainy:(<g><rect x="24" y="74" width="52" height="38" rx="13" fill="#FCD34D"/><rect x="24" y="74" width="52" height="17" rx="10" fill="#F59E0B"/><path d="M24 82 Q50 70 76 82 Q76 62 50 58 Q24 62 24 82 Z" fill="#F59E0B"/><ellipse cx="50" cy="75" rx="18" ry="10" fill="#FCD34D"/>{[87,95,103].map((y,i)=><circle key={i} cx="50" cy={y} r="2.8" fill="#F59E0B"/>)}<rect x="30" y="92" width="40" height="5" rx="2.5" fill="#D97706"/><rect x="28" y="110" width="18" height="22" rx="7" fill="#1D4ED8"/><ellipse cx="37" cy="110" rx="9" ry="5.5" fill="#2563EB"/><rect x="54" y="110" width="18" height="22" rx="7" fill="#1D4ED8"/><ellipse cx="63" cy="110" rx="9" ry="5.5" fill="#2563EB"/></g>),
+    snowy:(<g><rect x="22" y="72" width="56" height="40" rx="14" fill="#BAE6FD"/><rect x="22" y="72" width="56" height="18" rx="11" fill="#7DD3FC"/><path d="M22 82 Q50 68 78 82 Q78 60 50 56 Q22 60 22 82 Z" fill="#7DD3FC"/><ellipse cx="50" cy="74" rx="20" ry="11" fill="#BAE6FD"/>{[...Array(10)].map((_,i)=><ellipse key={i} cx={29+i*5} cy="67" rx="3.5" ry="4" fill="white" opacity=".9"/>)}<rect x="32" y="76" width="36" height="8" rx="4" fill="#EF4444"/><rect x="26" y="110" width="19" height="22" rx="8" fill="#0369A1"/><ellipse cx="35.5" cy="110" rx="9.5" ry="5.5" fill="#0284C7"/><rect x="55" y="110" width="19" height="22" rx="8" fill="#0369A1"/><ellipse cx="64.5" cy="110" rx="9.5" ry="5.5" fill="#0284C7"/><ellipse cx="19" cy="96" rx="7.5" ry="6" fill="#7DD3FC"/><ellipse cx="81" cy="96" rx="7.5" ry="6" fill="#7DD3FC"/></g>),
+    showery:(<g><rect x="28" y="79" width="44" height="26" rx="11" fill="#DDD6FE"/><rect x="28" y="79" width="44" height="13" rx="8" fill="#C4B5FD"/><rect x="48" y="79" width="4" height="24" rx="2" fill="#A78BFA"/><rect x="31" y="103" width="16" height="24" rx="7" fill="#1E40AF"/><rect x="53" y="103" width="16" height="24" rx="7" fill="#1E40AF"/><path d="M29 124 Q38 120 43 127 L43 132 Q37 134 29 131 Z" fill="#4C1D95"/><path d="M57 124 Q66 120 71 127 L71 132 Q65 134 57 131 Z" fill="#4C1D95"/></g>),
+    stormy:(<g><rect x="24" y="74" width="52" height="38" rx="13" fill="#312E81"/><rect x="24" y="74" width="52" height="18" rx="10" fill="#1E1B4B"/><path d="M24 83 Q50 70 76 83 Q76 62 50 58 Q24 62 24 83 Z" fill="#1E1B4B"/><ellipse cx="50" cy="75" rx="19" ry="10" fill="#312E81"/><rect x="48" y="80" width="4" height="28" rx="2" fill="#1E1B4B"/>{[88,96,104].map((y,i)=><circle key={i} cx="50" cy={y} r="2.5" fill="#818CF8"/>)}<rect x="26" y="110" width="18" height="22" rx="7" fill="#0F0A2E"/><ellipse cx="35" cy="110" rx="9" ry="5" fill="#1E1B4B"/><rect x="56" y="110" width="18" height="22" rx="7" fill="#0F0A2E"/><ellipse cx="65" cy="110" rx="9" ry="5" fill="#1E1B4B"/></g>),
+    night:(<g><rect x="28" y="79" width="44" height="27" rx="11" fill="#C7D2FE"/><rect x="28" y="79" width="44" height="13" rx="7" fill="#A5B4FC"/>{[[36,86,"#818CF8"],[57,84,"#A5B4FC"],[46,94,"#6366F1"],[63,97,"#818CF8"],[33,100,"#A5B4FC"]].map(([x,y,c],i)=><text key={i} x={x} y={y} fontSize="8" fill={c} opacity=".9">✦</text>)}<rect x="30" y="104" width="16" height="24" rx="7" fill="#C7D2FE"/><rect x="54" y="104" width="16" height="24" rx="7" fill="#C7D2FE"/><ellipse cx="38" cy="130" rx="11" ry="6" fill="#818CF8"/><circle cx="35" cy="127" r="5" fill="#A5B4FC"/><ellipse cx="62" cy="130" rx="11" ry="6" fill="#818CF8"/><circle cx="59" cy="127" r="5" fill="#A5B4FC"/></g>),
+  };
+  const hairStyles={
+    sunny:(<g><ellipse cx="50" cy="38" rx="30" ry="32" fill={HC.h}/><path d="M20 38 Q15 70 22 95 Q30 105 36 100 Q24 75 25 50 Z" fill={HC.h}/><path d="M80 38 Q85 70 78 95 Q70 105 64 100 Q76 75 75 50 Z" fill={HC.h}/><ellipse cx="50" cy="28" rx="26" ry="16" fill={HC.h}/><path d="M24 28 Q26 12 50 10 Q74 12 76 28" fill={HC.h2}/><path d="M38 18 Q50 12 62 18 Q50 24 38 18 Z" fill="#EF4444"/><path d="M38 18 Q34 12 38 8 Q44 14 38 18 Z" fill="#EF4444"/><path d="M62 18 Q66 12 62 8 Q56 14 62 18 Z" fill="#EF4444"/><circle cx="50" cy="18" r="4" fill="#DC2626"/></g>),
+    partly:(<g><ellipse cx="50" cy="38" rx="28" ry="30" fill={HC.h}/><path d="M22 38 Q18 62 24 88 Q30 100 36 96 Q26 72 26 48 Z" fill={HC.h}/><path d="M78 38 Q82 62 76 88 Q70 100 64 96 Q74 72 74 48 Z" fill={HC.h}/><ellipse cx="50" cy="28" rx="24" ry="15" fill={HC.h}/><path d="M26 28 Q28 13 50 11 Q72 13 74 28" fill={HC.h2}/><path d="M72 45 Q88 42 90 58 Q88 74 78 78 Q82 62 80 50 Q76 46 72 45 Z" fill={HC.h}/><ellipse cx="82" cy="60" rx="9" ry="12" fill={HC.h}/><circle cx="73" cy="46" r="5" fill="#60A5FA"/></g>),
+    cloudy:(<g><ellipse cx="50" cy="38" rx="28" ry="26" fill={HC.h}/><path d="M22 38 Q20 55 26 72 Q34 82 40 78 Q28 65 28 48 Z" fill={HC.h}/><path d="M78 38 Q80 55 74 72 Q66 82 60 78 Q72 65 72 48 Z" fill={HC.h}/><ellipse cx="50" cy="26" rx="25" ry="14" fill={HC.h}/><path d="M25 26 Q27 12 50 10 Q73 12 75 26" fill={HC.h2}/><path d="M30 22 Q50 16 70 22 Q65 30 55 32 Q45 32 35 30 Z" fill={HC.h}/></g>),
+    rainy:(<g><path d="M24 65 Q20 72 22 80 Q26 78 28 72 Z" fill={HC.h}/><path d="M76 65 Q80 72 78 80 Q74 78 72 72 Z" fill={HC.h}/><ellipse cx="50" cy="32" rx="18" ry="14" fill={HC.h}/><ellipse cx="50" cy="25" rx="12" ry="10" fill={HC.h2}/></g>),
+    snowy:(<g><path d="M26 78 Q20 90 22 108 Q28 115 32 112 Q26 98 28 84 Z" fill={HC.h}/><path d="M74 78 Q80 90 78 108 Q72 115 68 112 Q74 98 72 84 Z" fill={HC.h}/>{[82,90,98,106].map((y,i)=><ellipse key={i} cx="25" cy={y} rx="4" ry="3" fill={HC.h2} opacity=".7"/>)}{[82,90,98,106].map((y,i)=><ellipse key={i} cx="75" cy={y} rx="4" ry="3" fill={HC.h2} opacity=".7"/>)}<ellipse cx="50" cy="30" rx="19" ry="13" fill={HC.h}/><ellipse cx="50" cy="24" rx="12" ry="9" fill={HC.h2}/><text x="66" y="80" fontSize="12" fill="white" opacity=".9">❄</text></g>),
+    showery:(<g><ellipse cx="50" cy="38" rx="29" ry="31" fill={HC.h}/><path d="M21 38 Q16 65 22 88 Q28 100 35 96 Q22 72 24 48 Z" fill={HC.h}/><path d="M79 38 Q84 65 78 88 Q72 100 65 96 Q78 72 76 48 Z" fill={HC.h}/><ellipse cx="50" cy="27" rx="25" ry="15" fill={HC.h}/><path d="M25 27 Q27 13 50 11 Q73 13 75 27" fill={HC.h2}/><circle cx="68" cy="22" r="6" fill="#F472B6"/>{[0,60,120,180,240,300].map((a,i)=><circle key={i} cx={68+Math.cos(a*Math.PI/180)*5} cy={22+Math.sin(a*Math.PI/180)*5} r="2.5" fill={["#F87171","#FBBF24","#34D399","#60A5FA","#A78BFA","#F472B6"][i]}/>)}<circle cx="68" cy="22" r="2.5" fill="white"/></g>),
+    stormy:(<g><ellipse cx="50" cy="38" rx="30" ry="32" fill={HC.h}/><path d="M20 38 Q14 68 18 100 Q24 115 32 112 Q20 85 22 52 Z" fill={HC.h}/><path d="M80 38 Q86 68 82 100 Q76 115 68 112 Q80 85 78 52 Z" fill={HC.h}/><ellipse cx="50" cy="26" rx="26" ry="15" fill={HC.h}/><path d="M24 26 Q26 11 50 9 Q74 11 76 26" fill={HC.h2}/><path d="M22 50 Q18 75 20 100" stroke="#7C3AED" strokeWidth="3" fill="none" strokeLinecap="round" opacity=".7"/></g>),
+    night:(<g><ellipse cx="50" cy="42" rx="26" ry="28" fill={HC.h}/><path d="M24 42 Q20 62 24 82 Q30 90 36 86 Q26 68 28 52 Z" fill={HC.h}/><path d="M76 42 Q80 62 76 82 Q70 90 64 86 Q74 68 72 52 Z" fill={HC.h}/><circle cx="35" cy="22" r="10" fill={HC.h2}/><circle cx="65" cy="22" r="10" fill={HC.h2}/><circle cx="35" cy="20" r="7" fill={HC.h}/><circle cx="65" cy="20" r="7" fill={HC.h}/><circle cx="35" cy="28" r="3" fill="#818CF8"/><circle cx="65" cy="28" r="3" fill="#818CF8"/></g>),
+  };
+  return(
+    <div style={{animation:"float 6s ease-in-out infinite",filter:"drop-shadow(0 18px 36px rgba(0,0,0,.2))",flexShrink:0}}>
+      <svg width="200" height="230" viewBox="0 0 100 138">
+        <defs><radialGradient id="skinGrad" cx="40%" cy="35%"><stop offset="0%" stopColor="#FEE8C8"/><stop offset="60%" stopColor={skin}/><stop offset="100%" stopColor={skinDark}/></radialGradient><radialGradient id="skinGrad2" cx="45%" cy="40%"><stop offset="0%" stopColor={skin}/><stop offset="100%" stopColor={skinDark}/></radialGradient></defs>
+        {hairStyles[type]||hairStyles.sunny}
+        {outfits[type]||outfits.partly}
+        <rect x="44" y="70" width="12" height="14" rx="5" fill={skin}/>
+        <ellipse cx="50" cy="52" rx="23" ry="24" fill="url(#skinGrad)"/>
+        <ellipse cx="27" cy="52" rx="5" ry="6" fill="url(#skinGrad2)"/><ellipse cx="73" cy="52" rx="5" ry="6" fill="url(#skinGrad2)"/>
+        <ellipse cx="27" cy="52" rx="2.5" ry="3.5" fill={skinBlush} opacity=".35"/><ellipse cx="73" cy="52" rx="2.5" ry="3.5" fill={skinBlush} opacity=".35"/>
+        <path d="M36 40 Q42 37 46 39" stroke={HC.h} strokeWidth="2" fill="none" strokeLinecap="round"/><path d="M54 39 Q58 37 64 40" stroke={HC.h} strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <ellipse cx="40" cy="50" rx="7" ry="8" fill="white"/><ellipse cx="60" cy="50" rx="7" ry="8" fill="white"/>
+        <ellipse cx="40" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite"}}/><ellipse cx="60" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
+        <ellipse cx="40.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.75)" style={{animation:"eyeBlink 5s ease-in-out infinite"}}/><ellipse cx="60.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.75)" style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
+        <circle cx="42.5" cy="48.5" r="2.2" fill="white" opacity=".95"/><circle cx="62.5" cy="48.5" r="2.2" fill="white" opacity=".95"/>
+        {[-4,-1.5,1,3.5].map((dx,i)=><line key={i} x1={40+dx} y1={43.5} x2={40+dx-.8} y2={40} stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>)}
+        {[-4,-1.5,1,3.5].map((dx,i)=><line key={i} x1={60+dx} y1={43.5} x2={60+dx-.8} y2={40} stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>)}
+        <ellipse cx="33" cy="58" rx="8" ry="5.5" fill={skinBlush} opacity=".45"/><ellipse cx="67" cy="58" rx="8" ry="5.5" fill={skinBlush} opacity=".45"/>
+        <path d="M48 58 Q50 61 52 58" stroke={skinDark} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity=".5"/>
+        {type==="stormy"?<path d="M43 65 Q50 62 57 65" stroke={skinDark} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity=".6"/>:type==="cloudy"?<path d="M44 65 Q50 64 56 65" stroke={skinDark} strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".5"/>:<path d="M42 64 Q50 71 58 64" stroke={skinDark} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity=".8"/>}
+      </svg>
+    </div>
+  );
+}
+
+function SkylaGuy({type}){
+  const skin="#FFB7C5",skinDark="#F48FAA",skinBlush="#E91E8C";
+  const HC={sunny:{h:"#1565C0",h2:"#1976D2"},partly:{h:"#0D47A1",h2:"#1565C0"},cloudy:{h:"#37474F",h2:"#455A64"},rainy:{h:"#1A237E",h2:"#283593"},snowy:{h:"#E8EAF6",h2:"#C5CAE9"},showery:{h:"#4A148C",h2:"#6A1B9A"},stormy:{h:"#0D0D1A",h2:"#1A1A35"},night:{h:"#1A1A35",h2:"#12122A"}}[type]||{h:"#1565C0",h2:"#1976D2"};
+  const eyeC="#880E4F";
+  const outfits={
+    sunny:(<g><rect x="30" y="82" width="40" height="26" rx="9" fill="#FDE68A"/><rect x="30" y="82" width="40" height="11" rx="6" fill="#FCD34D"/><rect x="32" y="103" width="14" height="20" rx="6" fill="#1E3A5F"/><rect x="54" y="103" width="14" height="20" rx="6" fill="#1E3A5F"/><path d="M30 120 Q39 116 44 122 L44 127 Q38 129 30 126 Z" fill="#1D4ED8"/><path d="M56 120 Q65 116 70 122 L70 127 Q64 129 56 126 Z" fill="#1D4ED8"/></g>),
+    partly:(<g><rect x="28" y="80" width="44" height="28" rx="10" fill="#BFDBFE"/><rect x="28" y="80" width="44" height="12" rx="7" fill="#93C5FD"/><rect x="30" y="100" width="16" height="22" rx="7" fill="#1E3A8A"/><rect x="54" y="100" width="16" height="22" rx="7" fill="#1E3A8A"/><path d="M28 120 Q37 116 42 122 L42 127 Q36 129 28 126 Z" fill="#0F172A"/><path d="M58 120 Q67 116 72 122 L72 127 Q66 129 58 126 Z" fill="#0F172A"/></g>),
+    cloudy:(<g><rect x="26" y="79" width="48" height="28" rx="11" fill="#78909C"/><rect x="26" y="79" width="48" height="13" rx="8" fill="#546E7A"/><rect x="28" y="99" width="16" height="24" rx="6" fill="#37474F"/><rect x="56" y="99" width="16" height="24" rx="6" fill="#37474F"/><path d="M26 121 Q35 117 40 123 L40 128 Q34 130 26 127 Z" fill="#263238"/><path d="M60 121 Q69 117 74 123 L74 128 Q68 130 60 127 Z" fill="#263238"/></g>),
+    rainy:(<g><rect x="22" y="72" width="56" height="38" rx="13" fill="#1D4ED8"/><rect x="22" y="72" width="56" height="16" rx="10" fill="#1E40AF"/><path d="M22 80 Q50 68 78 80 Q78 60 50 56 Q22 60 22 80 Z" fill="#1E40AF"/><ellipse cx="50" cy="73" rx="19" ry="10" fill="#1D4ED8"/>{[86,94,102].map((y,i)=><circle key={i} cx="50" cy={y} r="2.8" fill="#93C5FD"/>)}<rect x="26" y="108" width="18" height="20" rx="6" fill="#0F172A"/><ellipse cx="35" cy="108" rx="9" ry="5" fill="#1D4ED8"/><rect x="56" y="108" width="18" height="20" rx="6" fill="#0F172A"/><ellipse cx="65" cy="108" rx="9" ry="5" fill="#1D4ED8"/></g>),
+    snowy:(<g><rect x="20" y="70" width="60" height="38" rx="13" fill="#90CAF9"/><rect x="20" y="70" width="60" height="17" rx="10" fill="#64B5F6"/><path d="M20 78 Q50 65 80 78 Q80 57 50 53 Q20 57 20 78 Z" fill="#64B5F6"/><ellipse cx="50" cy="71" rx="21" ry="11" fill="#90CAF9"/><ellipse cx="20" cy="92" rx="7" ry="6" fill="#90CAF9"/><ellipse cx="80" cy="92" rx="7" ry="6" fill="#90CAF9"/><rect x="32" y="74" width="36" height="7" rx="3.5" fill="#EF5350"/><rect x="28" y="106" width="19" height="20" rx="7" fill="#0D47A1"/><ellipse cx="37" cy="106" rx="9.5" ry="5" fill="#1565C0"/><rect x="53" y="106" width="19" height="20" rx="7" fill="#0D47A1"/><ellipse cx="62" cy="106" rx="9.5" ry="5" fill="#1565C0"/></g>),
+    showery:(<g><rect x="26" y="79" width="48" height="26" rx="11" fill="#CE93D8"/><rect x="26" y="79" width="48" height="13" rx="8" fill="#BA68C8"/><rect x="48" y="79" width="4" height="22" rx="2" fill="#9C27B0"/><rect x="30" y="99" width="16" height="24" rx="7" fill="#4A148C"/><rect x="54" y="99" width="16" height="24" rx="7" fill="#4A148C"/><path d="M28 121 Q37 117 42 123 L42 128 Q36 130 28 127 Z" fill="#311B92"/><path d="M58 121 Q67 117 72 123 L72 128 Q66 130 58 127 Z" fill="#311B92"/></g>),
+    stormy:(<g><rect x="22" y="72" width="56" height="38" rx="13" fill="#212121"/><rect x="22" y="72" width="56" height="17" rx="10" fill="#0D0D0D"/><path d="M22 80 Q50 68 78 80 Q78 60 50 56 Q22 60 22 80 Z" fill="#0D0D0D"/><ellipse cx="50" cy="73" rx="19" ry="10" fill="#212121"/>{[88,96,104].map((y,i)=><circle key={i} cx="50" cy={y} r="2.5" fill="#818CF8"/>)}<rect x="26" y="108" width="18" height="20" rx="6" fill="#0D0D1A"/><ellipse cx="35" cy="108" rx="9" ry="5" fill="#212121"/><rect x="56" y="108" width="18" height="20" rx="6" fill="#0D0D1A"/><ellipse cx="65" cy="108" rx="9" ry="5" fill="#212121"/></g>),
+    night:(<g><rect x="26" y="79" width="48" height="28" rx="11" fill="#1A1A4E"/><rect x="26" y="79" width="48" height="14" rx="8" fill="#12122A"/><rect x="28" y="99" width="16" height="24" rx="7" fill="#1A1A4E"/><rect x="56" y="99" width="16" height="24" rx="7" fill="#1A1A4E"/>{[[36,88],[57,86],[46,96],[63,99],[33,102]].map(([x,y],i)=><text key={i} x={x} y={y} fontSize="8" fill="#818CF8" opacity=".9">✦</text>)}<ellipse cx="38" cy="125" rx="11" ry="5.5" fill="#3949AB"/><circle cx="35" cy="122" r="5" fill="#5C6BC0"/><ellipse cx="62" cy="125" rx="11" ry="5.5" fill="#3949AB"/><circle cx="59" cy="122" r="5" fill="#5C6BC0"/></g>),
+  };
+  const hair={
+    sunny:(<g><ellipse cx="50" cy="36" rx="26" ry="20" fill={HC.h}/><path d="M24 36 Q20 52 26 66 Q32 74 38 70 Q26 58 28 44 Z" fill={HC.h}/><path d="M76 36 Q80 52 74 66 Q68 74 62 70 Q74 58 72 44 Z" fill={HC.h}/><ellipse cx="50" cy="24" rx="24" ry="13" fill={HC.h}/><path d="M26 24 Q28 11 50 9 Q72 11 74 24" fill={HC.h2}/><path d="M28 22 Q42 15 62 20 Q55 28 50 29 Q45 28 38 28 Z" fill={HC.h2}/></g>),
+    partly:(<g><ellipse cx="50" cy="36" rx="26" ry="20" fill={HC.h}/><path d="M24 36 Q20 52 26 64 Q32 72 38 68 Q26 56 28 44 Z" fill={HC.h}/><path d="M76 36 Q80 52 74 64 Q68 72 62 68 Q74 56 72 44 Z" fill={HC.h}/><ellipse cx="50" cy="24" rx="24" ry="13" fill={HC.h}/><path d="M26 24 Q28 11 50 9 Q72 11 74 24" fill={HC.h2}/></g>),
+    cloudy:(<g><ellipse cx="50" cy="37" rx="25" ry="19" fill={HC.h}/><path d="M25 37 Q21 52 27 64 Q33 71 39 68 Q27 56 29 44 Z" fill={HC.h}/><path d="M75 37 Q79 52 73 64 Q67 71 61 68 Q73 56 71 44 Z" fill={HC.h}/><ellipse cx="50" cy="25" rx="23" ry="12" fill={HC.h}/><path d="M27 25 Q29 12 50 10 Q71 12 73 25" fill={HC.h2}/></g>),
+    rainy:(<g><ellipse cx="50" cy="33" rx="20" ry="15" fill={HC.h}/><ellipse cx="50" cy="25" rx="14" ry="9" fill={HC.h2}/><path d="M30 33 Q26 24 28 18 Q34 24 30 33 Z" fill={HC.h}/><path d="M70 33 Q74 24 72 18 Q66 24 70 33 Z" fill={HC.h}/></g>),
+    snowy:(<g><ellipse cx="50" cy="33" rx="21" ry="14" fill={HC.h}/><ellipse cx="50" cy="26" rx="13" ry="9" fill={HC.h2}/></g>),
+    showery:(<g><ellipse cx="50" cy="36" rx="26" ry="20" fill={HC.h}/><path d="M24 36 Q20 52 26 66 Q32 74 38 70 Q26 58 28 44 Z" fill={HC.h}/><path d="M76 36 Q80 52 74 66 Q68 74 62 70 Q74 58 72 44 Z" fill={HC.h}/><ellipse cx="50" cy="24" rx="24" ry="13" fill={HC.h}/><path d="M26 24 Q28 11 50 9 Q72 11 74 24" fill={HC.h2}/></g>),
+    stormy:(<g><ellipse cx="50" cy="36" rx="26" ry="20" fill={HC.h}/><path d="M24 36 Q20 54 26 68 Q32 76 38 72 Q26 60 28 46 Z" fill={HC.h}/><path d="M76 36 Q80 54 74 68 Q68 76 62 72 Q74 60 72 46 Z" fill={HC.h}/><ellipse cx="50" cy="24" rx="24" ry="13" fill={HC.h}/><path d="M26 24 Q28 11 50 9 Q72 11 74 24" fill={HC.h2}/><path d="M22 48 Q18 65 20 82" stroke="#3949AB" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity=".7"/></g>),
+    night:(<g><ellipse cx="50" cy="37" rx="24" ry="19" fill={HC.h}/><circle cx="35" cy="22" r="9" fill={HC.h2}/><circle cx="65" cy="22" r="9" fill={HC.h2}/><circle cx="35" cy="21" r="6" fill={HC.h}/><circle cx="65" cy="21" r="6" fill={HC.h}/><ellipse cx="50" cy="24" rx="22" ry="13" fill={HC.h}/><path d="M26 24 Q28 12 50 10 Q72 12 74 24" fill={HC.h2}/></g>),
+  };
+  return(
+    <div style={{animation:"float 6s ease-in-out infinite",filter:"drop-shadow(0 18px 36px rgba(0,0,0,.2))",flexShrink:0}}>
+      <svg width="200" height="230" viewBox="0 0 100 138">
+        <defs><radialGradient id="skinGM" cx="40%" cy="35%"><stop offset="0%" stopColor="#FEE0EA"/><stop offset="60%" stopColor={skin}/><stop offset="100%" stopColor={skinDark}/></radialGradient><radialGradient id="skinG2M" cx="45%" cy="40%"><stop offset="0%" stopColor={skin}/><stop offset="100%" stopColor={skinDark}/></radialGradient></defs>
+        {hair[type]||hair.sunny}
+        {outfits[type]||outfits.partly}
+        <rect x="44" y="70" width="12" height="14" rx="5" fill={skin}/>
+        <ellipse cx="50" cy="52" rx="23" ry="24" fill="url(#skinGM)"/>
+        <ellipse cx="27" cy="52" rx="5" ry="6" fill="url(#skinG2M)"/><ellipse cx="73" cy="52" rx="5" ry="6" fill="url(#skinG2M)"/>
+        <ellipse cx="27" cy="52" rx="2.5" ry="3.5" fill={skinBlush} opacity=".28"/><ellipse cx="73" cy="52" rx="2.5" ry="3.5" fill={skinBlush} opacity=".28"/>
+        <path d="M35 40 Q41 38 46 40" stroke={HC.h} strokeWidth="2.2" fill="none" strokeLinecap="round"/><path d="M54 40 Q59 38 65 40" stroke={HC.h} strokeWidth="2.2" fill="none" strokeLinecap="round"/>
+        <ellipse cx="40" cy="50" rx="7" ry="8" fill="white"/><ellipse cx="60" cy="50" rx="7" ry="8" fill="white"/>
+        <ellipse cx="40" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite"}}/><ellipse cx="60" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
+        <ellipse cx="40.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.72)" style={{animation:"eyeBlink 5s ease-in-out infinite"}}/><ellipse cx="60.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.72)" style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
+        <circle cx="42.5" cy="48.5" r="2.2" fill="white" opacity=".95"/><circle cx="62.5" cy="48.5" r="2.2" fill="white" opacity=".95"/>
+        {[-3.5,-1,1.5,4].map((dx,i)=><line key={i} x1={40+dx} y1={43} x2={40+dx-.5} y2={40.2} stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>)}
+        {[-3.5,-1,1.5,4].map((dx,i)=><line key={i} x1={60+dx} y1={43} x2={60+dx-.5} y2={40.2} stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>)}
+        <ellipse cx="33" cy="58" rx="8" ry="5.5" fill={skinBlush} opacity=".38"/><ellipse cx="67" cy="58" rx="8" ry="5.5" fill={skinBlush} opacity=".38"/>
+        <path d="M48 58 Q50 61 52 58" stroke={skinDark} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity=".4"/>
+        {type==="stormy"?<path d="M43 65 Q50 62 57 65" stroke={skinDark} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity=".6"/>:type==="cloudy"?<path d="M44 65 Q50 64 56 65" stroke={skinDark} strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".5"/>:<path d="M42 64 Q50 71 58 64" stroke={skinDark} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity=".7"/>}
+      </svg>
+    </div>
+  );
+}
+
+function Character({type,gender}){
+  if(gender==="male")return <SkylaGuy type={type}/>;
+  return <SkylaGirl type={type}/>;
+}
+
+function Arc({score,acc}){
+  const r=36,c=2*Math.PI*r,arc=(score/10)*c*.72,off=c*.14;
+  return(<svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r={r} fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="6" strokeDasharray={`${c*.72} ${c*.28}`} strokeDashoffset={-off} strokeLinecap="round"/><circle cx="45" cy="45" r={r} fill="none" stroke={acc} strokeWidth="6" strokeDasharray={`${arc} 999`} strokeDashoffset={-off} strokeLinecap="round" style={{transition:"stroke-dasharray 1.5s ease",filter:`drop-shadow(0 0 8px ${acc}80)`}}/><text x="45" y="41" textAnchor="middle" fill={acc} style={{fontSize:20,fontWeight:900,fontFamily:"Fraunces"}}>{score}</text><text x="45" y="54" textAnchor="middle" fill={acc} style={{fontSize:8.5,fontWeight:700,fontFamily:"DM Sans",opacity:.8}}>OUT OF 10</text></svg>);
+}
+
+function sg(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
+function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+function plainEnglish(wx){
+  const coldGap=wx.temp-wx.feels,deceiving=wx.temp>=14&&coldGap>=4;
+  const feel=wx.feels<=0?"🥶 Bitterly cold":wx.feels<=5?"🧊 Really cold — hands will hurt":wx.feels<=10?"🧣 Cold enough for a coat":wx.feels<=15?"🍂 Cool and fresh":wx.feels<=19?"😊 Pleasantly mild":wx.feels<=24?"🌸 Warm and lovely":wx.feels<=28?"☀️ Hot and sunny":"🥵 Very hot!";
+  const windWord=wx.wind<=5?"Still — no wind at all":wx.wind<=15?"Gentle breeze":wx.wind<=25?"Light wind on your face":wx.wind<=35?"Breezy — hair will blow":wx.wind<=50?"Windy — hold your hat!":"Very windy — stay safe";
+  const rainWord=wx.rain<=10?"No rain — dry all day":wx.rain<=30?"Unlikely to rain":wx.rain<=50?"Might get a few drops":wx.rain<=70?"Good chance of rain":wx.rain<=85?"Very likely to rain":"Definitely raining — take umbrella!";
+  const verdict=wx.code>=95?"Stay inside if you can — stormy!":wx.code>=71&&wx.code<=77?"Snowing! Roads may be slippy.":wx.rain>70?"You WILL get wet — take umbrella.":deceiving?`Looks nice but sneaky cold! Wind makes it ${coldGap}° colder than it looks.`:wx.feels<=5?"Wrap up completely — really cold.":wx.feels>=25?"Hot day — light clothes, drink water.":wx.feels>=18?"Really nice day — enjoy it!":"Pretty decent day overall.";
+  return{feel,windWord,rainWord,verdict,deceiving};
+}
+
+function buildAI(wx,city){
+  const cold=wx.feels<8,warm=wx.feels>22,rain=wx.rain>50,snow=wx.code>=71&&wx.code<=77,coldGap=wx.temp-wx.feels,deceiving=wx.temp>=14&&coldGap>=4;
+  return{
+    msg:snow?`Snowy in ${city} — magical but cold! ❄️`:rain?`Rainy in ${city} — umbrella time! ☔`:deceiving?`Looks sunny but sneaky cold in ${city}! 🌞🧥`:cold?`Wrap up warm in ${city} today! 🧣`:warm?`Gorgeous day in ${city}! 🌞`:`Here's your day sorted, ${city}! ✨`,
+    wear:snow?"Thickest winter coat + boots":deceiving?"Warm coat — colder than it looks!":cold?"Proper coat essential":warm?"Light breathable clothes":rain?"Waterproof coat and boots":"Light jacket or cardigan",
+    take:rain||snow?"Umbrella ☔":wx.wind>35?"Windproof layer 🌬️":warm?"Sunglasses 😎":"Nothing extra 🎒",
+    umbrella:rain||snow,
+    feel:cold?"Cold & brisk ❄️":warm?"Warm & golden ☀️":rain?"Damp & grey 🌧️":snow?"Cold & magical ❄️":deceiving?"Sunny but cold! 🌞":"Fresh & pleasant ✨",
+    tip:deceiving?"The wind makes it much colder than the sunshine suggests — trust the coat!":rain?"Leave 5 mins early — wet pavements slow you down.":snow?"Watch for icy patches — take it slow.":cold?"Dress warmer than you think.":warm?"Great day to be outside!":"Make the most of the fresh air.",
+    score:snow?4:rain&&cold?3:rain?5:cold?6:deceiving?6:warm?9:7,
+    why:snow?"Snowy day":rain?"Rainy day":warm?"Beautiful weather":cold?"Cold one":deceiving?"Sneaky cold!":"Decent day",
+    items:snow?["Winter coat 🧥","Thermal layers 🔥","Snow boots 👢","Hat & gloves 🧤"]:deceiving?["Warm coat 🧥","Jumper underneath 🔥","Closed shoes 👟","Windproof layer 🌬️"]:cold?["Heavy coat 🧥","Warm jumper 🔥","Warm boots 👢","Scarf & gloves 🧣"]:warm?["Light top 👕","Shorts or skirt 🩳","Sandals 👡","Sunglasses 🕶️"]:rain?["Waterproof jacket 🧥","Rain boots 🥾","Quick-dry trousers 👖","Waterproof bag 🎒"]:["Light jacket 🧥","Jeans 👖","Trainers 👟","Light layers 👕"],
+    plant:rain?"Rain waters your plants — nothing to do! 🌧️":snow?"Keep plants inside today.":warm?"Water early morning only.":"Check soil — water gently if dry.",
+    plantAction:rain?"Nothing to do":snow?"Bring inside":warm?"Water before 9am":"Check soil first",
+  };
+}
+
+async function tryAI(wx,city,fb){
+  try{
+    const coldGap=wx.temp-wx.feels,dec=wx.temp>=14&&coldGap>=4;
+    const pr=`You are Skyla, a warm friendly AI weather companion. Speak plain simple English like a caring friend — never use technical terms like "feels like X degrees", instead say things like "cold enough to need a coat". ${dec?`IMPORTANT: Today looks nice but wind chill makes it feel ${coldGap}° colder! Warn strongly about this.`:""} Weather: ${city} ${wx.temp}°C feels ${wx.feels}°C ${wmoDesc(wx.code)} rain ${wx.rain}% wind ${wx.wind}km/h. Return ONLY valid JSON: {"msg":"greeting 10 words emoji","wear":"7 plain words","take":"6 words emoji","umbrella":true or false,"feel":"3 words emoji","tip":"14 plain words","score":1-10,"why":"5 words","items":["item emoji","item emoji","item emoji","item emoji"],"plant":"14 words","plantAction":"4 words"}`;
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,messages:[{role:"user",content:pr}]})});
+    const d=await r.json();
+    const raw=d.content?.find(b=>b.type==="text")?.text??"{}";
+    return{...fb,...JSON.parse(raw.replace(/```json|```/g,"").trim())};
+  }catch{return fb;}
+}
+
+function App(){
+  const [tab,setTab]=useState("home");
+  const [city,setCity]=useState("London");
+  const [wx,setWx]=useState(null);
+  const [ai,setAi]=useState(null);
+  const [stage,setStage]=useState("loading");
+  const [streak,setStreak]=useState(1);
+  const [hist,setHist]=useState([]);
+  const [alerts,setAlerts]=useState([]);
+  const [fam,setFam]=useState([]);
+  const [addFam,setAddFam]=useState(false);
+  const [famName,setFamName]=useState("");
+  const [famCity,setFamCity]=useState("");
+  const [talking,setTalking]=useState(false);
+  const [clock,setClock]=useState(new Date());
+  const [viewMode,setViewMode]=useState("now");
+  const [pickedH,setPickedH]=useState(null);
+  const [pickedD,setPickedD]=useState(0);
+  const [gender,setGender]=useState(()=>sg("skyla_gender")||"female");
+  const [isPremium,setIsPremium]=useState(()=>sg("skyla_premium")||false);
+  const [showPaywall,setShowPaywall]=useState(false);
+  const [chatMsgs,setChatMsgs]=useState([{role:"skyla",text:"Hi! Ask me anything about the weather — like 'shall I wear a coat?' or 'what's Tuesday like?' 🩷"}]);
+  const [chatInput,setChatInput]=useState("");
+  const [chatLoading,setChatLoading]=useState(false);
+  const [searchCity,setSearchCity]=useState("");
+  const [searchWx,setSearchWx]=useState(null);
+  const [searching,setSearching]=useState(false);
+  const [eventDate,setEventDate]=useState("");
+  const [eventName,setEventName]=useState("");
+  const [eventResult,setEventResult]=useState(null);
+  const [eventLoading,setEventLoading]=useState(false);
+  const [holidayCity,setHolidayCity]=useState("");
+  const [holidayFrom,setHolidayFrom]=useState("");
+  const [holidayTo,setHolidayTo]=useState("");
+  const [holidayResult,setHolidayResult]=useState(null);
+  const [holidayLoading,setHolidayLoading]=useState(false);
+  const [briefingTime,setBriefingTime]=useState(()=>sg("skyla_briefing")||"07:00");
+  const [briefingSaved,setBriefingSaved]=useState(false);
+
+  function toggleGender(g){setGender(g);ss("skyla_gender",g);}
+
+  async function checkEvent(){
+    if(!eventDate||!eventName.trim())return;
+    setEventLoading(true);setEventResult(null);
+    try{
+      const dayIdx=Math.round((new Date(eventDate)-new Date())/(86400000));
+      const dayData=wx.week[Math.min(dayIdx,6)];
+      const pr=`You are Skyla, friendly AI weather assistant. Event: "${eventName}" on ${eventDate} (${dayIdx===0?"today":dayIdx===1?"tomorrow":"in "+dayIdx+" days"}). Forecast: ${dayData?wmoDesc(dayData.code)+" "+dayData.max+"° high "+dayData.min+"° low rain "+dayData.rain+"%":"limited data"}. Give a warm friendly recommendation in 3 short sentences — will it be good for this event? What should they wear/bring? Any advice? Plain English, no jargon.`;
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,messages:[{role:"user",content:pr}]})});
+      const d=await r.json();
+      const reply=d.content?.find(b=>b.type==="text")?.text||"Looks like a decent day for your event!";
+      const dayWx=wx.week[Math.min(Math.max(dayIdx,0),6)];
+      setEventResult({text:reply,code:dayWx?.code||1,max:dayWx?.max||wx.maxT,min:dayWx?.min||wx.minT,rain:dayWx?.rain||20});
+    }catch{setEventResult({text:"I had trouble checking that date — but I'm here to help! Try again.",code:1,max:wx.maxT,min:wx.minT,rain:20});}
+    setEventLoading(false);
+  }
+
+  async function checkHoliday(){
+    if(!holidayCity.trim()||!holidayFrom||!holidayTo)return;
+    setHolidayLoading(true);setHolidayResult(null);
+    try{
+      const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(holidayCity)}&count=1`).then(r=>r.json());
+      if(!g.results?.[0]){setHolidayLoading(false);return;}
+      const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7`;
+      const d=await fetch(url).then(r=>r.json());
+      const avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
+      const avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
+      const rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
+      const dominantCode=d.daily.weathercode[3]||1;
+      const pr=`You are Skyla, friendly travel weather assistant. Holiday to ${cn}, ${co} from ${holidayFrom} to ${holidayTo}. Next 7 days forecast: avg high ${avgMax}°C avg low ${avgMin}°C, ${rainDays} rainy days expected, mainly ${wmoDesc(dominantCode)}. Give warm friendly packing advice in 4 short sentences. What clothes to pack? Umbrella needed? Any weather warnings? Plain English.`;
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:250,messages:[{role:"user",content:pr}]})});
+      const dd=await r.json();
+      const reply=dd.content?.find(b=>b.type==="text")?.text||"Looks like a great trip!";
+      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,code:dominantCode});
+    }catch{setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — try again!",avgMax:20,avgMin:12,rainDays:2,code:1});}
+    setHolidayLoading(false);
+  }
+
+  function saveBriefing(){
+    ss("skyla_briefing",briefingTime);
+    setBriefingSaved(true);
+    setTimeout(()=>setBriefingSaved(false),2500);
+    if("Notification" in window){Notification.requestPermission();}
+  }
+  function activatePremium(){setIsPremium(true);ss("skyla_premium",true);setShowPaywall(false);}
+
+  async function sendChat(){
+    if(!chatInput.trim()||chatLoading)return;
+    const userMsg=chatInput.trim();
+    setChatInput("");
+    setChatMsgs(m=>[...m,{role:"user",text:userMsg}]);
+    setChatLoading(true);
+    try{
+      const pr=`You are Skyla, a warm friendly AI weather assistant. Current weather in ${city}: ${wx?wx.temp:"?"}°C feels ${wx?wx.feels:"?"}°C ${wx?wmoDesc(wx.code):""} rain ${wx?wx.rain:"?"}% wind ${wx?wx.wind:"?"}km/h. Week ahead: ${wx?wx.week.map((d,i)=>d.day+" "+wmoDesc(d.code)+" "+d.max+"°").join(", "):"unknown"}. Answer the user's question in plain simple English like a caring friend — short, warm, no jargon. Never say 'feels like X degrees'. Max 3 sentences.`;
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,messages:[{role:"user",content:pr+"\n\nUser asks: "+userMsg}]})});
+      const d=await r.json();
+      const reply=d.content?.find(b=>b.type==="text")?.text||"Sorry, let me try again!";
+      setChatMsgs(m=>[...m,{role:"skyla",text:reply}]);
+    }catch{setChatMsgs(m=>[...m,{role:"skyla",text:"Sorry, I had trouble connecting. Try again! 🩷"}]);}
+    setChatLoading(false);
+  }
+
+  async function searchCityWeather(){
+    if(!searchCity.trim())return;
+    setSearching(true);setSearchWx(null);
+    try{
+      const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchCity)}&count=1`).then(r=>r.json());
+      if(!g.results?.[0]){setSearching(false);return;}
+      const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,wind_speed_10m,weathercode,is_day&hourly=precipitation_probability&timezone=auto&forecast_days=1`;
+      const d=await fetch(url).then(r=>r.json());
+      const cu=d.current,h=new Date().getHours();
+      const sw={name:cn+", "+co,temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,rain:d.hourly?.precipitation_probability?.[h]??0};
+      setSearchWx(sw);
+    }catch{}
+    setSearching(false);
+  }
+
+  useEffect(()=>{const t=setInterval(()=>setClock(new Date()),1000);return()=>clearInterval(t);},[]);
+  useEffect(()=>{initStreak();load();},[]);
+
+  function initStreak(){
+    const s=sg("skyla_str")||{n:1,d:null},today=new Date().toDateString();
+    if(s.d===today){setStreak(s.n);return;}
+    const y=new Date(Date.now()-86400000).toDateString(),n=s.d===y?s.n+1:1;
+    ss("skyla_str",{n,d:today});setStreak(n);
+  }
+
+  async function load(){
+    setStage("loading");setWx(null);setAi(null);setViewMode("now");
+    const oldH=sg("skyla_hist")||[];setHist(oldH);
+    let lat=51.5074,lon=-0.1278,cn="London";
+    try{
+      const p=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:6000}));
+      lat=p.coords.latitude;lon=p.coords.longitude;
+      try{const g=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`).then(r=>r.json());cn=g.address?.city||g.address?.town||g.address?.village||"Your area";}catch{}
+    }catch{}
+    setCity(cn);
+    let W;
+    try{
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,weathercode,is_day&hourly=temperature_2m,precipitation_probability,weathercode,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,apparent_temperature_max&timezone=auto&forecast_days=7`;
+      const d=await fetch(url).then(r=>r.json());const cu=d.current;const h=new Date().getHours();
+      W={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,rain:d.hourly?.precipitation_probability?.[h]??0,maxT:Math.round(d.daily?.temperature_2m_max?.[0]??cu.temperature_2m+2),minT:Math.round(d.daily?.temperature_2m_min?.[0]??cu.temperature_2m-4),hourly:[...Array(24)].map((_,i)=>({h:i,lbl:`${i===0?"12am":i<12?i+"am":i===12?"12pm":(i-12)+"pm"}`,temp:Math.round(d.hourly?.temperature_2m?.[i]??cu.temperature_2m),feels:Math.round(d.hourly?.apparent_temperature?.[i]??cu.apparent_temperature),rain:d.hourly?.precipitation_probability?.[i]??0,code:d.hourly?.weathercode?.[i]??cu.weathercode,wind:Math.round(d.hourly?.wind_speed_10m?.[i]??cu.wind_speed_10m)})),week:[0,1,2,3,4,5,6].map(i=>({code:d.daily?.weathercode?.[i]??0,max:Math.round(d.daily?.temperature_2m_max?.[i]??cu.temperature_2m),min:Math.round(d.daily?.temperature_2m_min?.[i]??cu.temperature_2m-4),feels:Math.round(d.daily?.apparent_temperature_max?.[i]??cu.apparent_temperature),rain:d.daily?.precipitation_probability_max?.[i]??0,day:i===0?"Today":i===1?"Tomorrow":new Date(Date.now()+i*86400000).toLocaleDateString([],{weekday:"long"}),short:i===0?"Today":i===1?"Tmrw":new Date(Date.now()+i*86400000).toLocaleDateString([],{weekday:"short"})}))};
+    }catch{W={temp:16,feels:11,humid:70,wind:28,code:1,isDay:1,rain:20,maxT:18,minT:9,hourly:[...Array(24)].map((_,i)=>({h:i,lbl:`${i===0?"12am":i<12?i+"am":i===12?"12pm":(i-12)+"pm"}`,temp:9+Math.round(8*Math.sin((i-6)*Math.PI/12)),feels:6+Math.round(6*Math.sin((i-6)*Math.PI/12)),rain:i>15&&i<20?65:15,code:i>15&&i<20?61:1,wind:25})),week:[0,1,2,3,4,5,6].map(i=>({code:[1,2,61,3,0,2,1][i],max:[18,16,13,11,17,19,20][i],min:[9,8,7,6,8,9,10][i],feels:[13,11,8,7,13,15,16][i],rain:[20,35,75,65,15,20,10][i],day:["Today","Tomorrow","Wednesday","Thursday","Friday","Saturday","Sunday"][i],short:["Today","Tmrw","Wed","Thu","Fri","Sat","Sun"][i]}))}}
+    setWx(W);
+    const newA=[];
+    if(W.rain>70)newA.push({i:"🌧️",t:"Rain Alert",m:`${W.rain}% rain today — umbrella essential`,c:"#1D4ED8"});
+    if(W.feels<2)newA.push({i:"🥶",t:"Really Cold!",m:"Feels freezing — wrap up completely",c:"#0EA5E9"});
+    if(W.feels>28)newA.push({i:"🌡️",t:"Very Hot!",m:`${W.temp}°C today — stay hydrated`,c:"#EF4444"});
+    if(W.wind>45)newA.push({i:"💨",t:"Very Windy",m:`${W.wind}km/h — hold onto your hat!`,c:"#8B5CF6"});
+    const cg=W.temp-W.feels;
+    if(W.temp>=14&&cg>=4)newA.push({i:"⚠️",t:"Don't Be Fooled!",m:`Looks nicer than it feels — wind makes it ${cg}° colder!`,c:"#F59E0B"});
+    if(W.rain<15&&W.temp>15)newA.push({i:"✨",t:"Nice Day!",m:"Good conditions — great for being outside",c:"#10B981"});
+    setAlerts(newA);
+    const fb=buildAI(W,cn);setAi(fb);setStage("done");
+    const nH=[{date:new Date().toLocaleDateString([],{weekday:"short",day:"numeric",month:"short"}),score:fb.score,emoji:SC[wxType(W.code,W.isDay)].em},...oldH].slice(0,14);
+    ss("skyla_hist",nH);setHist(nH);
+    tryAI(W,cn,fb).then(setAi);
+  }
+
+  function getDisplayWx(){
+    if(!wx)return null;
+    if(viewMode==="hour"&&pickedH!==null){const h=wx.hourly[pickedH];return{...wx,temp:h.temp,feels:h.feels,rain:h.rain,code:h.code,wind:h.wind,isDay:pickedH>=6&&pickedH<20?1:0};}
+    if(viewMode==="day"&&pickedD>0){const d=wx.week[pickedD];return{...wx,temp:d.max,feels:d.feels,rain:d.rain,code:d.code,isDay:1,maxT:d.max,minT:d.min};}
+    return wx;
+  }
+
+  async function addFamMember(){
+    if(!famName.trim()||!famCity.trim())return;
+    try{
+      const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(famCity)}&count=1`).then(r=>r.json());
+      if(!g.results?.[0])return;
+      const{latitude:la,longitude:lo}=g.results[0];
+      const d=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,weathercode,is_day&hourly=precipitation_probability&timezone=auto&forecast_days=1`).then(r=>r.json());
+      const emojis=["👩","👨","👧","👦","👴","👵","🧑","👶"];
+      setFam(f=>[...f,{name:famName,city:famCity,emoji:emojis[f.length%8],temp:Math.round(d.current.temperature_2m),code:d.current.weathercode,isDay:d.current.is_day,rain:d.hourly?.precipitation_probability?.[new Date().getHours()]??0}]);
+    }catch{}
+    setFamName("");setFamCity("");setAddFam(false);
+  }
+
+  function speak(){
+    if(!ai||!DWX)return;
+    if(talking){window.speechSynthesis.cancel();setTalking(false);return;}
+    const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
+    const PE=plainEnglish(DWX);
+    const txt=`Good ${gr}! I'm Skyla. ${PE.verdict} In ${city} it's ${DWX.temp} degrees. ${PE.feel}. ${PE.windWord}. ${PE.rainWord}. ${ai.tip} Skyla score: ${ai.score} out of 10. Have a wonderful ${gr}!`;
+    const u=new SpeechSynthesisUtterance(txt);u.rate=.92;u.pitch=1.12;
+    const vs=window.speechSynthesis.getVoices();
+    const v=vs.find(v=>v.name.includes("Samantha")||v.name.includes("Karen")||v.lang==="en-GB")||vs.find(v=>v.lang.startsWith("en"));
+    if(v)u.voice=v;u.onend=()=>setTalking(false);setTalking(true);window.speechSynthesis.speak(u);
+  }
+
+  const DWX=getDisplayWx();
+  const type=DWX?wxType(DWX.code,DWX.isDay):"partly";
+  const S=SC[type];
+  const PE=DWX?plainEnglish(DWX):{feel:"",windWord:"",rainWord:"",verdict:"",deceiving:false};
+  const h12=clock.getHours()%12||12,mn=String(clock.getMinutes()).padStart(2,"0"),ap=clock.getHours()>=12?"PM":"AM";
+  const avg=hist.length?Math.round(hist.slice(0,7).reduce((a,b)=>a+b.score,0)/Math.min(hist.slice(0,7).length,7)):null;
+  let viewLabel="Right Now";
+  if(viewMode==="hour"&&pickedH!==null)viewLabel=`Today at ${wx?.hourly?.[pickedH]?.lbl}`;
+  if(viewMode==="day"&&pickedD>0)viewLabel=wx?.week?.[pickedD]?.day||"";
+
+  const G={background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:`1px solid ${S.bdr}`,borderRadius:24};
+  const TABS=[{id:"home",icon:"🏠",label:"Home"},{id:"chat",icon:"🤖",label:"Ask Skyla"},{id:"search",icon:"🔍",label:"Search"},{id:"event",icon:"🗓️",label:"Event"},{id:"holiday",icon:"✈️",label:"Holiday"},{id:"week",icon:"📅",label:"Week"},{id:"more",icon:"✦",label:"More"}];
+  function Card({children,style={}}){return React.createElement("div",{style:{...G,padding:"22px",marginBottom:12,...style}},children);}
+  function Lbl({children}){return React.createElement("div",{style:{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:10,fontFamily:"DM Sans"}},children);}
+
+  return(
+    <div style={{minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:S.text,paddingBottom:100,paddingTop:0,position:"relative",zIndex:1,transition:"color 1.2s ease"}}>
+      <BG type={type}/>
+      {/* PAYWALL MODAL */}
+      {showPaywall&&(
+        <div style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,.85)",backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}>
+          <div style={{width:"100%",maxWidth:400,position:"relative"}}>
+            {/* Close button */}
+            <button onClick={()=>setShowPaywall(false)} style={{position:"absolute",top:-16,right:0,background:"rgba(255,255,255,.15)",border:"none",borderRadius:"50%",width:36,height:36,fontSize:18,cursor:"pointer",color:"white",display:"flex",alignItems:"center",justifyContent:"center",zIndex:10,fontFamily:"'DM Sans',sans-serif"}}>✕</button>
+
+            {/* Main card */}
+            <div style={{background:"linear-gradient(145deg,#1a0533 0%,#2d1b69 40%,#1a0533 100%)",borderRadius:28,padding:"32px 24px 28px",border:"1px solid rgba(233,30,140,.3)",boxShadow:"0 0 80px rgba(233,30,140,.25),0 32px 64px rgba(0,0,0,.5)"}}>
+
+              {/* Skyla crown + title */}
+              <div style={{textAlign:"center",marginBottom:24}}>
+                <div style={{fontSize:52,marginBottom:4,filter:"drop-shadow(0 0 20px rgba(233,30,140,.8))"}}>🩷</div>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:900,color:"white",letterSpacing:-1,marginBottom:6}}>Skyla Premium</div>
+                <div style={{fontSize:13,color:"rgba(255,255,255,.6)",lineHeight:1.5}}>Join thousands of people who never get caught out by the weather</div>
+              </div>
+
+              {/* Social proof */}
+              <div style={{background:"rgba(233,30,140,.12)",border:"1px solid rgba(233,30,140,.25)",borderRadius:14,padding:"10px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:10}}>
+                <div style={{fontSize:18}}>⭐</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:800,color:"#F48FB1"}}>4.9 stars · Loved by users</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:1}}>"I haven't been caught in the rain since I got premium!" — Sarah</div>
+                </div>
+              </div>
+
+              {/* Features — 2 col grid, punchy */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
+                {[
+                  ["🤖","AI Chat","Ask anything"],
+                  ["🔍","Any City","Search worldwide"],
+                  ["🗓️","Event Check","BBQ safe?"],
+                  ["✈️","Holiday Pack","What to bring"],
+                  ["🌅","Wake-up Brief","Daily forecast"],
+                  ["👨‍👩‍👧","Family","Everyone's weather"],
+                  ["📵","No Ads","Clean & fast"],
+                  ["🎙️","Voice Brief","Hear the forecast"],
+                ].map(([icon,title,desc],i)=>(
+                  <div key={i} style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:14,padding:"12px 10px",display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{fontSize:20,flexShrink:0}}>{icon}</div>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:800,color:"white"}}>{title}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,.45)",marginTop:1}}>{desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Price + CTA */}
+              <div style={{background:"rgba(233,30,140,.08)",border:"1px solid rgba(233,30,140,.2)",borderRadius:18,padding:"16px",marginBottom:14,textAlign:"center"}}>
+                <div style={{display:"flex",alignItems:"baseline",justifyContent:"center",gap:4,marginBottom:4}}>
+                  <span style={{fontFamily:"'Fraunces',serif",fontSize:40,fontWeight:900,color:"white",lineHeight:1}}>£3.98</span>
                   <span style={{fontSize:14,color:"rgba(255,255,255,.5)"}}>/month</span>
                 </div>
                 <div style={{fontSize:11,color:"rgba(255,255,255,.4)"}}>That's just 13p a day — less than a sip of coffee ☕</div>
@@ -649,7 +1662,7 @@ function App(){
                     <div style={{fontSize:52,marginBottom:12}}>🤖</div>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Ask Skyla Anything</div>
                     <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>"Shall I wear a coat today?"<br/>"Will it rain on Tuesday?"<br/>"What's the weather like in Paris?"</div>
-                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock AI Chat — £3.89/mo</button>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock AI Chat — £3.98/mo</button>
                   </div>
                 ):(
                   <div>
@@ -686,7 +1699,7 @@ function App(){
                     <div style={{fontSize:52,marginBottom:12}}>🔍</div>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Search Any City</div>
                     <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>Check the weather anywhere in the world — Paris, New York, Tokyo, anywhere.</div>
-                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock City Search — £3.89/mo</button>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock City Search — £3.98/mo</button>
                   </div>
                 ):(
                   <div>
@@ -742,7 +1755,7 @@ function App(){
                     <div style={{fontSize:52,marginBottom:12}}>🗓️</div>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Event Planner</div>
                     <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>"Will it be dry for my BBQ on Saturday?"<br/>"Is it good weather for the school sports day?"<br/>"Should I book an outdoor wedding?"</div>
-                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock Event Planner — £3.89/mo</button>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock Event Planner — £3.98/mo</button>
                   </div>
                 ):(
                   <div>
@@ -789,7 +1802,7 @@ function App(){
                     <div style={{fontSize:52,marginBottom:12}}>✈️</div>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:8}}>Holiday Mode</div>
                     <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:20}}>Tell Skyla where you're going and she'll tell you exactly what to pack — from flip flops to raincoats.</div>
-                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock Holiday Mode — £3.89/mo</button>
+                    <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock Holiday Mode — £3.98/mo</button>
                   </div>
                 ):(
                   <div>
@@ -950,36 +1963,6 @@ function App(){
               </div>
             )}
 
-            {/* PREMIUM PROMO — enticing, central, unmissable */}
-            {!isPremium&&(
-              <div onClick={()=>setShowPaywall(true)} style={{marginBottom:14,borderRadius:22,background:"linear-gradient(135deg,#1a0533,#4c1d95,#1a0533)",border:"1px solid rgba(233,30,140,.4)",padding:"18px 20px",cursor:"pointer",boxShadow:"0 8px 32px rgba(233,30,140,.2)",position:"relative",overflow:"hidden"}}>
-                {/* Glow blobs */}
-                <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(233,30,140,.15)",filter:"blur(30px)"}}/>
-                <div style={{position:"absolute",bottom:-20,left:-10,width:80,height:80,borderRadius:"50%",background:"rgba(139,92,246,.2)",filter:"blur(25px)"}}/>
-                <div style={{position:"relative",zIndex:1}}>
-                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-                    <div style={{fontSize:32,filter:"drop-shadow(0 0 8px rgba(233,30,140,.6))"}}>🩷</div>
-                    <div>
-                      <div style={{fontSize:15,fontWeight:900,color:"white",letterSpacing:-.3}}>Unlock Skyla Premium</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,.55)",marginTop:1}}>AI chat · City search · No ads · Events · Holidays</div>
-                    </div>
-                    <div style={{marginLeft:"auto",background:"rgba(233,30,140,.2)",border:"1px solid rgba(233,30,140,.4)",borderRadius:10,padding:"4px 10px"}}>
-                      <div style={{fontSize:13,fontWeight:900,color:"#F48FB1"}}>£3.89</div>
-                      <div style={{fontSize:9,color:"rgba(255,255,255,.4)",textAlign:"center"}}>/month</div>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
-                    {["🤖 Ask Skyla","🔍 Any city","🗓️ Events","✈️ Holidays","📵 No ads"].map((f,i)=>(
-                      <div key={i} style={{background:"rgba(255,255,255,.08)",borderRadius:100,padding:"4px 10px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.7)"}}>{f}</div>
-                    ))}
-                  </div>
-                  <div style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",borderRadius:14,padding:"12px",textAlign:"center",boxShadow:"0 4px 20px rgba(233,30,140,.4)"}}>
-                    <div style={{fontSize:14,fontWeight:900,color:"white"}}>Start Premium — just 13p a day ☕</div>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2}}>Cancel anytime · Instant access</div>
-                  </div>
-                </div>
-              </div>
-            )}
             <button onClick={load} style={{width:"100%",marginTop:4,...G,borderRadius:100,padding:"15px",color:S.sub,fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:700,cursor:"pointer",transition:"all .25s"}}
               onMouseEnter={e=>{e.currentTarget.style.background=S.acc;e.currentTarget.style.color="white";}}
               onMouseLeave={e=>{e.currentTarget.style.background=G.background;e.currentTarget.style.color=S.sub;}}>
