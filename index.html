@@ -486,8 +486,8 @@ function App(){
     const PE=plainEnglish(wx);
     const txt="Good "+gr+"! I'm Skyla. "+PE.verdict+" In "+city+" it's "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
     const isMale=gender==="male";
-    const GIRL_VOICE="XB0fDUnXU5powFXDhCwa";
-    const BOY_VOICE="IKne3meq5aSn9XLyUdCD";
+    const GIRL_VOICE="21m00Tcm4TlvDq8ikWAM"; // Rachel - warm natural female
+    const BOY_VOICE="pNInz6obpgDQGcFmaJgB";  // Adam - natural male
     const voiceId=isMale?BOY_VOICE:GIRL_VOICE;
     const ELEVEN_KEY="sk_032976f800904cea65184d02375073ebc528f0066def603e";
     setTalking(true);
@@ -511,16 +511,22 @@ function App(){
   }
 
   function fallbackSpeak(txt,isMale){
-    const u=new SpeechSynthesisUtterance(txt);
-    u.rate=isMale?1.08:1.13;u.pitch=isMale?0.9:1.45;u.volume=1;
+    function doSpeak(voices){
+      const u=new SpeechSynthesisUtterance(txt);
+      u.rate=isMale?1.05:1.1;
+      u.pitch=isMale?0.88:1.5;
+      u.volume=1;
+      const v=isMale
+        ?voices.find(v=>v.name.includes("Daniel"))||voices.find(v=>v.name.includes("Oliver"))||voices.find(v=>v.name.includes("Arthur"))||voices.find(v=>v.lang.startsWith("en"))
+        :voices.find(v=>v.name.includes("Samantha"))||voices.find(v=>v.name.includes("Karen"))||voices.find(v=>v.name.includes("Serena"))||voices.find(v=>v.name.includes("Zira"))||voices.find(v=>v.lang.startsWith("en"));
+      if(v)u.voice=v;
+      u.onend=()=>setTalking(false);
+      setTalking(true);
+      window.speechSynthesis.speak(u);
+    }
     const voices=window.speechSynthesis.getVoices();
-    const v=isMale
-      ?voices.find(v=>v.name.includes("Daniel"))||voices.find(v=>v.name.includes("Oliver"))||voices.find(v=>v.lang==="en-GB")
-      :voices.find(v=>v.name.includes("Samantha"))||voices.find(v=>v.name.includes("Karen"))||voices.find(v=>v.name.includes("Serena"))||voices.find(v=>v.lang==="en-GB");
-    if(v)u.voice=v;
-    u.onend=()=>setTalking(false);
-    setTalking(true);
-    window.speechSynthesis.speak(u);
+    if(voices.length>0){doSpeak(voices);}
+    else{window.speechSynthesis.onvoiceschanged=()=>doSpeak(window.speechSynthesis.getVoices());}
   }
 
   async function quickAsk(key,icon){
