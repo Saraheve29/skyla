@@ -310,18 +310,17 @@ function App(){
     if(!holidayCity.trim()||!holidayFrom||!holidayTo)return;
     setHolidayLoading(true);setHolidayResult(null);
     try{
-      const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(holidayCity)}&count=1`).then(r=>r.json());
-      if(!g.results?.[0]){setHolidayLoading(false);setHolidayResult({city:holidayCity,text:"I couldn't find that destination — try a nearby city or check the spelling! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});return;}
-      const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(holidayCity)+"&count=1").then(r=>r.json());
+      if(!g.results||!g.results[0]){setHolidayLoading(false);setHolidayResult({city:holidayCity,text:"I couldn't find that destination — try a nearby city or check the spelling! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});return;}
+      const la=g.results[0].latitude,lo=g.results[0].longitude,cn=g.results[0].name,co=g.results[0].country;
       const fromDate=new Date(holidayFrom);
-      const today=new Date();
-      const daysAway=Math.round((fromDate-today)/86400000);
+      const daysAway=Math.round((fromDate-new Date())/86400000);
       const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
       const tripMonth=fromDate.getMonth();
       const tripMonthName=monthNames[tripMonth];
-      let avgMax,avgMin,rainDays,dominantCode,isFuture=false;
+      let avgMax=20,avgMin=12,rainDays=3,dominantCode=1,isFuture=false;
       if(daysAway<=14){
-        const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7`;
+        const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7";
         const d=await fetch(url).then(r=>r.json());
         avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
         avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
@@ -332,39 +331,40 @@ function App(){
         try{
           const yr=fromDate.getFullYear()-1;
           const mm=String(tripMonth+1).padStart(2,"0");
-          const startDate=`${yr}-${mm}-01`;
-          const endDate=`${yr}-${mm}-28`;
-          const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${la}&longitude=${lo}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+          const url="https://archive-api.open-meteo.com/v1/archive?latitude="+la+"&longitude="+lo+"&start_date="+yr+"-"+mm+"-01&end_date="+yr+"-"+mm+"-28&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto";
           const d=await fetch(url).then(r=>r.json());
-          if(d.daily?.temperature_2m_max?.length>0){
+          if(d.daily&&d.daily.temperature_2m_max&&d.daily.temperature_2m_max.length>0){
             avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_max.length);
             avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_min.length);
             rainDays=d.daily.precipitation_sum.filter(r=>r>1).length;
           } else throw new Error("no data");
-        }catch{
-          const isNorthern=la>0;
-          const summerM=isNorthern?[5,6,7,8]:[11,0,1,2];
-          const winterM=isNorthern?[11,0,1]:[5,6,7];
-          const isSummer=summerM.includes(tripMonth);
-          const isWinter=winterM.includes(tripMonth);
+        }catch(ex){
+          const summerM=la>0?[5,6,7,8]:[11,0,1,2];
+          const winterM=la>0?[11,0,1]:[5,6,7];
+          const isSummerM=summerM.includes(tripMonth);
+          const isWinterM=winterM.includes(tripMonth);
           const base=la>55?{s:18,w:4}:la>45?{s:24,w:6}:la>30?{s:30,w:12}:la>10?{s:33,w:26}:{s:30,w:28};
-          avgMax=isSummer?base.s:isWinter?base.w:Math.round((base.s+base.w)/2);
-          avgMin=avgMax-8;rainDays=isSummer&&la>40?3:isWinter&&la>40?12:5;
+          avgMax=isSummerM?base.s:isWinterM?base.w:Math.round((base.s+base.w)/2);
+          avgMin=avgMax-8;
+          rainDays=isSummerM&&la>40?3:isWinterM&&la>40?12:5;
         }
         dominantCode=rainDays>10?61:rainDays>5?2:avgMax>24?0:1;
       }
-      const isHot=avgMax>=26;const isWarm=avgMax>=18;const isMild=avgMax>=12;const isCold=avgMax<12;
-      const isRainy=rainDays>=10;const isSomeRain=rainDays>=5;const isSunny=dominantCode<=1;
-      const fut=isFuture?`Based on typical ${tripMonthName} weather in ${cn}.`:"Based on this week's live forecast.";
+      const isHot=avgMax>=26,isWarm=avgMax>=18,isMild=avgMax>=12,isCold=avgMax<12;
+      const isRainy=rainDays>=10,isSomeRain=rainDays>=5,isSunny=dominantCode<=1;
+      const src=isFuture?"Based on typical "+tripMonthName+" weather in "+cn+".":"Based on this week's live forecast.";
+      const sunNote=isSunny?"Suncream is worth bringing!":"";
+      const rainNote=isRainy?"Rain is fairly likely so waterproof shoes are a good idea.":"Should be fairly dry.";
+      const coldRain=isRainy?"Rain and possibly snow is likely.":"Should stay fairly dry.";
       let reply="";
-      if(isHot&&!isRainy){reply=`${cn} in ${tripMonthName} is typically gorgeous — expect around ${avgMax}°C and mostly sunny! ☀️ Pack light summer clothes, shorts, sundresses and sandals. Suncream and a sun hat are absolutely essential. A light layer for evenings is handy as it cools down after dark. ${fut}`;}
-      else if(isHot&&isRainy){reply=`${cn} in ${tripMonthName} is hot at around ${avgMax}°C but it's the rainy season — expect tropical showers! 🌦️ Pack light breathable clothes but also a compact waterproof jacket. The rain usually passes quickly so don't let it put you off. Sandals are fine but have closed shoes for wet days. ${fut}`;}
-      else if(isWarm&&!isSomeRain){reply=`${cn} in ${tripMonthName} is lovely and warm at around ${avgMax}°C with mainly dry weather! 🌤️ Light clothes and a smart casual outfit or two would be perfect. Pack a light jacket for evenings. ${isSunny?"Suncream is worth bringing!":""} Should be a fantastic trip! ${fut}`;}
-      else if(isWarm&&isSomeRain){reply=`${cn} in ${tripMonthName} is warm at ${avgMax}°C but expect some rain — about ${rainDays} days could be wet. 🌧️ Pack a mix of light clothes and a waterproof jacket. An umbrella or packable mac would be really useful. Comfortable walking shoes are a must alongside your sandals. ${fut}`;}
-      else if(isMild){reply=`${cn} in ${tripMonthName} is mild at around ${avgMax}°C — not hot but perfectly pleasant! 🌥️ Pack layers you can mix and match — jeans, jumpers and a good waterproof jacket. ${isRainy?"Rain is fairly likely so waterproof shoes are a good idea.":"Should be fairly dry."} A scarf and cardigan would keep you cosy for evenings. ${fut}`;}
-      else if(isCold){reply=`${cn} in ${tripMonthName} is cold — typically around ${avgMax}°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. ${isRainy?"Rain and possibly snow is likely.":"Should stay fairly dry."} Gloves, hat and scarf are essential. You'll barely need any summer clothes! ${fut}`;}
-      else{reply=`${cn} in ${tripMonthName} typically sees around ${avgMax}°C with ${rainDays} rainy days. 🌤️ Pack a mix of layers — some lighter clothes plus a warm layer and waterproof jacket covers most situations. A compact umbrella in your bag is always handy! ${fut}`;}
-      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,code:dominantCode,isFuture,tripMonthName});
+      if(isHot&&!isRainy){reply=cn+" in "+tripMonthName+" is typically gorgeous — expect around "+avgMax+"°C and mostly sunny! ☀️ Pack light summer clothes, shorts, sundresses and sandals. Suncream and a sun hat are absolutely essential. A light layer for evenings is handy as it cools down after dark. "+src;}
+      else if(isHot&&isRainy){reply=cn+" in "+tripMonthName+" is hot at around "+avgMax+"°C but it's the rainy season — expect tropical showers! 🌦️ Pack light breathable clothes but also a compact waterproof jacket. The rain usually passes quickly so don't let it put you off. Sandals are fine but have closed shoes for wet days. "+src;}
+      else if(isWarm&&!isSomeRain){reply=cn+" in "+tripMonthName+" is lovely and warm at around "+avgMax+"°C with mainly dry weather! 🌤️ Light clothes and a smart casual outfit or two would be perfect. Pack a light jacket for evenings. "+sunNote+" Should be a fantastic trip! "+src;}
+      else if(isWarm&&isSomeRain){reply=cn+" in "+tripMonthName+" is warm at "+avgMax+"°C but expect some rain — about "+rainDays+" days could be wet. 🌧️ Pack a mix of light clothes and a waterproof jacket. An umbrella or packable mac would be really useful. Comfortable walking shoes are a must alongside your sandals. "+src;}
+      else if(isMild){reply=cn+" in "+tripMonthName+" is mild at around "+avgMax+"°C — not hot but perfectly pleasant! 🌥️ Pack layers you can mix and match — jeans, jumpers and a good waterproof jacket. "+rainNote+" A scarf and cardigan would keep you cosy for evenings. "+src;}
+      else if(isCold){reply=cn+" in "+tripMonthName+" is cold — typically around "+avgMax+"°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. "+coldRain+" Gloves, hat and scarf are essential. You'll barely need any summer clothes! "+src;}
+      else{reply=cn+" in "+tripMonthName+" typically sees around "+avgMax+"°C with "+rainDays+" rainy days. 🌤️ Pack a mix of layers — some lighter clothes plus a warm layer and waterproof jacket covers most situations. A compact umbrella in your bag is always handy! "+src;}
+      setHolidayResult({city:cn+", "+co,text:reply,avgMax:avgMax,avgMin:avgMin,rainDays:rainDays,code:dominantCode,isFuture:isFuture,tripMonthName:tripMonthName});
     }catch(e){
       setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — check the city name and try again! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});
     }
@@ -1520,18 +1520,17 @@ function App(){
     if(!holidayCity.trim()||!holidayFrom||!holidayTo)return;
     setHolidayLoading(true);setHolidayResult(null);
     try{
-      const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(holidayCity)}&count=1`).then(r=>r.json());
-      if(!g.results?.[0]){setHolidayLoading(false);setHolidayResult({city:holidayCity,text:"I couldn't find that destination — try a nearby city or check the spelling! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});return;}
-      const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(holidayCity)+"&count=1").then(r=>r.json());
+      if(!g.results||!g.results[0]){setHolidayLoading(false);setHolidayResult({city:holidayCity,text:"I couldn't find that destination — try a nearby city or check the spelling! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});return;}
+      const la=g.results[0].latitude,lo=g.results[0].longitude,cn=g.results[0].name,co=g.results[0].country;
       const fromDate=new Date(holidayFrom);
-      const today=new Date();
-      const daysAway=Math.round((fromDate-today)/86400000);
+      const daysAway=Math.round((fromDate-new Date())/86400000);
       const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
       const tripMonth=fromDate.getMonth();
       const tripMonthName=monthNames[tripMonth];
-      let avgMax,avgMin,rainDays,dominantCode,isFuture=false;
+      let avgMax=20,avgMin=12,rainDays=3,dominantCode=1,isFuture=false;
       if(daysAway<=14){
-        const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7`;
+        const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7";
         const d=await fetch(url).then(r=>r.json());
         avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
         avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
@@ -1542,39 +1541,40 @@ function App(){
         try{
           const yr=fromDate.getFullYear()-1;
           const mm=String(tripMonth+1).padStart(2,"0");
-          const startDate=`${yr}-${mm}-01`;
-          const endDate=`${yr}-${mm}-28`;
-          const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${la}&longitude=${lo}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+          const url="https://archive-api.open-meteo.com/v1/archive?latitude="+la+"&longitude="+lo+"&start_date="+yr+"-"+mm+"-01&end_date="+yr+"-"+mm+"-28&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto";
           const d=await fetch(url).then(r=>r.json());
-          if(d.daily?.temperature_2m_max?.length>0){
+          if(d.daily&&d.daily.temperature_2m_max&&d.daily.temperature_2m_max.length>0){
             avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_max.length);
             avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_min.length);
             rainDays=d.daily.precipitation_sum.filter(r=>r>1).length;
           } else throw new Error("no data");
-        }catch{
-          const isNorthern=la>0;
-          const summerM=isNorthern?[5,6,7,8]:[11,0,1,2];
-          const winterM=isNorthern?[11,0,1]:[5,6,7];
-          const isSummer=summerM.includes(tripMonth);
-          const isWinter=winterM.includes(tripMonth);
+        }catch(ex){
+          const summerM=la>0?[5,6,7,8]:[11,0,1,2];
+          const winterM=la>0?[11,0,1]:[5,6,7];
+          const isSummerM=summerM.includes(tripMonth);
+          const isWinterM=winterM.includes(tripMonth);
           const base=la>55?{s:18,w:4}:la>45?{s:24,w:6}:la>30?{s:30,w:12}:la>10?{s:33,w:26}:{s:30,w:28};
-          avgMax=isSummer?base.s:isWinter?base.w:Math.round((base.s+base.w)/2);
-          avgMin=avgMax-8;rainDays=isSummer&&la>40?3:isWinter&&la>40?12:5;
+          avgMax=isSummerM?base.s:isWinterM?base.w:Math.round((base.s+base.w)/2);
+          avgMin=avgMax-8;
+          rainDays=isSummerM&&la>40?3:isWinterM&&la>40?12:5;
         }
         dominantCode=rainDays>10?61:rainDays>5?2:avgMax>24?0:1;
       }
-      const isHot=avgMax>=26;const isWarm=avgMax>=18;const isMild=avgMax>=12;const isCold=avgMax<12;
-      const isRainy=rainDays>=10;const isSomeRain=rainDays>=5;const isSunny=dominantCode<=1;
-      const fut=isFuture?`Based on typical ${tripMonthName} weather in ${cn}.`:"Based on this week's live forecast.";
+      const isHot=avgMax>=26,isWarm=avgMax>=18,isMild=avgMax>=12,isCold=avgMax<12;
+      const isRainy=rainDays>=10,isSomeRain=rainDays>=5,isSunny=dominantCode<=1;
+      const src=isFuture?"Based on typical "+tripMonthName+" weather in "+cn+".":"Based on this week's live forecast.";
+      const sunNote=isSunny?"Suncream is worth bringing!":"";
+      const rainNote=isRainy?"Rain is fairly likely so waterproof shoes are a good idea.":"Should be fairly dry.";
+      const coldRain=isRainy?"Rain and possibly snow is likely.":"Should stay fairly dry.";
       let reply="";
-      if(isHot&&!isRainy){reply=`${cn} in ${tripMonthName} is typically gorgeous — expect around ${avgMax}°C and mostly sunny! ☀️ Pack light summer clothes, shorts, sundresses and sandals. Suncream and a sun hat are absolutely essential. A light layer for evenings is handy as it cools down after dark. ${fut}`;}
-      else if(isHot&&isRainy){reply=`${cn} in ${tripMonthName} is hot at around ${avgMax}°C but it's the rainy season — expect tropical showers! 🌦️ Pack light breathable clothes but also a compact waterproof jacket. The rain usually passes quickly so don't let it put you off. Sandals are fine but have closed shoes for wet days. ${fut}`;}
-      else if(isWarm&&!isSomeRain){reply=`${cn} in ${tripMonthName} is lovely and warm at around ${avgMax}°C with mainly dry weather! 🌤️ Light clothes and a smart casual outfit or two would be perfect. Pack a light jacket for evenings. ${isSunny?"Suncream is worth bringing!":""} Should be a fantastic trip! ${fut}`;}
-      else if(isWarm&&isSomeRain){reply=`${cn} in ${tripMonthName} is warm at ${avgMax}°C but expect some rain — about ${rainDays} days could be wet. 🌧️ Pack a mix of light clothes and a waterproof jacket. An umbrella or packable mac would be really useful. Comfortable walking shoes are a must alongside your sandals. ${fut}`;}
-      else if(isMild){reply=`${cn} in ${tripMonthName} is mild at around ${avgMax}°C — not hot but perfectly pleasant! 🌥️ Pack layers you can mix and match — jeans, jumpers and a good waterproof jacket. ${isRainy?"Rain is fairly likely so waterproof shoes are a good idea.":"Should be fairly dry."} A scarf and cardigan would keep you cosy for evenings. ${fut}`;}
-      else if(isCold){reply=`${cn} in ${tripMonthName} is cold — typically around ${avgMax}°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. ${isRainy?"Rain and possibly snow is likely.":"Should stay fairly dry."} Gloves, hat and scarf are essential. You'll barely need any summer clothes! ${fut}`;}
-      else{reply=`${cn} in ${tripMonthName} typically sees around ${avgMax}°C with ${rainDays} rainy days. 🌤️ Pack a mix of layers — some lighter clothes plus a warm layer and waterproof jacket covers most situations. A compact umbrella in your bag is always handy! ${fut}`;}
-      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,code:dominantCode,isFuture,tripMonthName});
+      if(isHot&&!isRainy){reply=cn+" in "+tripMonthName+" is typically gorgeous — expect around "+avgMax+"°C and mostly sunny! ☀️ Pack light summer clothes, shorts, sundresses and sandals. Suncream and a sun hat are absolutely essential. A light layer for evenings is handy as it cools down after dark. "+src;}
+      else if(isHot&&isRainy){reply=cn+" in "+tripMonthName+" is hot at around "+avgMax+"°C but it's the rainy season — expect tropical showers! 🌦️ Pack light breathable clothes but also a compact waterproof jacket. The rain usually passes quickly so don't let it put you off. Sandals are fine but have closed shoes for wet days. "+src;}
+      else if(isWarm&&!isSomeRain){reply=cn+" in "+tripMonthName+" is lovely and warm at around "+avgMax+"°C with mainly dry weather! 🌤️ Light clothes and a smart casual outfit or two would be perfect. Pack a light jacket for evenings. "+sunNote+" Should be a fantastic trip! "+src;}
+      else if(isWarm&&isSomeRain){reply=cn+" in "+tripMonthName+" is warm at "+avgMax+"°C but expect some rain — about "+rainDays+" days could be wet. 🌧️ Pack a mix of light clothes and a waterproof jacket. An umbrella or packable mac would be really useful. Comfortable walking shoes are a must alongside your sandals. "+src;}
+      else if(isMild){reply=cn+" in "+tripMonthName+" is mild at around "+avgMax+"°C — not hot but perfectly pleasant! 🌥️ Pack layers you can mix and match — jeans, jumpers and a good waterproof jacket. "+rainNote+" A scarf and cardigan would keep you cosy for evenings. "+src;}
+      else if(isCold){reply=cn+" in "+tripMonthName+" is cold — typically around "+avgMax+"°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. "+coldRain+" Gloves, hat and scarf are essential. You'll barely need any summer clothes! "+src;}
+      else{reply=cn+" in "+tripMonthName+" typically sees around "+avgMax+"°C with "+rainDays+" rainy days. 🌤️ Pack a mix of layers — some lighter clothes plus a warm layer and waterproof jacket covers most situations. A compact umbrella in your bag is always handy! "+src;}
+      setHolidayResult({city:cn+", "+co,text:reply,avgMax:avgMax,avgMin:avgMin,rainDays:rainDays,code:dominantCode,isFuture:isFuture,tripMonthName:tripMonthName});
     }catch(e){
       setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — check the city name and try again! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});
     }
