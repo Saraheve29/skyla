@@ -486,18 +486,34 @@ function App(){
     const PE=plainEnglish(wx);
     const txt="Good "+gr+"! I'm Skyla. "+PE.verdict+" In "+city+" it's "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
     const isMale=gender==="male";
-    const GIRL_VOICE="21m00Tcm4TlvDq8ikWAM"; // Rachel - warm natural female
+    // Try girl voices in order until one works
+    const GIRL_VOICES=["9BWtsMINqrJLrRacOk9x","cgSgspJ2msm6clMkppWt","EXAVITQu4vr4xnSDxMaL"];
+    const GIRL_VOICE=GIRL_VOICES[0]; // Aria - bright upbeat young female
     const BOY_VOICE="pNInz6obpgDQGcFmaJgB";  // Adam - natural male
     const voiceId=isMale?BOY_VOICE:GIRL_VOICE;
     const ELEVEN_KEY="sk_032976f800904cea65184d02375073ebc528f0066def603e";
     setTalking(true);
-    try{
-      const resp=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+voiceId+"/stream",{
+    async function tryElevenVoice(vid){
+      const resp=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+vid+"/stream",{
         method:"POST",
         headers:{"Content-Type":"application/json","xi-api-key":ELEVEN_KEY},
-        body:JSON.stringify({text:txt,model_id:"eleven_turbo_v2",voice_settings:{stability:0.4,similarity_boost:0.85,style:0.6,use_speaker_boost:true}})
+        body:JSON.stringify({text:txt,model_id:"eleven_turbo_v2",voice_settings:{stability:0.35,similarity_boost:0.85,style:0.65,use_speaker_boost:true}})
       });
-      if(!resp.ok)throw new Error("ElevenLabs failed");
+      if(!resp.ok)throw new Error("failed");
+      return resp;
+    }
+    try{
+      let resp;
+      if(!isMale){
+        // Try girl voices in order
+        for(const vid of GIRL_VOICES){
+          try{resp=await tryElevenVoice(vid);break;}catch{}
+        }
+        if(!resp)throw new Error("all girl voices failed");
+      }else{
+        resp=await tryElevenVoice(BOY_VOICE);
+      }
+      if(!resp||!resp.ok)throw new Error("ElevenLabs failed");
       const blob=await resp.blob();
       const url=URL.createObjectURL(blob);
       const audio=new Audio(url);
