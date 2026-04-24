@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#FFB7C5">
-<link rel="manifest" href="/manifest.json">
 <meta name="description" content="Skyla - Your AI Weather Decision Assistant">
 <title>Skyla 🩷 AI Weather</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -247,8 +246,29 @@ function App(){
   const [holidayLoading,setHolidayLoading]=useState(false);
   const [briefingTime,setBriefingTime]=useState(()=>sg("skyla_briefing")||"07:00");
   const [briefingSaved,setBriefingSaved]=useState(false);
+  const [quickAns,setQuickAns]=useState(null);
+  const [quickLoading,setQuickLoading]=useState(false);
 
   function toggleGender(g){setGender(g);ss("skyla_gender",g);}
+
+  async function quickAsk(question,icon){
+    setQuickLoading(icon);setQuickAns(null);
+    try{
+      const feels=wx.feels,temp=wx.temp,rain=wx.rain,wind=wx.wind,code=wx.code;
+      const answers={
+        "beanie":feels<=8?"Yes, definitely wear a warm beanie today! It's cold out there 🧣":feels<=13?"Could be handy — it's on the cool side. Pop one in your bag! 🧣":"No need for a beanie today — it's too warm for that! 😊",
+        "sunhat":temp>=22&&code<=2?"Yes! It's hot and sunny — a sun hat is a great idea today ☀️":temp>=18&&code<=2?"Might be worth it if you're out for a while — it's warm and bright 🌤️":"No need for a sun hat today — not sunny enough!",
+        "coat":feels<=10?"Yes, definitely wear a coat today — it's cold! 🧥":feels<=14?"A light jacket would be perfect — not freezing but cool 🧥":"No coat needed today — it's warm enough without one! 😊",
+        "umbrella":rain>=70?"Yes, take your umbrella — high chance of rain today! ☔":rain>=40?"Maybe pop one in your bag just in case — "+rain+"% chance of rain 🌂":"No umbrella needed — looking dry today! ☀️",
+        "suncream":temp>=22&&code<=2?"Yes! Put suncream on today — it's hot and sunny ☀️":temp>=18&&code<=3?"Factor 15 wouldn't hurt — it's warm and bright today 🌤️":"No suncream needed today — not sunny enough!",
+        "trousers":feels<=14?"Definitely wear trousers today — too cold for shorts! 🧥":feels<=19?"Jeans or light trousers would be perfect today 👖":"Shorts weather! Too warm for trousers today 🩳",
+        "jumper":feels<=16?"Yes, wear a jumper today — it's on the cool side! 🧸":feels<=20?"A light jumper or cardigan would be comfy 🧸":"No jumper needed — it's warm enough without one! ☀️",
+      };
+      const key=Object.keys(answers).find(k=>question.toLowerCase().includes(k));
+      const ans=answers[key]||"Based on today's weather I'd say yes — always better to be prepared! 🩷";
+      setTimeout(()=>{setQuickAns({text:ans,icon});setQuickLoading(null);},400);
+    }catch{setQuickAns({text:"Let me check that for you next time! 🩷",icon});setQuickLoading(null);}
+  }
 
   async function checkEvent(){
     if(!eventDate||!eventName.trim())return;
@@ -555,6 +575,35 @@ function App(){
             {/* GREETING */}
             <div style={{...G,padding:"14px 18px",marginBottom:12,borderRadius:"8px 24px 24px 24px"}}>
               <div style={{fontSize:14,fontWeight:600,lineHeight:1.6}}>{ai.msg}</div>
+            </div>
+
+            {/* QUICK ASK SKYLA BUTTONS */}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>Quick Ask Skyla</div>
+              <div style={{display:"flex",gap:7,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:6}}>
+                {[
+                  {icon:"🧣",label:"Warm beanie?",key:"beanie"},
+                  {icon:"👒",label:"Sun hat?",key:"sunhat"},
+                  {icon:"🧥",label:"Need a coat?",key:"coat"},
+                  {icon:"☂️",label:"Umbrella?",key:"umbrella"},
+                  {icon:"😎",label:"Suncream?",key:"suncream"},
+                  {icon:"👖",label:"Shorts or trousers?",key:"trousers"},
+                  {icon:"🧸",label:"Need a jumper?",key:"jumper"},
+                ].map((btn,i)=>(
+                  <button key={i} onClick={()=>quickAsk(btn.key,btn.icon)}
+                    style={{flexShrink:0,background:quickAns?.icon===btn.icon?S.acc:"rgba(255,255,255,.2)",backdropFilter:"blur(12px)",border:`1px solid ${quickAns?.icon===btn.icon?"transparent":S.bdr}`,borderRadius:100,padding:"8px 14px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
+                    <span style={{fontSize:20}}>{quickLoading===btn.icon?"⏳":btn.icon}</span>
+                    <span style={{fontSize:9,fontWeight:800,color:quickAns?.icon===btn.icon?"white":S.sub,whiteSpace:"nowrap"}}>{btn.label}</span>
+                  </button>
+                ))}
+              </div>
+              {quickAns&&(
+                <div style={{...G,padding:"12px 16px",marginTop:8,borderRadius:16,border:`1px solid ${S.acc}40`,display:"flex",gap:10,alignItems:"flex-start"}}>
+                  <div style={{fontSize:24,flexShrink:0}}>{quickAns.icon}</div>
+                  <div style={{fontSize:13,fontWeight:600,lineHeight:1.6,flex:1}}>{quickAns.text}</div>
+                  <button onClick={()=>setQuickAns(null)} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",opacity:.4,color:S.text,flexShrink:0}}>✕</button>
+                </div>
+              )}
             </div>
 
             {/* TABS */}
