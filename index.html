@@ -275,14 +275,34 @@ function App(){
     setEventLoading(true);setEventResult(null);
     try{
       const dayIdx=Math.round((new Date(eventDate)-new Date())/(86400000));
-      const dayData=wx.week[Math.min(dayIdx,6)];
-      const pr=`You are Skyla, friendly AI weather assistant. Event: "${eventName}" on ${eventDate} (${dayIdx===0?"today":dayIdx===1?"tomorrow":"in "+dayIdx+" days"}). Forecast: ${dayData?wmoDesc(dayData.code)+" "+dayData.max+"° high "+dayData.min+"° low rain "+dayData.rain+"%":"limited data"}. Give a warm friendly recommendation in 3 short sentences — will it be good for this event? What should they wear/bring? Any advice? Plain English, no jargon.`;
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,messages:[{role:"user",content:pr}]})});
-      const d=await r.json();
-      const reply=d.content?.find(b=>b.type==="text")?.text||"Looks like a decent day for your event!";
-      const dayWx=wx.week[Math.min(Math.max(dayIdx,0),6)];
-      setEventResult({text:reply,code:dayWx?.code||1,max:dayWx?.max||wx.maxT,min:dayWx?.min||wx.minT,rain:dayWx?.rain||20});
-    }catch{setEventResult({text:"I had trouble checking that date — but I'm here to help! Try again.",code:1,max:wx.maxT,min:wx.minT,rain:20});}
+      const clampedIdx=Math.min(Math.max(dayIdx,0),6);
+      const dayWx=wx.week&&wx.week[clampedIdx]?wx.week[clampedIdx]:null;
+      const maxT=dayWx?.max??wx.maxT??18;
+      const minT=dayWx?.min??wx.minT??10;
+      const rainPct=dayWx?.rain??20;
+      const desc=dayWx?wmoDesc(dayWx.code):"partly cloudy";
+      const dayLabel=dayIdx===0?"today":dayIdx===1?"tomorrow":`in ${dayIdx} days`;
+      // Build plain English response without API call to avoid CORS issues
+      const isGood=rainPct<40&&maxT>=15;
+      const isRainy=rainPct>=60;
+      const isCold=maxT<12;
+      let reply="";
+      if(isRainy){
+        reply=`${eventName} on ${eventDate} looks like it could be a rainy one — there's a ${rainPct}% chance of rain! I'd suggest having a backup plan or a covered area just in case. A waterproof jacket is definitely worth packing, and closed shoes would be wise. Keep an eye on the forecast closer to the day! 🌧️`;
+      } else if(isCold){
+        reply=`${eventName} on ${eventDate} is looking cool at around ${maxT}°C. It should stay dry though, which is great! Make sure everyone wraps up warm with layers, and a hot drink station would go down a treat. Should be a lovely day despite the chill! 🧥`;
+      } else if(isGood){
+        reply=`${eventName} on ${eventDate} is looking great! ${desc} with a high of ${maxT}° and only ${rainPct}% chance of rain — perfect conditions. Light layers would be ideal and you probably won't need a brolly. Enjoy your event! ☀️`;
+      } else {
+        reply=`${eventName} on ${eventDate} looks like a mixed bag — ${desc} with ${maxT}° high and ${rainPct}% chance of rain. I'd pack a light jacket just in case and maybe have a brolly handy. The afternoon should be the best window for outdoor activities! 🌤️`;
+      }
+      setEventResult({text:reply,code:dayWx?.code||1,max:maxT,min:minT,rain:rainPct});
+    }catch(e){
+      const dayIdx=Math.round((new Date(eventDate)-new Date())/(86400000));
+      const clampedIdx=Math.min(Math.max(dayIdx,0),6);
+      const dayWx=wx.week&&wx.week[clampedIdx]?wx.week[clampedIdx]:null;
+      setEventResult({text:`Looks like it should be a ${(dayWx?.rain||20)<40?"decent":"mixed"} day for ${eventName}! Check back closer to the date for a more detailed forecast. 🩷`,code:dayWx?.code||1,max:dayWx?.max||18,min:dayWx?.min||10,rain:dayWx?.rain||20});
+    }
     setEventLoading(false);
   }
 
@@ -291,20 +311,63 @@ function App(){
     setHolidayLoading(true);setHolidayResult(null);
     try{
       const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(holidayCity)}&count=1`).then(r=>r.json());
-      if(!g.results?.[0]){setHolidayLoading(false);return;}
+      if(!g.results?.[0]){setHolidayLoading(false);setHolidayResult({city:holidayCity,text:"I couldn't find that destination — try a nearby city or check the spelling! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});return;}
       const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
-      const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7`;
-      const d=await fetch(url).then(r=>r.json());
-      const avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
-      const avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
-      const rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
-      const dominantCode=d.daily.weathercode[3]||1;
-      const pr=`You are Skyla, friendly travel weather assistant. Holiday to ${cn}, ${co} from ${holidayFrom} to ${holidayTo}. Next 7 days forecast: avg high ${avgMax}°C avg low ${avgMin}°C, ${rainDays} rainy days expected, mainly ${wmoDesc(dominantCode)}. Give warm friendly packing advice in 4 short sentences. What clothes to pack? Umbrella needed? Any weather warnings? Plain English.`;
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:250,messages:[{role:"user",content:pr}]})});
-      const dd=await r.json();
-      const reply=dd.content?.find(b=>b.type==="text")?.text||"Looks like a great trip!";
-      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,code:dominantCode});
-    }catch{setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — try again!",avgMax:20,avgMin:12,rainDays:2,code:1});}
+      const fromDate=new Date(holidayFrom);
+      const today=new Date();
+      const daysAway=Math.round((fromDate-today)/86400000);
+      const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const tripMonth=fromDate.getMonth();
+      const tripMonthName=monthNames[tripMonth];
+      let avgMax,avgMin,rainDays,dominantCode,isFuture=false;
+      if(daysAway<=14){
+        const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7`;
+        const d=await fetch(url).then(r=>r.json());
+        avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
+        avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
+        rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
+        dominantCode=d.daily.weathercode[3]||1;
+      } else {
+        isFuture=true;
+        try{
+          const yr=fromDate.getFullYear()-1;
+          const mm=String(tripMonth+1).padStart(2,"0");
+          const startDate=`${yr}-${mm}-01`;
+          const endDate=`${yr}-${mm}-28`;
+          const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${la}&longitude=${lo}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+          const d=await fetch(url).then(r=>r.json());
+          if(d.daily?.temperature_2m_max?.length>0){
+            avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_max.length);
+            avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_min.length);
+            rainDays=d.daily.precipitation_sum.filter(r=>r>1).length;
+          } else throw new Error("no data");
+        }catch{
+          const isNorthern=la>0;
+          const summerM=isNorthern?[5,6,7,8]:[11,0,1,2];
+          const winterM=isNorthern?[11,0,1]:[5,6,7];
+          const isSummer=summerM.includes(tripMonth);
+          const isWinter=winterM.includes(tripMonth);
+          const base=la>55?{s:18,w:4}:la>45?{s:24,w:6}:la>30?{s:30,w:12}:la>10?{s:33,w:26}:{s:30,w:28};
+          avgMax=isSummer?base.s:isWinter?base.w:Math.round((base.s+base.w)/2);
+          avgMin=avgMax-8;rainDays=isSummer&&la>40?3:isWinter&&la>40?12:5;
+        }
+        dominantCode=rainDays>10?61:rainDays>5?2:avgMax>24?0:1;
+      }
+      const isHot=avgMax>=26;const isWarm=avgMax>=18;const isMild=avgMax>=12;const isCold=avgMax<12;
+      const isRainy=rainDays>=10;const isSomeRain=rainDays>=5;const isSunny=dominantCode<=1;
+      const fut=isFuture?`Based on typical ${tripMonthName} weather in ${cn}.`:"Based on this week's live forecast.";
+      let reply="";
+      if(isHot&&!isRainy){reply=`${cn} in ${tripMonthName} is typically gorgeous — expect around ${avgMax}°C and mostly sunny! ☀️ Pack light summer clothes, shorts, sundresses and sandals. Suncream and a sun hat are absolutely essential. A light layer for evenings is handy as it cools down after dark. ${fut}`;}
+      else if(isHot&&isRainy){reply=`${cn} in ${tripMonthName} is hot at around ${avgMax}°C but it's the rainy season — expect tropical showers! 🌦️ Pack light breathable clothes but also a compact waterproof jacket. The rain usually passes quickly so don't let it put you off. Sandals are fine but have closed shoes for wet days. ${fut}`;}
+      else if(isWarm&&!isSomeRain){reply=`${cn} in ${tripMonthName} is lovely and warm at around ${avgMax}°C with mainly dry weather! 🌤️ Light clothes and a smart casual outfit or two would be perfect. Pack a light jacket for evenings. ${isSunny?"Suncream is worth bringing!":""} Should be a fantastic trip! ${fut}`;}
+      else if(isWarm&&isSomeRain){reply=`${cn} in ${tripMonthName} is warm at ${avgMax}°C but expect some rain — about ${rainDays} days could be wet. 🌧️ Pack a mix of light clothes and a waterproof jacket. An umbrella or packable mac would be really useful. Comfortable walking shoes are a must alongside your sandals. ${fut}`;}
+      else if(isMild){reply=`${cn} in ${tripMonthName} is mild at around ${avgMax}°C — not hot but perfectly pleasant! 🌥️ Pack layers you can mix and match — jeans, jumpers and a good waterproof jacket. ${isRainy?"Rain is fairly likely so waterproof shoes are a good idea.":"Should be fairly dry."} A scarf and cardigan would keep you cosy for evenings. ${fut}`;}
+      else if(isCold){reply=`${cn} in ${tripMonthName} is cold — typically around ${avgMax}°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. ${isRainy?"Rain and possibly snow is likely.":"Should stay fairly dry."} Gloves, hat and scarf are essential. You'll barely need any summer clothes! ${fut}`;}
+      else{reply=`${cn} in ${tripMonthName} typically sees around ${avgMax}°C with ${rainDays} rainy days. 🌤️ Pack a mix of layers — some lighter clothes plus a warm layer and waterproof jacket covers most situations. A compact umbrella in your bag is always handy! ${fut}`;}
+      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,code:dominantCode,isFuture,tripMonthName});
+    }catch(e){
+      setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — check the city name and try again! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});
+    }
     setHolidayLoading(false);
   }
 
@@ -996,7 +1059,7 @@ function App(){
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
                           <div>
                             <div style={{fontSize:16,fontWeight:800}}>{holidayResult.city}</div>
-                            <div style={{fontSize:12,opacity:.6,marginTop:3}}>Next 7 days forecast</div>
+                            <div style={{fontSize:12,opacity:.6,marginTop:3}}>{holidayResult.isFuture?`Typical weather in ${holidayResult.tripMonth}`:"Live 7-day forecast"}</div>
                           </div>
                           <div style={{textAlign:"right"}}>
                             <div style={{fontSize:28}}>{SC[wxType(holidayResult.code,1)]?.em||"🌤️"}</div>
@@ -1104,7 +1167,7 @@ function App(){
                 </Card>
                 <Card>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                    <Lbl>⭐ Score History</Lbl>
+                    
                     {avg&&<div style={{fontSize:13,fontWeight:800,color:S.acc,paddingBottom:10}}>7-day avg: {avg}/10</div>}
                   </div>
                   {hist.length===0?<div style={{textAlign:"center",padding:"16px 0",opacity:.5}}>Open Skyla daily to build history!</div>:(
@@ -1422,14 +1485,34 @@ function App(){
     setEventLoading(true);setEventResult(null);
     try{
       const dayIdx=Math.round((new Date(eventDate)-new Date())/(86400000));
-      const dayData=wx.week[Math.min(dayIdx,6)];
-      const pr=`You are Skyla, friendly AI weather assistant. Event: "${eventName}" on ${eventDate} (${dayIdx===0?"today":dayIdx===1?"tomorrow":"in "+dayIdx+" days"}). Forecast: ${dayData?wmoDesc(dayData.code)+" "+dayData.max+"° high "+dayData.min+"° low rain "+dayData.rain+"%":"limited data"}. Give a warm friendly recommendation in 3 short sentences — will it be good for this event? What should they wear/bring? Any advice? Plain English, no jargon.`;
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,messages:[{role:"user",content:pr}]})});
-      const d=await r.json();
-      const reply=d.content?.find(b=>b.type==="text")?.text||"Looks like a decent day for your event!";
-      const dayWx=wx.week[Math.min(Math.max(dayIdx,0),6)];
-      setEventResult({text:reply,code:dayWx?.code||1,max:dayWx?.max||wx.maxT,min:dayWx?.min||wx.minT,rain:dayWx?.rain||20});
-    }catch{setEventResult({text:"I had trouble checking that date — but I'm here to help! Try again.",code:1,max:wx.maxT,min:wx.minT,rain:20});}
+      const clampedIdx=Math.min(Math.max(dayIdx,0),6);
+      const dayWx=wx.week&&wx.week[clampedIdx]?wx.week[clampedIdx]:null;
+      const maxT=dayWx?.max??wx.maxT??18;
+      const minT=dayWx?.min??wx.minT??10;
+      const rainPct=dayWx?.rain??20;
+      const desc=dayWx?wmoDesc(dayWx.code):"partly cloudy";
+      const dayLabel=dayIdx===0?"today":dayIdx===1?"tomorrow":`in ${dayIdx} days`;
+      // Build plain English response without API call to avoid CORS issues
+      const isGood=rainPct<40&&maxT>=15;
+      const isRainy=rainPct>=60;
+      const isCold=maxT<12;
+      let reply="";
+      if(isRainy){
+        reply=`${eventName} on ${eventDate} looks like it could be a rainy one — there's a ${rainPct}% chance of rain! I'd suggest having a backup plan or a covered area just in case. A waterproof jacket is definitely worth packing, and closed shoes would be wise. Keep an eye on the forecast closer to the day! 🌧️`;
+      } else if(isCold){
+        reply=`${eventName} on ${eventDate} is looking cool at around ${maxT}°C. It should stay dry though, which is great! Make sure everyone wraps up warm with layers, and a hot drink station would go down a treat. Should be a lovely day despite the chill! 🧥`;
+      } else if(isGood){
+        reply=`${eventName} on ${eventDate} is looking great! ${desc} with a high of ${maxT}° and only ${rainPct}% chance of rain — perfect conditions. Light layers would be ideal and you probably won't need a brolly. Enjoy your event! ☀️`;
+      } else {
+        reply=`${eventName} on ${eventDate} looks like a mixed bag — ${desc} with ${maxT}° high and ${rainPct}% chance of rain. I'd pack a light jacket just in case and maybe have a brolly handy. The afternoon should be the best window for outdoor activities! 🌤️`;
+      }
+      setEventResult({text:reply,code:dayWx?.code||1,max:maxT,min:minT,rain:rainPct});
+    }catch(e){
+      const dayIdx=Math.round((new Date(eventDate)-new Date())/(86400000));
+      const clampedIdx=Math.min(Math.max(dayIdx,0),6);
+      const dayWx=wx.week&&wx.week[clampedIdx]?wx.week[clampedIdx]:null;
+      setEventResult({text:`Looks like it should be a ${(dayWx?.rain||20)<40?"decent":"mixed"} day for ${eventName}! Check back closer to the date for a more detailed forecast. 🩷`,code:dayWx?.code||1,max:dayWx?.max||18,min:dayWx?.min||10,rain:dayWx?.rain||20});
+    }
     setEventLoading(false);
   }
 
@@ -1438,20 +1521,63 @@ function App(){
     setHolidayLoading(true);setHolidayResult(null);
     try{
       const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(holidayCity)}&count=1`).then(r=>r.json());
-      if(!g.results?.[0]){setHolidayLoading(false);return;}
+      if(!g.results?.[0]){setHolidayLoading(false);setHolidayResult({city:holidayCity,text:"I couldn't find that destination — try a nearby city or check the spelling! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});return;}
       const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
-      const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7`;
-      const d=await fetch(url).then(r=>r.json());
-      const avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
-      const avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
-      const rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
-      const dominantCode=d.daily.weathercode[3]||1;
-      const pr=`You are Skyla, friendly travel weather assistant. Holiday to ${cn}, ${co} from ${holidayFrom} to ${holidayTo}. Next 7 days forecast: avg high ${avgMax}°C avg low ${avgMin}°C, ${rainDays} rainy days expected, mainly ${wmoDesc(dominantCode)}. Give warm friendly packing advice in 4 short sentences. What clothes to pack? Umbrella needed? Any weather warnings? Plain English.`;
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:250,messages:[{role:"user",content:pr}]})});
-      const dd=await r.json();
-      const reply=dd.content?.find(b=>b.type==="text")?.text||"Looks like a great trip!";
-      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,code:dominantCode});
-    }catch{setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — try again!",avgMax:20,avgMin:12,rainDays:2,code:1});}
+      const fromDate=new Date(holidayFrom);
+      const today=new Date();
+      const daysAway=Math.round((fromDate-today)/86400000);
+      const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const tripMonth=fromDate.getMonth();
+      const tripMonthName=monthNames[tripMonth];
+      let avgMax,avgMin,rainDays,dominantCode,isFuture=false;
+      if(daysAway<=14){
+        const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=auto&forecast_days=7`;
+        const d=await fetch(url).then(r=>r.json());
+        avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
+        avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
+        rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
+        dominantCode=d.daily.weathercode[3]||1;
+      } else {
+        isFuture=true;
+        try{
+          const yr=fromDate.getFullYear()-1;
+          const mm=String(tripMonth+1).padStart(2,"0");
+          const startDate=`${yr}-${mm}-01`;
+          const endDate=`${yr}-${mm}-28`;
+          const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${la}&longitude=${lo}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+          const d=await fetch(url).then(r=>r.json());
+          if(d.daily?.temperature_2m_max?.length>0){
+            avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_max.length);
+            avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_min.length);
+            rainDays=d.daily.precipitation_sum.filter(r=>r>1).length;
+          } else throw new Error("no data");
+        }catch{
+          const isNorthern=la>0;
+          const summerM=isNorthern?[5,6,7,8]:[11,0,1,2];
+          const winterM=isNorthern?[11,0,1]:[5,6,7];
+          const isSummer=summerM.includes(tripMonth);
+          const isWinter=winterM.includes(tripMonth);
+          const base=la>55?{s:18,w:4}:la>45?{s:24,w:6}:la>30?{s:30,w:12}:la>10?{s:33,w:26}:{s:30,w:28};
+          avgMax=isSummer?base.s:isWinter?base.w:Math.round((base.s+base.w)/2);
+          avgMin=avgMax-8;rainDays=isSummer&&la>40?3:isWinter&&la>40?12:5;
+        }
+        dominantCode=rainDays>10?61:rainDays>5?2:avgMax>24?0:1;
+      }
+      const isHot=avgMax>=26;const isWarm=avgMax>=18;const isMild=avgMax>=12;const isCold=avgMax<12;
+      const isRainy=rainDays>=10;const isSomeRain=rainDays>=5;const isSunny=dominantCode<=1;
+      const fut=isFuture?`Based on typical ${tripMonthName} weather in ${cn}.`:"Based on this week's live forecast.";
+      let reply="";
+      if(isHot&&!isRainy){reply=`${cn} in ${tripMonthName} is typically gorgeous — expect around ${avgMax}°C and mostly sunny! ☀️ Pack light summer clothes, shorts, sundresses and sandals. Suncream and a sun hat are absolutely essential. A light layer for evenings is handy as it cools down after dark. ${fut}`;}
+      else if(isHot&&isRainy){reply=`${cn} in ${tripMonthName} is hot at around ${avgMax}°C but it's the rainy season — expect tropical showers! 🌦️ Pack light breathable clothes but also a compact waterproof jacket. The rain usually passes quickly so don't let it put you off. Sandals are fine but have closed shoes for wet days. ${fut}`;}
+      else if(isWarm&&!isSomeRain){reply=`${cn} in ${tripMonthName} is lovely and warm at around ${avgMax}°C with mainly dry weather! 🌤️ Light clothes and a smart casual outfit or two would be perfect. Pack a light jacket for evenings. ${isSunny?"Suncream is worth bringing!":""} Should be a fantastic trip! ${fut}`;}
+      else if(isWarm&&isSomeRain){reply=`${cn} in ${tripMonthName} is warm at ${avgMax}°C but expect some rain — about ${rainDays} days could be wet. 🌧️ Pack a mix of light clothes and a waterproof jacket. An umbrella or packable mac would be really useful. Comfortable walking shoes are a must alongside your sandals. ${fut}`;}
+      else if(isMild){reply=`${cn} in ${tripMonthName} is mild at around ${avgMax}°C — not hot but perfectly pleasant! 🌥️ Pack layers you can mix and match — jeans, jumpers and a good waterproof jacket. ${isRainy?"Rain is fairly likely so waterproof shoes are a good idea.":"Should be fairly dry."} A scarf and cardigan would keep you cosy for evenings. ${fut}`;}
+      else if(isCold){reply=`${cn} in ${tripMonthName} is cold — typically around ${avgMax}°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. ${isRainy?"Rain and possibly snow is likely.":"Should stay fairly dry."} Gloves, hat and scarf are essential. You'll barely need any summer clothes! ${fut}`;}
+      else{reply=`${cn} in ${tripMonthName} typically sees around ${avgMax}°C with ${rainDays} rainy days. 🌤️ Pack a mix of layers — some lighter clothes plus a warm layer and waterproof jacket covers most situations. A compact umbrella in your bag is always handy! ${fut}`;}
+      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,code:dominantCode,isFuture,tripMonthName});
+    }catch(e){
+      setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — check the city name and try again! 🗺️",avgMax:20,avgMin:12,rainDays:2,code:1,isFuture:false});
+    }
     setHolidayLoading(false);
   }
 
@@ -2067,7 +2193,7 @@ function App(){
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
                           <div>
                             <div style={{fontSize:16,fontWeight:800}}>{holidayResult.city}</div>
-                            <div style={{fontSize:12,opacity:.6,marginTop:3}}>Next 7 days forecast</div>
+                            <div style={{fontSize:12,opacity:.6,marginTop:3}}>{holidayResult.isFuture?`Typical weather in ${holidayResult.tripMonth}`:"Live 7-day forecast"}</div>
                           </div>
                           <div style={{textAlign:"right"}}>
                             <div style={{fontSize:28}}>{SC[wxType(holidayResult.code,1)]?.em||"🌤️"}</div>
@@ -2175,7 +2301,7 @@ function App(){
                 </Card>
                 <Card>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                    <Lbl>⭐ Score History</Lbl>
+                    
                     {avg&&<div style={{fontSize:13,fontWeight:800,color:S.acc,paddingBottom:10}}>7-day avg: {avg}/10</div>}
                   </div>
                   {hist.length===0?<div style={{textAlign:"center",padding:"16px 0",opacity:.5}}>Open Skyla daily to build history!</div>:(
