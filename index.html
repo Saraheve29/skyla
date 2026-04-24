@@ -482,39 +482,7 @@ function App(){
       if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}
       setTalking(false);return;
     }
-    // If girl toggle — try browser voice first since ElevenLabs girl IDs may vary
-    const isMaleCheck=gender==="male";
-    if(!isMaleCheck){
-      // Use browser voice for girl — much more reliable
-      const u=new SpeechSynthesisUtterance();
-      const gr2=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
-      const PE2=plainEnglish(wx);
-      u.text="Good "+gr2+"! I'm Skyla! "+PE2.verdict+" In "+city+" it's "+wx.temp+" degrees. "+PE2.feel+". "+PE2.windWord+" "+PE2.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr2+"!";
-      u.rate=1.15;u.pitch=1.6;u.volume=1;
-      function tryGirlVoice(){
-        const vs=window.speechSynthesis.getVoices();
-        const v=vs.find(v=>v.name==="Samantha")||
-          vs.find(v=>v.name==="Karen")||
-          vs.find(v=>v.name==="Serena")||
-          vs.find(v=>v.name.includes("female")&&v.lang.startsWith("en"))||
-          vs.find(v=>v.name==="Google UK English Female")||
-          vs.find(v=>v.name==="Microsoft Zira")||
-          vs.find(v=>v.name.toLowerCase().includes("zira"))||
-          vs.find(v=>v.name.toLowerCase().includes("hazel"))||
-          vs.find(v=>v.name.toLowerCase().includes("susan"))||
-          vs.find(v=>v.lang.startsWith("en")&&v.name.toLowerCase().includes("female"))||
-          vs.filter(v=>v.lang.startsWith("en"))[1]||
-          vs.find(v=>v.lang.startsWith("en"));
-        if(v)u.voice=v;
-        u.onend=()=>setTalking(false);
-        setTalking(true);
-        window.speechSynthesis.speak(u);
-      }
-      const vs=window.speechSynthesis.getVoices();
-      if(vs.length>0){tryGirlVoice();}
-      else{window.speechSynthesis.onvoiceschanged=()=>tryGirlVoice();}
-      return;
-    }
+    // Both girl and boy use ElevenLabs
     const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
     const PE=plainEnglish(wx);
     const txt="Good "+gr+"! I'm Skyla. "+PE.verdict+" In "+city+" it's "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
