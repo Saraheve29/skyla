@@ -416,10 +416,41 @@ function App(){
     const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
     const PE=plainEnglish(DWX);
     const txt=`Good ${gr}! I'm Skyla. ${PE.verdict} In ${city} it's ${DWX.temp} degrees. ${PE.feel}. ${PE.windWord}. ${PE.rainWord}. ${ai.tip} Skyla score: ${ai.score} out of 10. Have a wonderful ${gr}!`;
-    const u=new SpeechSynthesisUtterance(txt);u.rate=.92;u.pitch=1.12;
+    const u=new SpeechSynthesisUtterance(txt);
+    const isMale=gender==="male";
+    // Rate and pitch — upbeat and young sounding
+    u.rate=isMale?1.08:1.12;
+    u.pitch=isMale?0.95:1.35;
+    u.volume=1;
     const vs=window.speechSynthesis.getVoices();
-    const v=vs.find(v=>v.name.includes("Samantha")||v.name.includes("Karen")||v.lang==="en-GB")||vs.find(v=>v.lang.startsWith("en"));
-    if(v)u.voice=v;u.onend=()=>setTalking(false);setTalking(true);window.speechSynthesis.speak(u);
+    let v;
+    if(isMale){
+      // Upbeat young male voice
+      v=vs.find(v=>v.name.includes("Daniel"))||
+        vs.find(v=>v.name.includes("Oliver"))||
+        vs.find(v=>v.name.includes("Arthur"))||
+        vs.find(v=>v.name.includes("James"))||
+        vs.find(v=>v.name.includes("Alex"))||
+        vs.find(v=>v.gender==="male"&&v.lang.startsWith("en"))||
+        vs.find(v=>v.lang==="en-GB")||
+        vs.find(v=>v.lang.startsWith("en"));
+    } else {
+      // Upbeat young female voice
+      v=vs.find(v=>v.name.includes("Samantha"))||
+        vs.find(v=>v.name.includes("Karen"))||
+        vs.find(v=>v.name.includes("Serena"))||
+        vs.find(v=>v.name.includes("Moira"))||
+        vs.find(v=>v.name.includes("Veena"))||
+        vs.find(v=>v.name.includes("Victoria"))||
+        vs.find(v=>v.name.includes("Tessa"))||
+        vs.find(v=>v.gender==="female"&&v.lang.startsWith("en"))||
+        vs.find(v=>v.lang==="en-GB")||
+        vs.find(v=>v.lang.startsWith("en"));
+    }
+    if(v)u.voice=v;
+    u.onend=()=>setTalking(false);
+    setTalking(true);
+    window.speechSynthesis.speak(u);
   }
 
   const DWX=getDisplayWx();
@@ -695,6 +726,35 @@ function App(){
                     <div style={{flex:1}}><Lbl>Plant Care</Lbl><div style={{fontSize:13,fontWeight:500,lineHeight:1.55}}>{ai.plant}</div><div style={{marginTop:8,display:"inline-block",background:"rgba(16,185,129,.2)",border:"1px solid rgba(16,185,129,.4)",borderRadius:100,padding:"4px 14px",fontSize:11,fontWeight:700,color:"#059669"}}>{ai.plantAction}</div></div>
                   </div>
                 </Card>
+                
+                {/* QUICK ASK SKYLA BUTTONS */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>✦ Quick Ask Skyla</div>
+                  <div style={{display:"flex",gap:7,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4}}>
+                    {[
+                      {icon:"🧣",label:"Warm beanie?",key:"beanie"},
+                      {icon:"👒",label:"Sun hat?",key:"sunhat"},
+                      {icon:"🧥",label:"Need a coat?",key:"coat"},
+                      {icon:"☂️",label:"Umbrella?",key:"umbrella"},
+                      {icon:"😎",label:"Suncream?",key:"suncream"},
+                      {icon:"👖",label:"Shorts or trousers?",key:"trousers"},
+                      {icon:"🧸",label:"Need a jumper?",key:"jumper"},
+                    ].map((btn,i)=>(
+                      <button key={i} onClick={()=>quickAsk(btn.key,btn.icon)}
+                        style={{flexShrink:0,background:quickAns?.icon===btn.icon?S.acc:"rgba(255,255,255,.2)",backdropFilter:"blur(12px)",border:`1px solid ${quickAns?.icon===btn.icon?"transparent":S.bdr}`,borderRadius:100,padding:"8px 14px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
+                        <span style={{fontSize:20}}>{quickLoading===btn.icon?"⏳":btn.icon}</span>
+                        <span style={{fontSize:9,fontWeight:800,color:quickAns?.icon===btn.icon?"white":S.sub,whiteSpace:"nowrap"}}>{btn.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {quickAns&&(
+                    <div style={{...G,padding:"12px 16px",marginTop:8,borderRadius:16,border:`1px solid ${S.acc}40`,display:"flex",gap:10,alignItems:"flex-start"}}>
+                      <div style={{fontSize:24,flexShrink:0}}>{quickAns.icon}</div>
+                      <div style={{fontSize:13,fontWeight:600,lineHeight:1.6,flex:1}}>{quickAns.text}</div>
+                      <button onClick={()=>setQuickAns(null)} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",opacity:.4,color:S.text,flexShrink:0}}>✕</button>
+                    </div>
+                  )}
+                </div>
                 <Card><Lbl>👗 Full Outfit</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{(ai.items||[]).map((item,i)=><div key={i} style={{background:"rgba(255,255,255,.18)",borderRadius:14,padding:"11px 12px",fontSize:13,fontWeight:600,lineHeight:1.3}}>{item}</div>)}</div></Card>
               </div>
             )}
@@ -1459,10 +1519,41 @@ function App(){
     const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
     const PE=plainEnglish(DWX);
     const txt=`Good ${gr}! I'm Skyla. ${PE.verdict} In ${city} it's ${DWX.temp} degrees. ${PE.feel}. ${PE.windWord}. ${PE.rainWord}. ${ai.tip} Skyla score: ${ai.score} out of 10. Have a wonderful ${gr}!`;
-    const u=new SpeechSynthesisUtterance(txt);u.rate=.92;u.pitch=1.12;
+    const u=new SpeechSynthesisUtterance(txt);
+    const isMale=gender==="male";
+    // Rate and pitch — upbeat and young sounding
+    u.rate=isMale?1.08:1.12;
+    u.pitch=isMale?0.95:1.35;
+    u.volume=1;
     const vs=window.speechSynthesis.getVoices();
-    const v=vs.find(v=>v.name.includes("Samantha")||v.name.includes("Karen")||v.lang==="en-GB")||vs.find(v=>v.lang.startsWith("en"));
-    if(v)u.voice=v;u.onend=()=>setTalking(false);setTalking(true);window.speechSynthesis.speak(u);
+    let v;
+    if(isMale){
+      // Upbeat young male voice
+      v=vs.find(v=>v.name.includes("Daniel"))||
+        vs.find(v=>v.name.includes("Oliver"))||
+        vs.find(v=>v.name.includes("Arthur"))||
+        vs.find(v=>v.name.includes("James"))||
+        vs.find(v=>v.name.includes("Alex"))||
+        vs.find(v=>v.gender==="male"&&v.lang.startsWith("en"))||
+        vs.find(v=>v.lang==="en-GB")||
+        vs.find(v=>v.lang.startsWith("en"));
+    } else {
+      // Upbeat young female voice
+      v=vs.find(v=>v.name.includes("Samantha"))||
+        vs.find(v=>v.name.includes("Karen"))||
+        vs.find(v=>v.name.includes("Serena"))||
+        vs.find(v=>v.name.includes("Moira"))||
+        vs.find(v=>v.name.includes("Veena"))||
+        vs.find(v=>v.name.includes("Victoria"))||
+        vs.find(v=>v.name.includes("Tessa"))||
+        vs.find(v=>v.gender==="female"&&v.lang.startsWith("en"))||
+        vs.find(v=>v.lang==="en-GB")||
+        vs.find(v=>v.lang.startsWith("en"));
+    }
+    if(v)u.voice=v;
+    u.onend=()=>setTalking(false);
+    setTalking(true);
+    window.speechSynthesis.speak(u);
   }
 
   const DWX=getDisplayWx();
@@ -1662,6 +1753,35 @@ function App(){
                     <div style={{flex:1}}><Lbl>Plant Care</Lbl><div style={{fontSize:13,fontWeight:500,lineHeight:1.55}}>{ai.plant}</div><div style={{marginTop:8,display:"inline-block",background:"rgba(16,185,129,.2)",border:"1px solid rgba(16,185,129,.4)",borderRadius:100,padding:"4px 14px",fontSize:11,fontWeight:700,color:"#059669"}}>{ai.plantAction}</div></div>
                   </div>
                 </Card>
+                
+                {/* QUICK ASK SKYLA BUTTONS */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>✦ Quick Ask Skyla</div>
+                  <div style={{display:"flex",gap:7,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4}}>
+                    {[
+                      {icon:"🧣",label:"Warm beanie?",key:"beanie"},
+                      {icon:"👒",label:"Sun hat?",key:"sunhat"},
+                      {icon:"🧥",label:"Need a coat?",key:"coat"},
+                      {icon:"☂️",label:"Umbrella?",key:"umbrella"},
+                      {icon:"😎",label:"Suncream?",key:"suncream"},
+                      {icon:"👖",label:"Shorts or trousers?",key:"trousers"},
+                      {icon:"🧸",label:"Need a jumper?",key:"jumper"},
+                    ].map((btn,i)=>(
+                      <button key={i} onClick={()=>quickAsk(btn.key,btn.icon)}
+                        style={{flexShrink:0,background:quickAns?.icon===btn.icon?S.acc:"rgba(255,255,255,.2)",backdropFilter:"blur(12px)",border:`1px solid ${quickAns?.icon===btn.icon?"transparent":S.bdr}`,borderRadius:100,padding:"8px 14px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
+                        <span style={{fontSize:20}}>{quickLoading===btn.icon?"⏳":btn.icon}</span>
+                        <span style={{fontSize:9,fontWeight:800,color:quickAns?.icon===btn.icon?"white":S.sub,whiteSpace:"nowrap"}}>{btn.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {quickAns&&(
+                    <div style={{...G,padding:"12px 16px",marginTop:8,borderRadius:16,border:`1px solid ${S.acc}40`,display:"flex",gap:10,alignItems:"flex-start"}}>
+                      <div style={{fontSize:24,flexShrink:0}}>{quickAns.icon}</div>
+                      <div style={{fontSize:13,fontWeight:600,lineHeight:1.6,flex:1}}>{quickAns.text}</div>
+                      <button onClick={()=>setQuickAns(null)} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",opacity:.4,color:S.text,flexShrink:0}}>✕</button>
+                    </div>
+                  )}
+                </div>
                 <Card><Lbl>👗 Full Outfit</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{(ai.items||[]).map((item,i)=><div key={i} style={{background:"rgba(255,255,255,.18)",borderRadius:14,padding:"11px 12px",fontSize:13,fontWeight:600,lineHeight:1.3}}>{item}</div>)}</div></Card>
               </div>
             )}
