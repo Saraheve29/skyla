@@ -1370,8 +1370,29 @@ function App(){
   const [holidayLoading,setHolidayLoading]=useState(false);
   const [briefingTime,setBriefingTime]=useState(()=>sg("skyla_briefing")||"07:00");
   const [briefingSaved,setBriefingSaved]=useState(false);
+  const [quickAns,setQuickAns]=useState(null);
+  const [quickLoading,setQuickLoading]=useState(false);
 
   function toggleGender(g){setGender(g);ss("skyla_gender",g);}
+
+  async function quickAsk(question,icon){
+    setQuickLoading(icon);setQuickAns(null);
+    try{
+      const feels=wx.feels,temp=wx.temp,rain=wx.rain,code=wx.code;
+      const answers={
+        "beanie":feels<=8?"Yes, definitely wear a warm beanie today! It's cold out there 🧣":feels<=13?"Could be handy — it's on the cool side. Pop one in your bag! 🧣":"No need for a beanie today — it's too warm for that! 😊",
+        "sunhat":temp>=22&&code<=2?"Yes! It's hot and sunny — a sun hat is a great idea today ☀️":temp>=18&&code<=2?"Might be worth it if you're out for a while — it's warm and bright 🌤️":"No need for a sun hat today — not sunny enough!",
+        "coat":feels<=10?"Yes, definitely wear a coat today — it's cold! 🧥":feels<=14?"A light jacket would be perfect — not freezing but cool 🧥":"No coat needed today — it's warm enough without one! 😊",
+        "umbrella":rain>=70?"Yes, take your umbrella — high chance of rain today! ☔":rain>=40?"Maybe pop one in your bag just in case — "+rain+"% chance of rain 🌂":"No umbrella needed — looking dry today! ☀️",
+        "suncream":temp>=22&&code<=2?"Yes! Put suncream on today — it's hot and sunny ☀️":temp>=18&&code<=3?"Factor 15 wouldn't hurt — it's warm and bright today 🌤️":"No suncream needed today — not sunny enough!",
+        "trousers":feels<=14?"Definitely wear trousers today — too cold for shorts! 🧥":feels<=19?"Jeans or light trousers would be perfect today 👖":"Shorts weather! Too warm for trousers today 🩳",
+        "jumper":feels<=16?"Yes, wear a jumper today — it's on the cool side! 🧸":feels<=20?"A light jumper or cardigan would be comfy 🧸":"No jumper needed — it's warm enough without one! ☀️",
+      };
+      const key=Object.keys(answers).find(k=>question.toLowerCase().includes(k));
+      const ans=answers[key]||"Based on today's weather I'd say yes — always better to be prepared! 🩷";
+      setTimeout(()=>{setQuickAns({text:ans,icon});setQuickLoading(null);},400);
+    }catch{setQuickAns({text:"Let me check that for you next time! 🩷",icon});setQuickLoading(null);}
+  }
 
   async function checkEvent(){
     if(!eventDate||!eventName.trim())return;
