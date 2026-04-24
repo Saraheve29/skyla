@@ -577,34 +577,6 @@ function App(){
               <div style={{fontSize:14,fontWeight:600,lineHeight:1.6}}>{ai.msg}</div>
             </div>
 
-            {/* QUICK ASK SKYLA BUTTONS */}
-            <div style={{marginBottom:12}}>
-              <div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>Quick Ask Skyla</div>
-              <div style={{display:"flex",gap:7,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:6}}>
-                {[
-                  {icon:"🧣",label:"Warm beanie?",key:"beanie"},
-                  {icon:"👒",label:"Sun hat?",key:"sunhat"},
-                  {icon:"🧥",label:"Need a coat?",key:"coat"},
-                  {icon:"☂️",label:"Umbrella?",key:"umbrella"},
-                  {icon:"😎",label:"Suncream?",key:"suncream"},
-                  {icon:"👖",label:"Shorts or trousers?",key:"trousers"},
-                  {icon:"🧸",label:"Need a jumper?",key:"jumper"},
-                ].map((btn,i)=>(
-                  <button key={i} onClick={()=>quickAsk(btn.key,btn.icon)}
-                    style={{flexShrink:0,background:quickAns?.icon===btn.icon?S.acc:"rgba(255,255,255,.2)",backdropFilter:"blur(12px)",border:`1px solid ${quickAns?.icon===btn.icon?"transparent":S.bdr}`,borderRadius:100,padding:"8px 14px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-                    <span style={{fontSize:20}}>{quickLoading===btn.icon?"⏳":btn.icon}</span>
-                    <span style={{fontSize:9,fontWeight:800,color:quickAns?.icon===btn.icon?"white":S.sub,whiteSpace:"nowrap"}}>{btn.label}</span>
-                  </button>
-                ))}
-              </div>
-              {quickAns&&(
-                <div style={{...G,padding:"12px 16px",marginTop:8,borderRadius:16,border:`1px solid ${S.acc}40`,display:"flex",gap:10,alignItems:"flex-start"}}>
-                  <div style={{fontSize:24,flexShrink:0}}>{quickAns.icon}</div>
-                  <div style={{fontSize:13,fontWeight:600,lineHeight:1.6,flex:1}}>{quickAns.text}</div>
-                  <button onClick={()=>setQuickAns(null)} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",opacity:.4,color:S.text,flexShrink:0}}>✕</button>
-                </div>
-              )}
-            </div>
 
             {/* TABS */}
             <div style={{...G,padding:"6px",marginBottom:14,display:"flex",gap:4,borderRadius:20,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
@@ -652,6 +624,35 @@ function App(){
                   <div style={{height:1,background:"rgba(255,255,255,.18)",margin:"10px 0"}}/>
                   <div style={{fontSize:13,lineHeight:1.7,fontWeight:500}}>✦ {ai.tip}</div>
                 </Card>
+
+                {/* QUICK ASK SKYLA BUTTONS */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>✦ Quick Ask Skyla</div>
+                  <div style={{display:"flex",gap:7,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4}}>
+                    {[
+                      {icon:"🧣",label:"Warm beanie?",key:"beanie"},
+                      {icon:"👒",label:"Sun hat?",key:"sunhat"},
+                      {icon:"🧥",label:"Need a coat?",key:"coat"},
+                      {icon:"☂️",label:"Umbrella?",key:"umbrella"},
+                      {icon:"😎",label:"Suncream?",key:"suncream"},
+                      {icon:"👖",label:"Shorts or trousers?",key:"trousers"},
+                      {icon:"🧸",label:"Need a jumper?",key:"jumper"},
+                    ].map((btn,i)=>(
+                      <button key={i} onClick={()=>quickAsk(btn.key,btn.icon)}
+                        style={{flexShrink:0,background:quickAns?.icon===btn.icon?S.acc:"rgba(255,255,255,.2)",backdropFilter:"blur(12px)",border:`1px solid ${quickAns?.icon===btn.icon?"transparent":S.bdr}`,borderRadius:100,padding:"8px 14px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
+                        <span style={{fontSize:20}}>{quickLoading===btn.icon?"⏳":btn.icon}</span>
+                        <span style={{fontSize:9,fontWeight:800,color:quickAns?.icon===btn.icon?"white":S.sub,whiteSpace:"nowrap"}}>{btn.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {quickAns&&(
+                    <div style={{...G,padding:"12px 16px",marginTop:8,borderRadius:16,border:`1px solid ${S.acc}40`,display:"flex",gap:10,alignItems:"flex-start"}}>
+                      <div style={{fontSize:24,flexShrink:0}}>{quickAns.icon}</div>
+                      <div style={{fontSize:13,fontWeight:600,lineHeight:1.6,flex:1}}>{quickAns.text}</div>
+                      <button onClick={()=>setQuickAns(null)} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",opacity:.4,color:S.text,flexShrink:0}}>✕</button>
+                    </div>
+                  )}
+                </div>
             {/* PREMIUM PROMO CARD — gorgeous, central, unmissable */}
             {!isPremium&&(
               <div onClick={()=>setShowPaywall(true)} style={{marginBottom:14,borderRadius:22,background:"linear-gradient(135deg,#120026 0%,#4c1d95 50%,#120026 100%)",border:"1px solid rgba(233,30,140,.45)",padding:"22px 20px",cursor:"pointer",boxShadow:"0 8px 40px rgba(233,30,140,.25), 0 2px 8px rgba(0,0,0,.3)",position:"relative",overflow:"hidden"}}>
