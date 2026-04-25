@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  // Parse body manually since we are not using Next.js
   let body = "";
   await new Promise((resolve) => {
     req.on("data", (chunk) => { body += chunk; });
@@ -23,12 +22,13 @@ export default async function handler(req, res) {
   if (!text || !voiceId) return res.status(400).json({ error: "Missing text or voiceId" });
 
   const KEY = "sk_032976f800904cea65184d02375073ebc528f0066def603e";
+  const GIRL = "PoHUWWWMHFrA8z7Q88pu";
 
-  // Make girl voice happy and upbeat, boy voice confident
-  const isGirl = voiceId === "PoHUWWWMHFrA8z7Q88pu";
-  const voiceSettings = isGirl
-    ? { stability: 0.15, similarity_boost: 0.9, style: 1.0, use_speaker_boost: true }
-    : { stability: 0.4, similarity_boost: 0.85, style: 0.6, use_speaker_boost: true };
+  // Girl: very low stability = expressive & upbeat, high style = emotional & lively
+  // Boy: medium stability = natural & warm, medium style = friendly human feel
+  const voiceSettings = voiceId === GIRL
+    ? { stability: 0.10, similarity_boost: 0.95, style: 1.0, use_speaker_boost: true }
+    : { stability: 0.25, similarity_boost: 0.90, style: 0.75, use_speaker_boost: true };
 
   try {
     const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       headers: { "Content-Type": "application/json", "xi-api-key": KEY },
       body: JSON.stringify({
         text: text,
-        model_id: "eleven_multilingual_v2",
+        model_id: "eleven_turbo_v2_5",
         voice_settings: voiceSettings
       })
     });
