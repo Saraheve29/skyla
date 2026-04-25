@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#FFB7C5">
-<meta name="description" content="Skyla - Your AI Weather Decision Assistant">
 <link rel="manifest" href="/manifest.json">
-<title>Skyla 🩷 AI Weather</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Skyla AI Weather</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
@@ -15,433 +14,189 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-@keyframes eyeBlink{0%,85%,100%{transform:scaleY(1)}90%,96%{transform:scaleY(0.04)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
-@keyframes sunRot{to{transform:rotate(360deg)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,90%,100%{transform:scaleY(1)}93%{transform:scaleY(0.05)}}
+@keyframes rainFall{0%{opacity:0;transform:translateY(-20px)}10%{opacity:1}90%{opacity:.6}100%{opacity:0;transform:translateY(100vh)}}
+@keyframes snowDrift{0%{opacity:0;transform:translateY(-10px) rotate(0deg)}10%{opacity:.9}100%{opacity:0;transform:translateY(100vh) rotate(360deg)}}
 @keyframes cloudSail{from{transform:translateX(-350px)}to{transform:translateX(110vw)}}
-@keyframes rainFall{0%{opacity:0;transform:translateY(-30px)}8%{opacity:1}92%{opacity:.7}100%{opacity:0;transform:translateY(105vh)}}
-@keyframes snowDrift{0%{opacity:0;transform:translateY(-20px) rotate(0deg)}8%{opacity:.9}100%{opacity:0;transform:translateY(105vh) rotate(720deg)}}
-@keyframes bolt{0%,88%,100%{opacity:0}89%,93%{opacity:1}91%{opacity:.2}95%{opacity:.8}}
-@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.3)}}
-@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes popIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
-input[type=date],input[type=time]{color-scheme:light}
-::-webkit-scrollbar{width:0;height:0}
+@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes bolt{0%,85%,100%{opacity:0}87%,92%{opacity:1}}
+@keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+::-webkit-scrollbar{width:0}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
-const {useState,useEffect,useRef,useCallback}=React;
+const {useState,useEffect,useRef}=React;
 
-// ── Storage helpers ──────────────────────────────────────────────────────────
 function sg(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}}
 function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
-// ── WMO weather code descriptions ────────────────────────────────────────────
 function wmoDesc(c){
-  const m={0:"Clear sky",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",
-    45:"Foggy",48:"Icy fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",
-    61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",
-    77:"Snow grains",80:"Light showers",81:"Showers",82:"Heavy showers",
-    85:"Snow showers",86:"Heavy snow showers",95:"Thunderstorm",96:"Thunderstorm + hail",99:"Thunderstorm + heavy hail"};
-  return m[c]??"Cloudy";
+  const m={0:"Clear sky",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",45:"Foggy",51:"Light drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",80:"Light showers",81:"Showers",82:"Heavy showers",95:"Thunderstorm",96:"Thunderstorm"};
+  return m[c]||"Cloudy";
 }
 
-// ── Weather type from code + isDay ───────────────────────────────────────────
 function wxType(c,d){
   if(!d)return"night";
   if(c===0)return"sunny";
   if(c<=2)return"partly";
   if(c<=3)return"cloudy";
-  if(c<=67||c<=82)return"rainy";
-  if(c<=77)return"snowy";
   if(c>=95)return"stormy";
+  if(c>=71&&c<=77)return"snowy";
+  if(c>=51)return"rainy";
   return"partly";
 }
 
-// ── Scene colours ────────────────────────────────────────────────────────────
 const SC={
-  sunny: {acc:"#D97706",text:"#1C0A00",sub:"rgba(28,10,0,.5)",bdr:"rgba(255,255,255,.45)",em:"☀️",name:"Sunny"},
-  partly: {acc:"#2563EB",text:"#0C1A3D",sub:"rgba(12,26,61,.5)",bdr:"rgba(255,255,255,.5)",em:"⛅",name:"Partly Cloudy"},
-  cloudy: {acc:"#475569",text:"#0F172A",sub:"rgba(15,23,42,.5)",bdr:"rgba(255,255,255,.38)",em:"☁️",name:"Overcast"},
-  rainy:  {acc:"#60A5FA",text:"#EFF6FF",sub:"rgba(239,246,255,.55)",bdr:"rgba(255,255,255,.18)",em:"🌧️",name:"Rainy"},
-  snowy:  {acc:"#0369A1",text:"#082F49",sub:"rgba(8,47,73,.5)",bdr:"rgba(255,255,255,.5)",em:"❄️",name:"Snowy"},
-  stormy: {acc:"#A78BFA",text:"#EEF2FF",sub:"rgba(238,242,255,.5)",bdr:"rgba(255,255,255,.12)",em:"⛈️",name:"Thunderstorm"},
-  night:  {acc:"#818CF8",text:"#F0F4FF",sub:"rgba(240,244,255,.5)",bdr:"rgba(255,255,255,.12)",em:"🌙",name:"Night"},
+  sunny:{acc:"#D97706",text:"#1C0A00",sub:"rgba(28,10,0,.5)",bdr:"rgba(255,255,255,.4)",em:"☀️",bg:"linear-gradient(175deg,#1a6fa8,#87CEEB,#ffd166)"},
+  partly:{acc:"#2563EB",text:"#0C1A3D",sub:"rgba(12,26,61,.5)",bdr:"rgba(255,255,255,.45)",em:"⛅",bg:"linear-gradient(175deg,#1565c0,#42a5f5,#e3f2fd)"},
+  cloudy:{acc:"#475569",text:"#0F172A",sub:"rgba(15,23,42,.5)",bdr:"rgba(255,255,255,.35)",em:"☁️",bg:"linear-gradient(175deg,#37474f,#546e7a,#78909c)"},
+  rainy:{acc:"#60A5FA",text:"#EFF6FF",sub:"rgba(239,246,255,.5)",bdr:"rgba(255,255,255,.18)",em:"🌧️",bg:"linear-gradient(175deg,#0d1b3e,#1e3a8a,#1976d2)"},
+  snowy:{acc:"#0369A1",text:"#082F49",sub:"rgba(8,47,73,.5)",bdr:"rgba(255,255,255,.45)",em:"❄️",bg:"linear-gradient(175deg,#90a4ae,#cfd8dc,#f4f8fa)"},
+  stormy:{acc:"#A78BFA",text:"#EEF2FF",sub:"rgba(238,242,255,.5)",bdr:"rgba(255,255,255,.12)",em:"⛈️",bg:"linear-gradient(175deg,#04020f,#1a0f3d,#3730a3)"},
+  night:{acc:"#818CF8",text:"#F0F4FF",sub:"rgba(240,244,255,.5)",bdr:"rgba(255,255,255,.12)",em:"🌙",bg:"linear-gradient(175deg,#020408,#0a1628,#162a4a)"},
 };
 
-// ── Plain English weather logic ───────────────────────────────────────────────
 function plainEnglish(w){
-  if(!w)return{verdict:"",feel:"",windWord:"",rainWord:"",deceiving:false};
-  const{temp,feels,wind,rain,humid}=w;
-  const coldGap=temp-feels;
+  if(!w)return{verdict:"",feel:"",windWord:"",rainWord:"",deceiving:false,coldGap:0};
+  const{temp,feels,wind,rain}=w;
+  const coldGap=Math.max(0,temp-feels);
   const deceiving=temp>=14&&coldGap>=4;
   const verdict=deceiving
-    ?`Sneaky one — it looks nicer than it is! The wind makes it feel ${coldGap}° colder than it looks.`
-    :feels<=4?"It's bitterly cold out there — wrap up properly!"
-    :feels<=8?"It's cold — you'll definitely need a warm coat."
-    :feels<=12?"It's chilly — a good jacket is a must."
-    :feels<=16?"It's cool and fresh — a light jacket would be perfect."
-    :feels<=20?"It's mild and pleasant — a light layer should do it."
-    :feels<=24?"It's warm and lovely — light clothing works perfectly."
-    :"It's hot today — stay cool and drink plenty of water!";
-  const feel=feels<=4?"Bitterly cold 🥶":feels<=8?"Cold ❄️":feels<=12?"Chilly 🧥":feels<=16?"Cool & fresh 🍂":feels<=20?"Mild & pleasant 🌤️":feels<=24?"Warm & lovely ☀️":"Hot! 🌞";
-  const windWord=wind<10?"Calm — barely any wind.":wind<20?"A light breeze.":wind<35?"A noticeable breeze on your face.":wind<50?"It's quite windy today.":"Very windy — hold onto your hat!";
-  const rainWord=rain<15?"Looks dry — no umbrella needed.":rain<40?"Small chance of a shower — might be fine.":rain<65?"Rain likely — pop an umbrella in your bag.":"Very likely to rain — definitely take your umbrella!";
+    ?"Sneaky one — it looks nicer than it is! The wind makes it feel "+coldGap+"C colder than it looks."
+    :feels<=4?"It is bitterly cold out there — wrap up properly!"
+    :feels<=8?"It is cold — you will definitely need a warm coat."
+    :feels<=12?"It is chilly — a good jacket is a must."
+    :feels<=16?"It is cool and fresh — a light jacket would be perfect."
+    :feels<=20?"It is mild and pleasant — a light layer should do it."
+    :feels<=24?"It is warm and lovely — light clothing works perfectly."
+    :"It is hot today — stay cool and drink plenty of water!";
+  const feel=feels<=4?"Bitterly cold":feels<=8?"Cold":feels<=12?"Chilly":feels<=16?"Cool and fresh":feels<=20?"Mild and pleasant":feels<=24?"Warm and lovely":"Hot!";
+  const windWord=wind<10?"Calm — barely any wind.":wind<20?"A light breeze.":wind<35?"A noticeable breeze.":wind<50?"Quite windy today.":"Very windy — hold onto your hat!";
+  const rainWord=rain<15?"Looks dry — no umbrella needed.":rain<40?"Small chance of a shower.":rain<65?"Rain likely — take an umbrella.":"Very likely to rain — definitely take your umbrella!";
   return{verdict,feel,windWord,rainWord,deceiving,coldGap};
 }
 
-// ── SkylaGirl component ──────────────────────────────────────────────────────
-function SkylaGirl({type}){
-  const skin="#FFB7C5",skinD="#F48FAA",blush="#E91E8C";
-  const HC={sunny:{h:"#E91E8C",h2:"#F06292"},partly:{h:"#C2185B",h2:"#E91E8C"},cloudy:{h:"#AD1457",h2:"#C2185B"},rainy:{h:"#880E4F",h2:"#AD1457"},snowy:{h:"#FCE4EC",h2:"#F8BBD0"},stormy:{h:"#880E4F",h2:"#AD1457"},night:{h:"#C2185B",h2:"#AD1457"}}[type]||{h:"#E91E8C",h2:"#F06292"};
-  const eyeC="#880E4F";
-  const Hair=()=><g>
-    <ellipse cx="50" cy="38" rx="30" ry="32" fill={HC.h}/>
-    <path d="M20 38 Q15 70 22 95 Q30 105 36 100 Q24 75 25 50 Z" fill={HC.h}/>
-    <path d="M80 38 Q85 70 78 95 Q70 105 64 100 Q76 75 75 50 Z" fill={HC.h}/>
-    <ellipse cx="50" cy="28" rx="26" ry="16" fill={HC.h}/>
-    <path d="M24 28 Q26 12 50 10 Q74 12 76 28" fill={HC.h2}/>
-    <path d="M38 18 Q50 12 62 18 Q50 24 38 18 Z" fill="#EF4444"/>
-    <path d="M38 18 Q34 12 38 8 Q44 14 38 18 Z" fill="#EF4444"/>
-    <path d="M62 18 Q66 12 62 8 Q56 14 62 18 Z" fill="#EF4444"/>
-    <circle cx="50" cy="18" r="4" fill="#DC2626"/>
-  </g>;
-  const Outfit=()=>{
-    if(type==="rainy")return<g>
-      <rect x="24" y="74" width="52" height="38" rx="13" fill="#FCD34D"/>
-      <rect x="24" y="74" width="52" height="17" rx="10" fill="#F59E0B"/>
-      <path d="M24 82 Q50 70 76 82 Q76 62 50 58 Q24 62 24 82 Z" fill="#F59E0B"/>
-      <rect x="28" y="110" width="18" height="22" rx="7" fill="#1D4ED8"/>
-      <ellipse cx="37" cy="110" rx="9" ry="5.5" fill="#2563EB"/>
-      <rect x="54" y="110" width="18" height="22" rx="7" fill="#1D4ED8"/>
-      <ellipse cx="63" cy="110" rx="9" ry="5.5" fill="#2563EB"/>
-    </g>;
-    if(type==="snowy")return<g>
-      <rect x="22" y="72" width="56" height="40" rx="14" fill="#BAE6FD"/>
-      <rect x="22" y="72" width="56" height="18" rx="11" fill="#7DD3FC"/>
-      <path d="M22 82 Q50 68 78 82 Q78 60 50 56 Q22 60 22 82 Z" fill="#7DD3FC"/>
-      <rect x="32" y="76" width="36" height="8" rx="4" fill="#EF4444"/>
-      <rect x="26" y="110" width="19" height="22" rx="8" fill="#0369A1"/>
-      <ellipse cx="35.5" cy="110" rx="9.5" ry="5.5" fill="#0284C7"/>
-      <rect x="55" y="110" width="19" height="22" rx="8" fill="#0369A1"/>
-      <ellipse cx="64.5" cy="110" rx="9.5" ry="5.5" fill="#0284C7"/>
-    </g>;
-    if(type==="stormy")return<g>
-      <rect x="24" y="74" width="52" height="38" rx="13" fill="#312E81"/>
-      <rect x="24" y="74" width="52" height="18" rx="10" fill="#1E1B4B"/>
-      <path d="M24 83 Q50 70 76 83 Q76 62 50 58 Q24 62 24 83 Z" fill="#1E1B4B"/>
-      <rect x="26" y="110" width="18" height="22" rx="7" fill="#0F0A2E"/>
-      <ellipse cx="35" cy="110" rx="9" ry="5" fill="#1E1B4B"/>
-      <rect x="56" y="110" width="18" height="22" rx="7" fill="#0F0A2E"/>
-      <ellipse cx="65" cy="110" rx="9" ry="5" fill="#1E1B4B"/>
-    </g>;
-    if(type==="night")return<g>
-      <rect x="28" y="79" width="44" height="27" rx="11" fill="#C7D2FE"/>
-      <rect x="28" y="79" width="44" height="13" rx="7" fill="#A5B4FC"/>
-      <text x="36" y="90" fontSize="7" fill="#818CF8">✦</text>
-      <text x="56" y="87" fontSize="7" fill="#6366F1">✦</text>
-      <text x="46" y="100" fontSize="7" fill="#818CF8">✦</text>
-      <rect x="30" y="104" width="16" height="24" rx="7" fill="#C7D2FE"/>
-      <rect x="54" y="104" width="16" height="24" rx="7" fill="#C7D2FE"/>
-    </g>;
-    if(type==="cloudy"||type==="partly")return<g>
-      <rect x="28" y="79" width="44" height="27" rx="11" fill="#BFDBFE"/>
-      <rect x="28" y="79" width="44" height="13" rx="7" fill="#93C5FD"/>
-      <rect x="30" y="104" width="16" height="24" rx="7" fill="#60A5FA"/>
-      <rect x="54" y="104" width="16" height="24" rx="7" fill="#60A5FA"/>
-    </g>;
-    return<g>
-      <path d="M34 85 Q50 80 66 85 L72 130 Q50 136 28 130 Z" fill="#FCD34D"/>
-      <path d="M34 85 Q50 80 66 85 L64 97 Q50 93 36 97 Z" fill="#F59E0B"/>
-      <rect x="41" y="74" width="5" height="14" rx="2.5" fill="#F59E0B"/>
-      <rect x="54" y="74" width="5" height="14" rx="2.5" fill="#F59E0B"/>
-      <path d="M30 128 Q39 124 44 130 L44 135 Q38 137 30 134 Z" fill="#C2770A"/>
-      <path d="M56 128 Q65 124 70 130 L70 135 Q64 137 56 134 Z" fill="#C2770A"/>
-    </g>;
-  };
-  return(
-    <div style={{animation:"float 6s ease-in-out infinite",flexShrink:0}}>
-      <svg width="160" height="180" viewBox="0 0 100 138">
-        <defs><radialGradient id="skg" cx="40%" cy="35%"><stop offset="0%" stopColor="#FEE8C8"/><stop offset="60%" stopColor={skin}/><stop offset="100%" stopColor={skinD}/></radialGradient></defs>
-        <Outfit/><Hair/>
-        <rect x="44" y="70" width="12" height="14" rx="5" fill={skin}/>
-        <ellipse cx="50" cy="52" rx="23" ry="24" fill="url(#skg)"/>
-        <ellipse cx="27" cy="52" rx="5" ry="6" fill={skinD}/>
-        <ellipse cx="73" cy="52" rx="5" ry="6" fill={skinD}/>
-        <path d="M36 40 Q42 37 46 39" stroke={HC.h} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <path d="M54 39 Q58 37 64 40" stroke={HC.h} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <ellipse cx="40" cy="50" rx="7" ry="8" fill="white"/>
-        <ellipse cx="60" cy="50" rx="7" ry="8" fill="white"/>
-        <ellipse cx="40" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite"}}/>
-        <ellipse cx="60" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
-        <ellipse cx="40.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.75)" style={{animation:"eyeBlink 5s ease-in-out infinite"}}/>
-        <ellipse cx="60.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.75)" style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
-        <circle cx="42.5" cy="48.5" r="2.2" fill="white" opacity=".95"/>
-        <circle cx="62.5" cy="48.5" r="2.2" fill="white" opacity=".95"/>
-        <line x1="36" y1="43.5" x2="35.2" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <line x1="38.5" y1="43.5" x2="37.7" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <line x1="41" y1="43.5" x2="40.2" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <line x1="43.5" y1="43.5" x2="42.7" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <line x1="56" y1="43.5" x2="55.2" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <line x1="58.5" y1="43.5" x2="57.7" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <line x1="61" y1="43.5" x2="60.2" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <line x1="63.5" y1="43.5" x2="62.7" y2="40" stroke={HC.h} strokeWidth="1.2" strokeLinecap="round"/>
-        <ellipse cx="33" cy="58" rx="8" ry="5.5" fill={blush} opacity=".45"/>
-        <ellipse cx="67" cy="58" rx="8" ry="5.5" fill={blush} opacity=".45"/>
-        <path d="M42 64 Q50 71 58 64" stroke={skinD} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity=".8"/>
-      </svg>
-    </div>
-  );
-}
-
-// ── SkylaGuy component ───────────────────────────────────────────────────────
-function SkylaGuy({type}){
-  const skin="#FFB7C5",skinD="#F48FAA",blush="#E91E8C";
-  const HC={sunny:{h:"#1565C0",h2:"#1976D2"},partly:{h:"#0D47A1",h2:"#1565C0"},cloudy:{h:"#37474F",h2:"#455A64"},rainy:{h:"#1A237E",h2:"#283593"},snowy:{h:"#E8EAF6",h2:"#C5CAE9"},stormy:{h:"#0D0D1A",h2:"#1A1A35"},night:{h:"#1A1A35",h2:"#12122A"}}[type]||{h:"#1565C0",h2:"#1976D2"};
-  const eyeC="#880E4F";
-  const Hair=()=><g>
-    <ellipse cx="50" cy="36" rx="26" ry="20" fill={HC.h}/>
-    <path d="M24 36 Q20 52 26 66 Q32 74 38 70 Q26 58 28 44 Z" fill={HC.h}/>
-    <path d="M76 36 Q80 52 74 66 Q68 74 62 70 Q74 58 72 44 Z" fill={HC.h}/>
-    <ellipse cx="50" cy="24" rx="24" ry="13" fill={HC.h}/>
-    <path d="M26 24 Q28 11 50 9 Q72 11 74 24" fill={HC.h2}/>
-  </g>;
-  const Outfit=()=>{
-    if(type==="rainy")return<g>
-      <rect x="24" y="74" width="52" height="38" rx="13" fill="#1D4ED8"/>
-      <rect x="24" y="74" width="52" height="17" rx="10" fill="#1E40AF"/>
-      <path d="M24 82 Q50 70 76 82 Q76 62 50 58 Q24 62 24 82 Z" fill="#1E40AF"/>
-      <rect x="28" y="110" width="18" height="22" rx="7" fill="#1D4ED8"/>
-      <ellipse cx="37" cy="110" rx="9" ry="5.5" fill="#2563EB"/>
-      <rect x="54" y="110" width="18" height="22" rx="7" fill="#1D4ED8"/>
-      <ellipse cx="63" cy="110" rx="9" ry="5.5" fill="#2563EB"/>
-    </g>;
-    if(type==="snowy")return<g>
-      <rect x="22" y="72" width="56" height="40" rx="14" fill="#BAE6FD"/>
-      <rect x="22" y="72" width="56" height="18" rx="11" fill="#7DD3FC"/>
-      <path d="M22 82 Q50 68 78 82 Q78 60 50 56 Q22 60 22 82 Z" fill="#7DD3FC"/>
-      <rect x="32" y="76" width="36" height="8" rx="4" fill="#EF4444"/>
-      <rect x="26" y="110" width="19" height="22" rx="8" fill="#0369A1"/>
-      <ellipse cx="35.5" cy="110" rx="9.5" ry="5.5" fill="#0284C7"/>
-      <rect x="55" y="110" width="19" height="22" rx="8" fill="#0369A1"/>
-      <ellipse cx="64.5" cy="110" rx="9.5" ry="5.5" fill="#0284C7"/>
-    </g>;
-    if(type==="stormy")return<g>
-      <rect x="24" y="74" width="52" height="38" rx="13" fill="#1E1B4B"/>
-      <rect x="24" y="74" width="52" height="18" rx="10" fill="#0F0A2E"/>
-      <path d="M24 83 Q50 70 76 83 Q76 62 50 58 Q24 62 24 83 Z" fill="#0F0A2E"/>
-      <rect x="26" y="110" width="18" height="22" rx="7" fill="#0F0A2E"/>
-      <rect x="56" y="110" width="18" height="22" rx="7" fill="#0F0A2E"/>
-    </g>;
-    if(type==="night")return<g>
-      <rect x="28" y="79" width="44" height="27" rx="11" fill="#1E3A8A"/>
-      <rect x="28" y="79" width="44" height="13" rx="7" fill="#1E40AF"/>
-      <rect x="30" y="104" width="16" height="24" rx="7" fill="#1E3A8A"/>
-      <rect x="54" y="104" width="16" height="24" rx="7" fill="#1E3A8A"/>
-    </g>;
-    if(type==="cloudy"||type==="partly")return<g>
-      <rect x="28" y="79" width="44" height="27" rx="11" fill="#BFDBFE"/>
-      <rect x="28" y="79" width="44" height="13" rx="7" fill="#93C5FD"/>
-      <rect x="30" y="104" width="16" height="24" rx="7" fill="#1D4ED8"/>
-      <rect x="54" y="104" width="16" height="24" rx="7" fill="#1D4ED8"/>
-    </g>;
-    return<g>
-      <rect x="28" y="79" width="44" height="27" rx="11" fill="#FEF3C7"/>
-      <rect x="28" y="79" width="44" height="13" rx="7" fill="#FDE68A"/>
-      <rect x="30" y="104" width="16" height="24" rx="7" fill="#92400E"/>
-      <rect x="54" y="104" width="16" height="24" rx="7" fill="#92400E"/>
-    </g>;
-  };
-  return(
-    <div style={{animation:"float 6s ease-in-out infinite",flexShrink:0}}>
-      <svg width="160" height="180" viewBox="0 0 100 138">
-        <defs><radialGradient id="sgk" cx="40%" cy="35%"><stop offset="0%" stopColor="#FEE8C8"/><stop offset="60%" stopColor={skin}/><stop offset="100%" stopColor={skinD}/></radialGradient></defs>
-        <Outfit/><Hair/>
-        <rect x="44" y="70" width="12" height="14" rx="5" fill={skin}/>
-        <ellipse cx="50" cy="52" rx="23" ry="24" fill="url(#sgk)"/>
-        <ellipse cx="27" cy="52" rx="5" ry="6" fill={skinD}/>
-        <ellipse cx="73" cy="52" rx="5" ry="6" fill={skinD}/>
-        <path d="M36 40 Q42 37 46 39" stroke={HC.h} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <path d="M54 39 Q58 37 64 40" stroke={HC.h} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <ellipse cx="40" cy="50" rx="7" ry="8" fill="white"/>
-        <ellipse cx="60" cy="50" rx="7" ry="8" fill="white"/>
-        <ellipse cx="40" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite"}}/>
-        <ellipse cx="60" cy="51" rx="5.5" ry="6.5" fill={eyeC} style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
-        <ellipse cx="40.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.75)" style={{animation:"eyeBlink 5s ease-in-out infinite"}}/>
-        <ellipse cx="60.5" cy="51.5" rx="3" ry="3.8" fill="rgba(0,0,0,.75)" style={{animation:"eyeBlink 5s ease-in-out infinite .22s"}}/>
-        <circle cx="42.5" cy="48.5" r="2.2" fill="white" opacity=".95"/>
-        <circle cx="62.5" cy="48.5" r="2.2" fill="white" opacity=".95"/>
-        <ellipse cx="33" cy="58" rx="8" ry="5.5" fill={blush} opacity=".45"/>
-        <ellipse cx="67" cy="58" rx="8" ry="5.5" fill={blush} opacity=".45"/>
-        <path d="M42 64 Q50 71 58 64" stroke={skinD} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity=".8"/>
-      </svg>
-    </div>
-  );
-}
-
-function Character({type,gender}){
-  return gender==="male"?<SkylaGuy type={type}/>:<SkylaGirl type={type}/>;
-}
-
-
-// ── Animated Weather Backgrounds ────────────────────────────────────────────
 function BG({type}){
-  const bgs={
-    sunny:"linear-gradient(175deg,#1a6fa8 0%,#38a8e0 18%,#87CEEB 40%,#ffedb5 72%,#ffd166 88%,#ffb347 100%)",
-    partly:"linear-gradient(175deg,#1565c0 0%,#1e88e5 20%,#42a5f5 42%,#90caf9 68%,#e3f2fd 100%)",
-    cloudy:"linear-gradient(175deg,#37474f 0%,#455a64 20%,#546e7a 45%,#607d8b 70%,#78909c 100%)",
-    rainy:"linear-gradient(175deg,#0d1b3e 0%,#1a2f6a 25%,#1e3a8a 55%,#1565c0 80%,#1976d2 100%)",
-    snowy:"linear-gradient(175deg,#90a4ae 0%,#b0bec5 30%,#cfd8dc 60%,#e0e6ea 80%,#f4f8fa 100%)",
-    stormy:"linear-gradient(175deg,#04020f 0%,#0a0520 20%,#1a0f3d 45%,#2a1660 70%,#3730a3 100%)",
-    night:"linear-gradient(175deg,#020408 0%,#060d1f 30%,#0a1628 55%,#0f2340 80%,#162a4a 100%)",
-  };
-  const bg=bgs[type]||bgs.partly;
-
-  const Sunny=()=><>
-    <div style={{position:"absolute",top:40,right:40,width:200,height:200}}>
-      <div style={{position:"absolute",inset:0,animation:"sunRot 30s linear infinite"}}>
-        {[...Array(18)].map((_,i)=><div key={i} style={{position:"absolute",top:"50%",left:"50%",width:3,height:60,background:"linear-gradient(180deg,rgba(255,210,0,.8),transparent)",transformOrigin:"top center",transform:`rotate(${i*20}deg) translateX(-50%)`,borderRadius:2}}/>)}
-      </div>
-      <div style={{position:"absolute",inset:55,borderRadius:"50%",background:"radial-gradient(circle at 38% 35%,#FFFDE0,#FFE566,#FFC200,#FF9500)",boxShadow:"0 0 0 15px rgba(255,210,0,.12),0 0 60px 30px rgba(255,160,0,.25)"}}/>
-    </div>
-    {[{t:50,d:38},{t:140,d:55}].map((c,i)=><div key={i} style={{position:"absolute",top:c.t,left:"-300px",animation:`cloudSail ${c.d}s linear infinite`,animationDelay:`${i*-18}s`}}><svg width="200" height="70"><ellipse cx="100" cy="48" rx="90" ry="25" fill="rgba(255,255,255,.9)"/><ellipse cx="68" cy="38" rx="52" ry="34" fill="rgba(255,255,255,.9)"/><ellipse cx="132" cy="36" rx="48" ry="30" fill="rgba(255,255,255,.9)"/></svg></div>)}
-  </>;
-
-  const Rainy=()=><>
-    {[...Array(55)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*6.3+i*i*.08)%100}%`,top:"-40px",width:`${i%5===0?2.5:i%3===0?2:1.5}px`,height:`${i%4===0?26:i%3===0?20:15}px`,background:"linear-gradient(180deg,transparent,rgba(150,210,255,.55))",borderRadius:3,animation:`rainFall ${.52+i%6*.11}s linear infinite`,animationDelay:`${(i*.07)%2}s`,transform:`rotate(${10+i%8}deg)`}}/>)}
-  </>;
-
-  const Snowy=()=><>
-    {[...Array(45)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*9.7+i)%100}%`,top:"-25px",fontSize:`${i%6===0?22:i%4===0?16:i%3===0?12:9}px`,color:`rgba(200,230,255,${.6+i%3*.15})`,animation:`snowDrift ${2.2+i%7*.5}s linear infinite`,animationDelay:`${(i*.17)%4.5}s`}}>{["❄","❅","✦","·"][i%4]}</div>)}
-  </>;
-
-  const Stormy=()=><>
-    {[...Array(60)].map((_,i)=><div key={i} style={{position:"absolute",left:`${(i*4.7+i*.3)%100}%`,top:"-35px",width:`${i%4===0?2.5:i%3===0?2:1.5}px`,height:`${i%3===0?27:i%2===0?21:16}px`,background:`rgba(120,120,200,${.28+i%5*.09})`,borderRadius:3,animation:`rainFall ${.44+i%5*.1}s linear infinite`,animationDelay:`${(i*.055)%1.8}s`,transform:`rotate(${14+i%10}deg)`}}/>)}
-    <div style={{position:"absolute",left:"18%",top:"12%",animation:"bolt 7s ease-in-out infinite"}}><svg width="36" height="110"><polyline points="24,0 10,50 22,50 5,110" stroke="#FDE68A" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
-    <div style={{position:"absolute",left:"65%",top:"8%",animation:"bolt 9s ease-in-out infinite",animationDelay:"2.5s"}}><svg width="30" height="90"><polyline points="20,0 8,42 18,42 4,90" stroke="#FDE68A" strokeWidth="3.5" fill="none" strokeLinecap="round"/></svg></div>
-  </>;
-
-  const Night=()=><>
-    {[...Array(80)].map((_,i)=>{const sz=i%8===0?3:i%5===0?2.5:i%3===0?2:1.5;return<div key={i} style={{position:"absolute",left:`${(i*41.3+i*.7)%99}%`,top:`${(i*23.9+i*.4)%75}%`,width:sz,height:sz,background:"white",borderRadius:"50%",animation:`twinkle ${1+(i%6)*.4}s ease-in-out infinite`,animationDelay:`${(i*.11)%3.5}s`}}/>})}
-    <div style={{position:"absolute",top:50,right:60,width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle at 36% 33%,#FFFEF0,#FFF9C4,#FFE082,#FFD54F)",boxShadow:"0 0 40px 12px rgba(220,200,100,.22)"}}/>
-    <div style={{position:"absolute",top:68,right:48,width:30,height:30,borderRadius:"50%",background:"rgba(0,0,0,.15)"}}/>
-  </>;
-
-  const Cloudy=()=><>
-    {[{t:40,l:"-300px",d:40},{t:110,l:"-260px",d:55},{t:200,l:"-280px",d:48}].map((c,i)=><div key={i} style={{position:"absolute",top:c.t,left:c.l,animation:`cloudSail ${c.d}s linear infinite`,animationDelay:`${i*-14}s`,opacity:.75}}><svg width="180" height="65"><ellipse cx="90" cy="45" rx="80" ry="22" fill="rgba(180,190,200,.8)"/><ellipse cx="60" cy="35" rx="48" ry="30" fill="rgba(180,190,200,.8)"/><ellipse cx="120" cy="33" rx="44" ry="27" fill="rgba(180,190,200,.8)"/></svg></div>)}
-  </>;
-
+  const s=SC[type]||SC.partly;
   return(
-    <div style={{position:"fixed",inset:0,background:bg,zIndex:-1,overflow:"hidden",transition:"background 1.5s ease"}}>
-      {type==="sunny"&&<Sunny/>}
-      {type==="rainy"&&<Rainy/>}
-      {type==="snowy"&&<Snowy/>}
-      {type==="stormy"&&<Stormy/>}
-      {type==="night"&&<Night/>}
-      {(type==="cloudy"||type==="partly")&&<Cloudy/>}
+    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden"}}>
+      {type==="rainy"&&[...Array(40)].map((_,i)=>(
+        <div key={i} style={{position:"absolute",left:(i*7.3)%100+"%",top:"-20px",width:"2px",height:"18px",background:"rgba(150,210,255,.5)",animation:"rainFall "+(.5+i%5*.1)+"s linear infinite",animationDelay:(i*.06)%2+"s",transform:"rotate(10deg)"}}/>
+      ))}
+      {type==="snowy"&&[...Array(35)].map((_,i)=>(
+        <div key={i} style={{position:"absolute",left:(i*9)%100+"%",top:"-15px",fontSize:i%3===0?"18px":"10px",color:"rgba(200,230,255,.8)",animation:"snowDrift "+(2+i%6*.4)+"s linear infinite",animationDelay:(i*.15)%4+"s"}}>{"❄"}</div>
+      ))}
+      {type==="night"&&[...Array(60)].map((_,i)=>(
+        <div key={i} style={{position:"absolute",left:(i*41)%99+"%",top:(i*24)%75+"%",width:i%5===0?"3px":"1.5px",height:i%5===0?"3px":"1.5px",background:"white",borderRadius:"50%",animation:"twinkle "+(1+i%5*.3)+"s ease-in-out infinite",animationDelay:(i*.1)%3+"s"}}/>
+      ))}
+      {type==="stormy"&&(
+        <div style={{position:"absolute",left:"20%",top:"10%",animation:"bolt 6s ease-in-out infinite"}}>
+          <svg width="30" height="90"><polyline points="20,0 8,42 18,42 4,90" stroke="#FDE68A" strokeWidth="4" fill="none" strokeLinecap="round"/></svg>
+        </div>
+      )}
     </div>
   );
 }
 
-
-// ── Secret Tester Unlock Component ──────────────────────────────────────────
-function SecretUnlock({isPremium,setIsPremium}){
-  const [code,setCode]=useState("");
-  const [msg,setMsg]=useState("");
-  function tryCode(){
-    if(code.toLowerCase()==="skyla2025"){
-      setIsPremium(true);
-      ss("skyla_premium",true);
-      setMsg("✅ Premium unlocked! Welcome tester 🩷");
-    }else{
-      setMsg("❌ Invalid code");
-      setTimeout(()=>setMsg(""),2000);
-    }
-    setCode("");
-  }
-  if(isPremium)return null;
+function SkylaChar({type,gender}){
+  const pink="#E91E8C",blue="#1565C0";
+  const hc=gender==="male"?blue:pink;
   return(
-    <div style={{marginBottom:12,padding:"16px 20px",background:"rgba(255,255,255,.1)",borderRadius:18,border:"1px solid rgba(255,255,255,.2)"}}>
-      <div style={{fontSize:11,opacity:.4,marginBottom:8,letterSpacing:2,textTransform:"uppercase",fontWeight:700}}>Tester Access</div>
-      <div style={{display:"flex",gap:8}}>
-        <input value={code} onChange={e=>setCode(e.target.value)} onKeyDown={e=>e.key==="Enter"&&tryCode()} placeholder="Enter tester code" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid rgba(255,255,255,.3)",borderRadius:12,padding:"10px 14px",fontSize:13,color:"inherit",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-        <button onClick={tryCode} style={{background:"rgba(233,30,140,.4)",border:"none",borderRadius:12,padding:"10px 16px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Unlock</button>
-      </div>
-      {msg&&<div style={{fontSize:12,marginTop:8,fontWeight:600}}>{msg}</div>}
+    <div style={{animation:"float 6s ease-in-out infinite"}}>
+      <svg width="140" height="160" viewBox="0 0 100 130">
+        <ellipse cx="50" cy="55" rx="23" ry="24" fill="#FFB7C5"/>
+        <ellipse cx="50" cy="38" rx="26" ry="20" fill={hc}/>
+        {gender==="female"&&<>
+          <path d="M24 38 Q18 70 26 90 Q34 100 40 95 Q28 72 28 48 Z" fill={hc}/>
+          <path d="M76 38 Q82 70 74 90 Q66 100 60 95 Q72 72 72 48 Z" fill={hc}/>
+          <path d="M50 16 Q60 10 65 16 Q58 20 50 16 Z" fill="#EF4444"/>
+        </>}
+        <ellipse cx="40" cy="52" rx="6" ry="7" fill="white"/>
+        <ellipse cx="60" cy="52" rx="6" ry="7" fill="white"/>
+        <ellipse cx="40" cy="53" rx="4.5" ry="5.5" fill={gender==="male"?blue:pink} style={{animation:"blink 5s ease-in-out infinite"}}/>
+        <ellipse cx="60" cy="53" rx="4.5" ry="5.5" fill={gender==="male"?blue:pink} style={{animation:"blink 5s ease-in-out infinite",animationDelay:".2s"}}/>
+        <circle cx="42" cy="51" r="1.8" fill="white" opacity=".9"/>
+        <circle cx="62" cy="51" r="1.8" fill="white" opacity=".9"/>
+        <ellipse cx="32" cy="60" rx="7" ry="4.5" fill={pink} opacity=".4"/>
+        <ellipse cx="68" cy="60" rx="7" ry="4.5" fill={pink} opacity=".4"/>
+        <path d="M42 67 Q50 73 58 67" stroke="#F48FAA" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+        {type==="rainy"?<rect x="24" y="76" width="52" height="36" rx="12" fill="#FCD34D"/>
+        :type==="snowy"?<rect x="22" y="74" width="56" height="38" rx="13" fill="#BAE6FD"/>
+        :type==="sunny"?<path d="M34 87 Q50 82 66 87 L72 128 Q50 134 28 128 Z" fill="#FCD34D"/>
+        :<rect x="28" y="80" width="44" height="26" rx="11" fill={gender==="male"?"#BFDBFE":"#FBCFE8"}/>}
+        <rect x={type==="rainy"?"28":"30"} y="112" width="17" height="20" rx="7" fill={gender==="male"?"#1D4ED8":"#C2185B"}/>
+        <rect x={type==="rainy"?"55":"53"} y="112" width="17" height="20" rx="7" fill={gender==="male"?"#1D4ED8":"#C2185B"}/>
+      </svg>
     </div>
   );
 }
 
-// ── Main App ─────────────────────────────────────────────────────────────────
 function App(){
-  // State
   const [wx,setWx]=useState(null);
   const [city,setCity]=useState("Your location");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
   const [tab,setTab]=useState("home");
   const [gender,setGender]=useState(()=>sg("skyla_gender")||"female");
-  const [isPremium,setIsPremium]=useState(true); // Open for beta testing
-  const [showPaywall,setShowPaywall]=useState(false);
+  const [isPremium]=useState(true);
   const [talking,setTalking]=useState(false);
   const [ai,setAi]=useState(null);
-  const [streak,setStreak]=useState(()=>sg("skyla_streak")||0);
-  // Chat
-  const [chatMsgs,setChatMsgs]=useState([{role:"skyla",text:"Hi! Ask me anything about the weather — like 'shall I wear a coat?' or 'will it rain Tuesday?' 🩷"}]);
-  const [chatInput,setChatInput]=useState("");
-  const [chatLoading,setChatLoading]=useState(false);
-  // Search
-  const [searchCity,setSearchCity]=useState("");
-  const searchCityRef=React.useRef("");
-  const [searchWx,setSearchWx]=useState(null);
-  const [searching,setSearching]=useState(false);
-  // Event planner
-  const [eventName,setEventName]=useState("");
-  const eventNameRef=React.useRef("");
-  const [eventDate,setEventDate]=useState("");
-  const [eventResult,setEventResult]=useState(null);
-  const [eventLoading,setEventLoading]=useState(false);
-  // Holiday
-  const [holidayCity,setHolidayCity]=useState("");
-  const holidayCityRef=React.useRef("");
-  const [holidayFrom,setHolidayFrom]=useState("");
-  const [holidayTo,setHolidayTo]=useState("");
-  const [holidayResult,setHolidayResult]=useState(null);
-  const [holidayLoading,setHolidayLoading]=useState(false);
-  // Morning briefing
-  const [briefingTime,setBriefingTime]=useState(()=>sg("skyla_briefing")||"07:00");
-  const [briefingSaved,setBriefingSaved]=useState(false);
-  // Family
-  const [famMembers,setFamMembers]=useState(()=>sg("skyla_fam")||[]);
-  const [newFamCity,setNewFamCity]=useState("");
-  const [newFamName,setNewFamName]=useState("");
-  const [famLoading,setFamLoading]=useState(false);
-  // Quick ask
-  const [quickAns,setQuickAns]=useState(null);
-  const [travelUpdates,setTravelUpdates]=useState(null);
-  const [travelLoading,setTravelLoading]=useState(false);
-  const [travelSearch,setTravelSearch]=useState("");
-  const [showCitySearch,setShowCitySearch]=useState(false);
-  const travelSearchRef=React.useRef("");
   const [alerts,setAlerts]=useState([]);
-  const [quickLoading,setQuickLoading]=useState(null);
-  // Hourly/week picker
+  const [streak,setStreak]=useState(()=>sg("skyla_streak")||0);
+  const [quickAns,setQuickAns]=useState(null);
   const [pickedH,setPickedH]=useState(null);
   const [pickedD,setPickedD]=useState(null);
+  const [chatMsgs,setChatMsgs]=useState([{role:"skyla",text:"Hi! Ask me anything about the weather! Ask: coat? umbrella? best day this week?"}]);
+  const [chatInput,setChatInput]=useState("");
+  const [searchWx,setSearchWx]=useState(null);
+  const [searching,setSearching]=useState(false);
+  const [eventDate,setEventDate]=useState("");
+  const [eventResult,setEventResult]=useState(null);
+  const [holidayResult,setHolidayResult]=useState(null);
+  const [holidayFrom,setHolidayFrom]=useState("");
+  const [holidayTo,setHolidayTo]=useState("");
+  const [travelUpdates,setTravelUpdates]=useState(null);
+  const [travelLoading,setTravelLoading]=useState(false);
+  const [famMembers,setFamMembers]=useState(()=>sg("skyla_fam")||[]);
+  const [briefingTime,setBriefingTime]=useState(()=>sg("skyla_briefing")||"07:00");
+  const [briefingSaved,setBriefingSaved]=useState(false);
+  const [showPaywall,setShowPaywall]=useState(false);
   const clock=new Date();
-
-  // ── Functions ───────────────────────────────────────────────────────────────
-  function toggleGender(g){setGender(g);ss("skyla_gender",g);}
-  function activatePremium(){setIsPremium(true);ss("skyla_premium",true);setShowPaywall(false);}
-
-  function getDisplayWx(){
+  const DWX=(()=>{
     if(!wx)return null;
     if(pickedD!==null&&wx.week[pickedD])return{...wx,...wx.week[pickedD],isDay:1};
     if(pickedH!==null&&wx.hourly[pickedH])return{...wx,...wx.hourly[pickedH]};
     return wx;
+  })();
+  const type=DWX?wxType(DWX.code,DWX.isDay):"partly";
+  const S=SC[type];
+  const G={background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:"1px solid "+S.bdr,borderRadius:24};
+  const PE=DWX?plainEnglish(DWX):{verdict:"",feel:"",windWord:"",rainWord:"",deceiving:false,coldGap:0};
+
+  function buildAlerts(w){
+    if(!w||!w.week)return;
+    const als=[];
+    const days=[{temp:w.temp,feels:w.feels,wind:w.wind,rain:w.rain,code:w.code,max:w.maxT,min:w.minT,label:"Today"},...w.week.slice(1,7).map(d=>({temp:d.max,feels:d.feels||d.max-3,wind:25,rain:d.rain,code:d.code,max:d.max,min:d.min,label:d.day}))];
+    days.forEach(d=>{
+      const{feels,wind,rain,code,max,label}=d;
+      if(code>=95)als.push({emoji:"🔴",level:"RED WARNING",title:"Thunderstorm",msg:"Severe thunderstorm "+label.toLowerCase()+". Stay indoors and away from windows.",color:"#DC2626",bg:"rgba(220,38,38,.15)",label});
+      else if(max>=30)als.push({emoji:"🟠",level:"AMBER WARNING",title:"Heat Wave",msg:"Very hot "+label.toLowerCase()+" — "+max+"C. Drink plenty of water and wear light clothing.",color:"#D97706",bg:"rgba(217,119,6,.15)",label});
+      else if(max>=25)als.push({emoji:"🟡",level:"YELLOW WARNING",title:"Hot Weather",msg:"Warm "+label.toLowerCase()+" — "+max+"C. Stay hydrated and use suncream if heading out.",color:"#CA8A04",bg:"rgba(202,138,4,.12)",label});
+      if(feels<=-5)als.push({emoji:"🔴",level:"RED WARNING",title:"Extreme Cold",msg:"Dangerously cold "+label.toLowerCase()+" — feels like "+feels+"C. Stay indoors if possible.",color:"#DC2626",bg:"rgba(220,38,38,.15)",label});
+      else if(feels<=0)als.push({emoji:"🟠",level:"AMBER WARNING",title:"Freezing",msg:"Very cold "+label.toLowerCase()+" — feels like "+feels+"C. Wear thermals and your warmest coat.",color:"#2563EB",bg:"rgba(37,99,235,.15)",label});
+      else if(feels<=4)als.push({emoji:"🟡",level:"YELLOW WARNING",title:"Cold Snap",msg:"Cold "+label.toLowerCase()+" — feels like "+feels+"C. Hat, scarf and gloves are a must.",color:"#3B82F6",bg:"rgba(59,130,246,.12)",label});
+      else if(feels<=8)als.push({emoji:"🟡",level:"YELLOW WARNING",title:"Cold Today",msg:"Chilly "+label.toLowerCase()+" — feels like "+feels+"C. Wrap up in a warm coat.",color:"#60A5FA",bg:"rgba(96,165,250,.1)",label});
+      if(label==="Today"&&wind>=55)als.push({emoji:"🟠",level:"AMBER WARNING",title:"Strong Winds",msg:"Strong winds today. Stay away from trees and exposed areas.",color:"#D97706",bg:"rgba(217,119,6,.15)",label});
+      else if(label==="Today"&&wind>=35)als.push({emoji:"🟡",level:"YELLOW WARNING",title:"Windy",msg:"Quite windy today — hold onto your hat in open areas.",color:"#CA8A04",bg:"rgba(202,138,4,.12)",label});
+      else if(label==="Today"&&wind>=25)als.push({emoji:"🟡",level:"YELLOW WARNING",title:"Breezy",msg:"A noticeable breeze today. Good to know before heading out.",color:"#CA8A04",bg:"rgba(202,138,4,.10)",label});
+      if(rain>=70&&code>=61)als.push({emoji:"🟠",level:"AMBER WARNING",title:"Heavy Rain",msg:"Heavy rain "+label.toLowerCase()+". Take your umbrella and a waterproof coat.",color:"#2563EB",bg:"rgba(37,99,235,.15)",label});
+      else if(rain>=40&&code>=61)als.push({emoji:"🟡",level:"YELLOW WARNING",title:"Rain Expected",msg:"Rain likely "+label.toLowerCase()+". Pack your umbrella just in case.",color:"#60A5FA",bg:"rgba(96,165,250,.12)",label});
+    });
+    setAlerts(als.slice(0,6));
   }
 
   async function load(){
@@ -449,1178 +204,630 @@ function App(){
     try{
       const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000}));
       const{latitude:la,longitude:lo}=pos.coords;
-      // Reverse geocode
-      const gc=await fetch("https://geocoding-api.open-meteo.com/v1/search?name=&latitude="+la+"&longitude="+lo+"&count=1").catch(()=>null);
-      // Get city name via reverse geocode
       const cityRes=await fetch("https://nominatim.openstreetmap.org/reverse?lat="+la+"&lon="+lo+"&format=json").then(r=>r.json()).catch(()=>null);
-      if(cityRes?.address){
-        const a=cityRes.address;
-        setCity(a.city||a.town||a.village||a.county||"Your location");
-      }
-      // Weather
+      if(cityRes?.address){const a=cityRes.address;setCity(a.city||a.town||a.village||a.county||"Your location");}
       const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weathercode,is_day&hourly=temperature_2m,apparent_temperature,weathercode,precipitation_probability,wind_speed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max&timezone=auto&forecast_days=7";
       const d=await fetch(url).then(r=>r.json());
       const cu=d.current;
       const hr=new Date().getHours();
-      const week=d.daily.time.map((t,i)=>{
-        const date=new Date(t);
-        const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-        const shorts=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-        return{day:days[date.getDay()],short:shorts[date.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i]};
-      });
-      const hourly=d.hourly.time.slice(0,24).map((t,i)=>{
-        const h=new Date(t).getHours();
-        const lbl=h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
-        return{h,lbl,temp:Math.round(d.hourly.temperature_2m[i]),feels:Math.round(d.hourly.apparent_temperature[i]),code:d.hourly.weathercode[i],rain:d.hourly.precipitation_probability[i]||0,wind:Math.round(d.hourly.wind_speed_10m[i]||0)};
-      });
+      const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const shorts=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i]};});
+      const hourly=d.hourly.time.slice(0,24).map((t,i)=>{const h=new Date(t).getHours();const lbl=h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";return{h,lbl,temp:Math.round(d.hourly.temperature_2m[i]),feels:Math.round(d.hourly.apparent_temperature[i]),code:d.hourly.weathercode[i],rain:d.hourly.precipitation_probability[i]||0,wind:Math.round(d.hourly.wind_speed_10m[i]||0)};});
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:d.hourly.precipitation_probability[hr]||0,week,hourly};
       setWx(newWx);
-      try{checkAlerts(newWx);}catch(e){console.error("checkAlerts error:",e);}
-      // Update streak
+      buildAlerts(newWx);
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
       const yesterday=new Date(Date.now()-86400000).toDateString();
-      if(lastVisit!==today){
-        const newStreak=lastVisit===yesterday?(sg("skyla_streak")||0)+1:1;
-        setStreak(newStreak);ss("skyla_streak",newStreak);ss("skyla_last",today);
-      }
-      // Get AI briefing
-      await getAI(newWx,la,lo);
-    }catch(e){
-      setError("Couldn't get your location. Please allow location access.");
-    }
+      if(lastVisit!==today){const ns=lastVisit===yesterday?(sg("skyla_streak")||0)+1:1;setStreak(ns);ss("skyla_streak",ns);ss("skyla_last",today);}
+      await getAI(newWx);
+    }catch(e){setError("Could not get your location. Please allow location access and try again.");}
     setLoading(false);
   }
 
-  async function getAI(w,la,lo){
+  async function getAI(w){
     if(!w)return;
-    const PE=plainEnglish(w);
-    const dec=PE.deceiving;
-    const coldGap=PE.coldGap||0;
-    const pr="You are Skyla, a warm friendly AI weather companion. Speak plain simple English like a caring friend. "+
-      (dec?"IMPORTANT: Today looks nice but wind chill makes it feel "+coldGap+"degrees colder! Warn about this. ":"")+
-      "Weather: "+city+" "+w.temp+"C feels "+w.feels+"C "+wmoDesc(w.code)+" rain "+w.rain+"% wind "+w.wind+"kmh. "+
-      "Return ONLY valid JSON: {\"msg\":\"greeting 10 words emoji\",\"wear\":\"7 plain words\",\"take\":\"6 words emoji\",\"umbrella\":true or false,\"feel\":\"3 words emoji\",\"tip\":\"14 plain words\",\"items\":[\"item emoji\",\"item emoji\",\"item emoji\",\"item emoji\"],\"plant\":\"14 words\",\"plantAction\":\"4 words\"}";
+    const PE2=plainEnglish(w);
+    const pr="You are Skyla, a warm friendly AI weather companion. Weather: "+city+" "+w.temp+"C feels "+w.feels+"C "+wmoDesc(w.code)+" rain "+w.rain+"% wind "+w.wind+"kmh. Return ONLY valid JSON no backticks: {\"msg\":\"greeting 10 words emoji\",\"wear\":\"7 plain words\",\"tip\":\"14 plain words\",\"items\":[\"item emoji\",\"item emoji\",\"item emoji\",\"item emoji\"],\"plant\":\"12 words\",\"plantAction\":\"4 words\"}";
     try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:300,messages:[{role:"user",content:pr}]})});
-      const d=await r.json();
-      const txt=d.content?.find(b=>b.type==="text")?.text||"{}";
-      const clean=txt.replace(/```json|```/g,"").trim();
-      const parsed=JSON.parse(clean);
-      setAi(parsed);
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:250,messages:[{role:"user",content:pr}]})});
+      const data=await r.json();
+      const txt=data.content&&data.content[0]?data.content[0].text:"{}";
+      setAi(JSON.parse(txt.replace(/```json|```/g,"").trim()));
     }catch{
-      setAi({msg:"Here's your weather sorted for today! 🩷",wear:"Something comfortable for today",take:"Your essentials",umbrella:w.rain>50,feel:"Check outside first",tip:"Stay comfortable and enjoy your day!",items:["🧥 Jacket","👟 Comfy shoes","☕ Hot drink","📱 Phone"],plant:"Check if plants need water today",plantAction:"Check moisture"});
+      setAi({msg:"Here is your weather sorted for today!",wear:"Something comfortable for today",tip:"Stay comfortable and enjoy your day!",items:["Jacket","Comfy shoes","Hot drink","Phone"],plant:"Check if plants need water today",plantAction:"Check moisture"});
     }
   }
 
   async function speak(){
     if(!wx)return;
-    if(talking){
-      window.speechSynthesis.cancel();
-      if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}
-      setTalking(false);return;
-    }
+    if(talking){window.speechSynthesis&&window.speechSynthesis.cancel();if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}setTalking(false);return;}
     const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
-    const PE=plainEnglish(wx);
-    const txt="Good "+gr+"! I am Skyla! "+PE.verdict+" In "+city+" it is "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
-    const isMale=gender==="male";
-    
-    // First try ElevenLabs via our server
-    try{
-      const r=await fetch("/api/speak",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:txt,voiceId:isMale?"MYiFAKeVwcvm4z9VsFAR":"PoHUWWWMHFrA8z7Q88pu"})
-      });
-      if(r.ok){
-        const blob=await r.blob();
-        const url=URL.createObjectURL(blob);
-        const audio=new Audio(url);
-        window._skylaAudio=audio;
-        audio.onended=()=>{setTalking(false);URL.revokeObjectURL(url);};
-        audio.onerror=()=>{setTalking(false);};
-        setTalking(true);
-        await audio.play();
-        return;
-      }
-    }catch(e){console.log("ElevenLabs unavailable, using browser voice");}
-    
-    // Browser voice fallback
-    window.speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(txt);
-    u.volume=1;
-    
-    if(isMale){
-      u.pitch=0.85;u.rate=1.0;
-    }else{
-      u.pitch=1.8;u.rate=1.1;
-    }
-    
-    function pickVoice(voices){
-      if(isMale){
-        return voices.find(v=>v.name==="Daniel")||
-               voices.find(v=>v.name==="Google UK English Male")||
-               voices.find(v=>v.name.includes("Male")&&v.lang.startsWith("en"))||
-               voices.find(v=>v.lang==="en-GB")||
-               voices.find(v=>v.lang.startsWith("en"));
-      }else{
-        return voices.find(v=>v.name==="Samantha")||
-               voices.find(v=>v.name==="Karen")||
-               voices.find(v=>v.name==="Google UK English Female")||
-               voices.find(v=>v.name==="Microsoft Zira - English (United States)")||
-               voices.find(v=>v.name==="Zira")||
-               voices.find(v=>v.name==="Hazel")||
-               voices.find(v=>v.name.toLowerCase().includes("female")&&v.lang.startsWith("en"))||
-               voices.filter(v=>v.lang.startsWith("en"))[1]||
-               voices.find(v=>v.lang.startsWith("en"));
-      }
-    }
-    
-    u.onend=()=>setTalking(false);
-    u.onerror=()=>setTalking(false);
+    const PE2=plainEnglish(wx);
+    const txt="Good "+gr+"! "+PE2.verdict+" In "+city+" it is "+wx.temp+" degrees. "+PE2.windWord+" "+PE2.rainWord+" "+(ai&&ai.tip?ai.tip:"")+" Have a wonderful "+gr+"!";
+    const vid=gender==="male"?"MYiFAKeVwcvm4z9VsFAR":"PoHUWWWMHFrA8z7Q88pu";
     setTalking(true);
-    
-    const voices=window.speechSynthesis.getVoices();
-    if(voices.length>0){
-      const v=pickVoice(voices);
-      if(v)u.voice=v;
-      window.speechSynthesis.speak(u);
-    }else{
-      window.speechSynthesis.onvoiceschanged=()=>{
-        const vs=window.speechSynthesis.getVoices();
-        const v=pickVoice(vs);
-        if(v)u.voice=v;
-        window.speechSynthesis.speak(u);
-      };
-    }
-  }
-
-    function fallbackSpeak(txt,isMale){
-    function doSpeak(voices){
+    try{
+      const r=await fetch("/api/speak",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:txt,voiceId:vid})});
+      if(!r.ok)throw new Error("failed");
+      const blob=await r.blob();
+      const url=URL.createObjectURL(blob);
+      const audio=new Audio(url);
+      window._skylaAudio=audio;
+      audio.onended=()=>{setTalking(false);URL.revokeObjectURL(url);};
+      audio.onerror=()=>setTalking(false);
+      await audio.play();
+    }catch{
       const u=new SpeechSynthesisUtterance(txt);
-      u.rate=isMale?1.05:1.1;
-      u.pitch=isMale?0.88:1.5;
-      u.volume=1;
-      const v=isMale
-        ?voices.find(v=>v.name.includes("Daniel"))||voices.find(v=>v.name.includes("Oliver"))||voices.find(v=>v.name.includes("Arthur"))||voices.find(v=>v.lang.startsWith("en"))
-        :voices.find(v=>v.name.includes("Samantha"))||voices.find(v=>v.name.includes("Karen"))||voices.find(v=>v.name.includes("Serena"))||voices.find(v=>v.name.includes("Zira"))||voices.find(v=>v.lang.startsWith("en"));
+      u.rate=gender==="male"?1.05:1.1;u.pitch=gender==="male"?0.88:1.5;
+      const vs=window.speechSynthesis.getVoices();
+      const v=gender==="male"?vs.find(v=>v.name.includes("Daniel")||v.name.includes("Oliver")):vs.find(v=>v.name.includes("Samantha")||v.name.includes("Karen")||v.name.includes("Zira"));
       if(v)u.voice=v;
       u.onend=()=>setTalking(false);
-      setTalking(true);
       window.speechSynthesis.speak(u);
     }
-    const voices=window.speechSynthesis.getVoices();
-    if(voices.length>0){doSpeak(voices);}
-    else{window.speechSynthesis.onvoiceschanged=()=>doSpeak(window.speechSynthesis.getVoices());}
   }
 
-  async function quickAsk(key,icon){
-    setQuickLoading(icon);setQuickAns(null);
-    const feels=wx?.feels||12,temp=wx?.temp||15,rain=wx?.rain||20,code=wx?.code||2;
-    const answers={
-      beanie:feels<=8?"Yes, definitely wear a warm beanie today — it's cold out there! 🧣":feels<=13?"Could be handy — it's on the cool side. Pop one in your bag! 🧣":"No need for a beanie today — it's too warm for that! 😊",
-      sunhat:temp>=22&&code<=2?"Yes! It's hot and sunny — a sun hat is a great idea ☀️":temp>=18&&code<=2?"Might be worth it if you're out for a while 🌤️":"No need for a sun hat today — not sunny enough!",
-      coat:feels<=10?"Yes, definitely wear a coat — it's cold! 🧥":feels<=14?"A light jacket would be perfect today 🧥":"No coat needed — it's warm enough without one! 😊",
-      umbrella:rain>=70?"Yes, take your umbrella — high chance of rain! ☔":rain>=40?"Maybe pop one in your bag just in case — "+rain+"% chance of rain 🌂":"No umbrella needed — looking dry today! ☀️",
-      suncream:temp>=22&&code<=2?"Yes! Put suncream on today — it's hot and sunny ☀️":temp>=18&&code<=3?"Factor 15 wouldn't hurt — it's warm and bright 🌤️":"No suncream needed today — not sunny enough!",
-      trousers:feels<=14?"Definitely wear trousers — too cold for shorts! 👖":feels<=19?"Jeans or light trousers would be perfect today 👖":"Shorts weather! Too warm for trousers today 🩳",
-      jumper:feels<=16?"Yes, wear a jumper today — it's on the cool side! 🧸":feels<=20?"A light jumper or cardigan would be comfy 🧸":"No jumper needed — it's warm enough! ☀️",
+  function quickAsk(key,icon){
+    const f=wx?wx.feels:12,t=wx?wx.temp:15,r=wx?wx.rain:20,code=wx?wx.code:2;
+    const ans={
+      beanie:f<=8?"Yes — it is cold enough for a beanie today!":f<=13?"Could be handy — pop one in your bag":"No beanie needed today — too warm!",
+      sunhat:t>=22&&code<=2?"Yes! It is hot and sunny — a sun hat is a great idea":"No need for a sun hat today",
+      coat:f<=10?"Yes — definitely wear a coat today!":f<=14?"A light jacket would be perfect":"No coat needed — warm enough!",
+      umbrella:r>=70?"Yes — high chance of rain, take your umbrella!":r>=40?"Maybe pop one in your bag just in case":"No umbrella needed — looking dry!",
+      suncream:t>=22&&code<=2?"Yes! Put suncream on today":"No suncream needed today",
+      trousers:f<=14?"Definitely wear trousers — too cold for shorts":f<=19?"Jeans or light trousers would be perfect":"Shorts weather today!",
+      jumper:f<=16?"Yes — wear a jumper today":f<=20?"A light jumper or cardigan would be comfy":"No jumper needed — warm enough!",
     };
-    setTimeout(()=>{
-      setQuickAns({text:answers[key]||"Based on today's weather — always better to be prepared! 🩷",icon});
-      setQuickLoading(null);
-    },400);
-  }
-
-  function checkAlerts(w){
-    if(!w)return;
-    const als=[];
-
-    function dayLabel(i){
-      return i===0?"today":i===1?"tomorrow":w.week[i]?.day||"day "+i;
-    }
-
-    function addAlert(level,title,msg,color,bg,day){
-      const when=day===0?"today":day===1?"tomorrow":"on "+dayLabel(day);
-      const whenCap=day===0?"Today":day===1?"Tomorrow":w.week[day]?.day||"Soon";
-      const emojiMap={"🔴 RED":"🔴","🟠 AMBER":"🟠","🟡 YELLOW":"🟡"};
-      const emoji=emojiMap[level]||"⚠️";
-      als.push({level,title:title,msg,color,bg,day,emoji,dayLabel:whenCap});
-    }
-
-    // Check today AND next 6 days
-    const days=[{temp:w.temp,feels:w.feels,wind:w.wind,rain:w.rain,code:w.code,max:w.maxT,min:w.minT},...(w.week||[]).slice(1,7).map(d=>({temp:d.max,feels:d.feels||d.max-2,wind:30,rain:d.rain,code:d.code,max:d.max,min:d.min}))];
-
-    days.forEach((d,i)=>{
-      const{temp,feels,wind,rain,code,max}=d;
-      const when=dayLabel(i);
-
-      // Thunderstorm
-      if(code>=95){addAlert("🔴 RED","Thunderstorm Warning","Dangerous thunderstorm expected "+when+". Stay indoors, away from windows. Unplug your devices and avoid open water. Plan ahead if you need to go anywhere.","#7C3AED","rgba(124,58,237,.15)",i);}
-      // Heavy snow
-      else if(code>=73&&code<=77){addAlert("🔴 RED","Heavy Snow Warning","Heavy snow expected "+when+". Only travel if essential. Stock up on what you need today and stay warm at home — roads will be dangerous.","#0369A1","rgba(3,105,161,.15)",i);}
-      // Light snow
-      else if(code===71||code===72){addAlert("🟡 YELLOW","Snow Warning","Snow is expected "+when+". Allow extra travel time and wear warm waterproof boots. Roads may be slippery.","#0369A1","rgba(3,105,161,.12)",i);}
-      // Extreme heat
-      if(max>=35){addAlert("🔴 RED","Extreme Heat Warning","Dangerously hot "+when+" — up to "+max+"°C. Stay indoors in the coolest room. Drink water every hour and keep your curtains closed to stay cool.","#DC2626","rgba(220,38,38,.15)",i);}
-      else if(max>=30){addAlert("🟠 AMBER","Heat Wave Alert","Very hot "+when+" — up to "+max+"°C. Keep yourself cool, drink plenty of water and wear suncream if you head outside.","#D97706","rgba(217,119,6,.15)",i);}
-      else if(max>=25){addAlert("🟡 YELLOW","Hot Weather","It is going to be warm "+when+" — "+max+"°C. Stay hydrated and use suncream if you are outside for long.","#CA8A04","rgba(202,138,4,.12)",i);}
-      // Severe cold
-      if(feels<=-5){addAlert("🔴 RED","Severe Cold Warning","Dangerously cold "+when+". Stay indoors if you can. If you do go out cover all your skin and wear as many layers as possible.","#1D4ED8","rgba(29,78,216,.15)",i);}
-      else if(feels<=0){addAlert("🟠 AMBER","Freezing Conditions","Very cold "+when+" — it will feel like "+feels+"°C. Wear your warmest coat and thermals — watch your step as paths could be icy.","#2563EB","rgba(37,99,235,.15)",i);}
-      else if(feels<=4){addAlert("🟡 YELLOW","Cold Snap","It is going to feel cold "+when+" — around "+feels+"°C. Make sure you have your hat, scarf and gloves before you step outside.","#3B82F6","rgba(59,130,246,.12)",i);}
-      // Heavy rain - lower threshold
-      if(rain>=70&&(code>=61&&code<=82)){addAlert("🟠 AMBER","Heavy Rain Warning","Heavy rain likely "+when+". Take your umbrella and a waterproof coat — you will really need them.","#2563EB","rgba(37,99,235,.15)",i);}
-      else if(rain>=50&&code>=61){addAlert("🟡 YELLOW","Rain Warning","Rain expected "+when+". Pack your umbrella just in case — it could be a wet one.","#60A5FA","rgba(96,165,250,.12)",i);}
-      // Wind warnings (today only - no weekly wind data)
-      if(i===0&&wind>=80){addAlert("🔴 RED","Dangerous Wind Warning","Extremely dangerous winds today. Stay indoors and away from trees and exposed areas.","#DC2626","rgba(220,38,38,.15)",i);}
-      else if(i===0&&wind>=55){addAlert("🟠 AMBER","Strong Wind Warning","Strong winds today. Avoid tall trees and exposed areas. Take extra care if you go out.","#D97706","rgba(217,119,6,.15)",i);}
-      else if(i===0&&wind>=35){addAlert("🟡 YELLOW","Windy Today","It is quite windy today — hold onto your hat and take extra care in open areas.","#CA8A04","rgba(202,138,4,.12)",i);}
-      else if(i===0&&wind>=25){addAlert("🟡 YELLOW","Breezy Today","A noticeable breeze today. Good to know before you head out — you might want an extra layer.","#CA8A04","rgba(202,138,4,.10)",i);}
-      // Rain warnings - more sensitive for UK
-      if(rain>=70&&code>=61){addAlert("🟠 AMBER","Heavy Rain","Heavy rain expected "+when+". Take your umbrella and a waterproof coat — you will really need them.","#2563EB","rgba(37,99,235,.15)",i);}
-      else if(rain>=40&&code>=61){addAlert("🟡 YELLOW","Rain Expected","Rain likely "+when+". Pack your umbrella — it could be a wet one.","#60A5FA","rgba(96,165,250,.12)",i);}
-      else if(rain>=50&&code>=61){addAlert("🟡 YELLOW","Chance of Rain","Possible rain "+when+". Worth having an umbrella handy just in case.","#60A5FA","rgba(96,165,250,.10)",i);}
-      // Feels cold
-      if(feels<=8&&feels>4){addAlert("🟡 YELLOW","Feel the Chill","It is going to feel cold "+when+" — around "+feels+"°C. Wrap up with a warm coat, hat and gloves.","#3B82F6","rgba(59,130,246,.10)",i);}
-    });
-
-    // Remove duplicates — keep earliest day for same alert type
-    const seen=new Set();
-    const unique=als.filter(a=>{
-      const key=a.level+a.title.split("—")[1];
-      if(seen.has(key))return false;
-      seen.add(key);return true;
-    });
-
-    // Sort by day then severity
-    unique.sort((a,b)=>a.day-b.day);
-    // Always add a daily summary if no warnings
-    if(unique.length===0){
-      try{
-        unique.push({
-          level:"ALL CLEAR",
-          title:"No Weather Warnings",
-          msg:"No severe weather expected for the next 7 days.",
-          color:"#059669",
-          bg:"rgba(5,150,105,.1)",
-          day:0,
-          emoji:"✅",
-          dayLabel:"Today"
-        });
-      }catch(e){}
-    }
-    setAlerts(unique.slice(0,6));
-  }
-
-
-  async function checkTravel(locationName){
-    setTravelLoading(true);setTravelUpdates(null);
-    const loc=(locationName&&locationName.trim())||city;
-    try{
-      // Get weather for searched location if different from current
-      let tw=wx;
-      if(locationName&&locationName.trim()&&locationName.trim().toLowerCase()!==city.toLowerCase()){
-        const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(locationName.trim())+"&count=1").then(r=>r.json());
-        if(g.results&&g.results[0]){
-          const la=g.results[0].latitude,lo=g.results[0].longitude;
-          const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,wind_speed_10m,weathercode,precipitation_probability&hourly=precipitation_probability&timezone=auto&forecast_days=1";
-          const d=await fetch(url).then(r=>r.json());
-          const cu=d.current;
-          tw={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,rain:cu.precipitation_probability||0};
-        }
-      }
-      // Generate travel updates from weather data - no API needed
-      const updates=[];
-      const wind=tw?.wind||0,rain=tw?.rain||0,code=tw?.code||0,temp=tw?.temp||15;
-      if(wind>=60){
-        updates.push("🚂 Trains — High winds are causing delays and speed restrictions. Allow extra time for your journey.");
-        updates.push("✈️ Flights — Possible delays or turbulence due to strong winds. Check with your airline before travelling.");
-        updates.push("🚌 Buses — Some services may be diverted or delayed due to dangerous wind conditions.");
-      } else if(wind>=40){
-        updates.push("🚂 Trains — Wind may cause minor delays on some routes. Check live departures before you leave.");
-        updates.push("✈️ Flights — Minor delays possible. Worth checking your flight status.");
-      }
-      if(rain>=70||(code>=61&&code<=67)){
-        updates.push("🚂 Trains — Heavy rain may affect some services. Check live departures.");
-        updates.push("🚌 Buses — Wet weather may cause some delays. Allow extra time.");
-        updates.push("🚶 Walking — Pavements and steps will be slippery. Take extra care and wear grippy shoes.");
-      } else if(rain>=40){
-        updates.push("🚌 Buses — Rain may cause minor delays in busy areas.");
-        updates.push("🚶 Walking — Wet surfaces — take care on pavements and steps.");
-      }
-      if(code>=95){
-        updates.push("🚂 Trains — Thunderstorm causing significant disruption. Check before you travel.");
-        updates.push("✈️ Flights — Storm conditions causing delays and cancellations. Contact your airline.");
-        updates.push("🚌 Buses — Services severely disrupted. Consider waiting until storm passes.");
-      }
-      if(temp<=0||tw?.feels<=0){
-        updates.push("🚂 Trains — Ice on the tracks may cause delays on some routes.");
-        updates.push("🚌 Buses — Icy roads causing delays. Services may be running late.");
-        updates.push("🚶 Walking — Icy pavements and steps — take very careful steps and wear grippy shoes.");
-      }
-      let txt="";
-      if(updates.length===0){
-        txt="No weather-related travel disruptions in "+loc+" right now. Conditions look fine for travelling! "+S.em;
-      } else {
-        txt=updates.join("\n\n");
-      }
-      setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),hasIssues:updates.length>0});
-    }catch(e){
-      // Even if fetch fails, show basic info from current weather
-      const updates=[];
-      if(wx){
-        if(wx.wind>=40)updates.push("🚂 Trains — Wind may cause delays. Check live departures before you leave.");
-        if(wx.rain>=60)updates.push("🚶 Walking — Wet and slippery conditions. Take care on pavements.");
-        if(wx.code>=95)updates.push("✈️ Flights — Storm conditions may affect travel. Check with your airline.");
-      }
-      const txt=updates.length>0?updates.join("\n\n"):"No major weather-related disruptions expected in "+loc+" right now.";
-      setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),hasIssues:updates.length>0});
-    }
-    setTravelLoading(false);
+    setQuickAns({text:ans[key]||"Check the weather first!",icon});
   }
 
   function sendChat(){
-    if(!chatInput.trim()||chatLoading)return;
+    if(!chatInput.trim())return;
     const userMsg=chatInput.trim();
     const q=userMsg.toLowerCase();
     setChatInput("");
     setChatMsgs(m=>[...m,{role:"user",text:userMsg}]);
-    setChatLoading(true);
-    const t=wx?.temp||15,f=wx?.feels||12,r=wx?.rain||20,w2=wx?.wind||10,code=wx?.code||2;
-    const week=wx?.week||[];
+    const t=wx?wx.temp:15,f=wx?wx.feels:12,r=wx?wx.rain:20,code=wx?wx.code:2;
+    const week=wx?wx.week:[];
     let reply="";
-    if(q.includes("coat")||q.includes("jacket")){
-      reply=f<=10?"Yes definitely wear a coat today — it feels like "+f+"°C out there! 🧥":f<=15?"A light jacket would be perfect today 🧥":"No coat needed — warm enough at "+f+"°C 😊";
-    }else if(q.includes("umbrella")||q.includes("rain")||q.includes("wet")){
-      reply=r>=70?"Yes take your umbrella — "+r+"% chance of rain! ☔":r>=40?"Maybe pop one in your bag — "+r+"% rain chance 🌂":"No umbrella needed today — looks dry! ☀️";
-    }else if(q.includes("wear")||q.includes("dress")||q.includes("outfit")){
-      reply=f<=8?"Bundle up! Warmest coat, hat and gloves today — feels like "+f+"°C 🧥":f<=14?"A good jacket and comfy layers today 👕":f<=20?"Light clothes with a layer just in case — lovely "+f+"°C 👗":"Summer clothes! "+f+"°C and gorgeous ☀️";
-    }else if(q.includes("hot")||q.includes("warm")||q.includes("sun")){
-      reply=t>=22&&code<=2?"Hot one today — "+t+"°C! Light clothes and suncream ☀️":t>=18?"Pleasantly warm at "+t+"°C 🌤️":"Not very warm — only "+t+"°C. A layer would help 🌥️";
-    }else if(q.includes("cold")||q.includes("freez")||q.includes("chilly")){
-      reply=f<=4?"Very cold — feels like "+f+"°C! Thermals and a warm coat 🥶":f<=10?"Chilly — feels like "+f+"°C. A good coat is a must 🧥":"Not too bad — feels like "+f+"°C 😊";
-    }else if(q.includes("best day")||q.includes("nicest")||q.includes("good day")){
-      const best=week.reduce((b,d)=>(!b||d.max>b.max)?d:b,null);
-      reply=best?"Best day this week: "+best.day+" — "+best.max+"°C with "+best.rain+"% rain ☀️":"Check the week tab for the full forecast 📅";
-    }else if(q.includes("weekend")||q.includes("saturday")||q.includes("sunday")){
-      const sat=week.find(d=>d.day==="Saturday"),sun=week.find(d=>d.day==="Sunday");
-      reply=sat&&sun?"Saturday: "+sat.max+"°C, "+wmoDesc(sat.code)+", "+sat.rain+"% rain. Sunday: "+sun.max+"°C, "+wmoDesc(sun.code)+", "+sun.rain+"% rain. "+(sat.rain<40&&sun.rain<40?"Decent weekend! 🌤️":"Mixed — have a backup plan 🌧️"):"Check the week tab for the weekend forecast 📅";
-    }else if(q.includes("tomorrow")||q.includes("tmrw")){
-      const tmrw=week[1];
-      reply=tmrw?"Tomorrow: "+wmoDesc(tmrw.code)+" — "+tmrw.max+"°C with "+tmrw.rain+"% rain. "+(tmrw.rain<40?"Should be nice! 🌤️":"Take your umbrella! ☔"):"Check back tomorrow!";
-    }else if(q.includes("suncream")||q.includes("sunscreen")){
-      reply=t>=22&&code<=2?"Yes suncream today — hot and sunny ☀️":t>=18?"Worth putting on if out for a while 🌤️":"No suncream needed today!";
-    }else if(q.includes("beanie")||q.includes("hat")){
-      reply=f<=8?"Yes wear a warm beanie — feels like "+f+"°C 🧣":f<=13?"Could be handy — pop one in your bag 🧣":"No beanie needed — too warm! 😊";
-    }else if(q.includes("jumper")||q.includes("sweater")){
-      reply=f<=16?"Yes wear a jumper today — feels like "+f+"°C 🧸":f<=20?"A light jumper or cardigan would be comfy 🧸":"No jumper needed — warm enough! ☀️";
-    }else{
-      const PE2=plainEnglish(wx||{temp:t,feels:f,wind:w2,rain:r,humid:70});
-      reply="Today in "+city+": "+t+"°C, feels like "+f+"°C. "+PE2.verdict+" "+PE2.rainWord+" Ask me anything — coat? umbrella? best day this week? 🩷";
-    }
-    setTimeout(()=>{setChatMsgs(m=>[...m,{role:"skyla",text:reply}]);setChatLoading(false);},400);
+    if(q.includes("coat")||q.includes("jacket")){reply=f<=10?"Yes definitely wear a coat — feels like "+f+"C!":f<=15?"A light jacket would be perfect":"No coat needed — warm enough at "+f+"C!";}
+    else if(q.includes("umbrella")||q.includes("rain")){reply=r>=70?"Yes take your umbrella — "+r+"% chance of rain!":r>=40?"Maybe pack one just in case — "+r+"% rain chance":"No umbrella needed — looks dry!";}
+    else if(q.includes("wear")||q.includes("outfit")){reply=f<=8?"Warmest coat, hat and gloves — feels like "+f+"C":f<=14?"Good jacket and layers today":f<=20?"Light clothes with a layer":"Summer clothes today!";}
+    else if(q.includes("cold")||q.includes("chilly")){reply=f<=4?"Very cold — feels like "+f+"C! Wrap up warm":f<=10?"Chilly — feels like "+f+"C. Coat is a must":"Not too bad — feels like "+f+"C";}
+    else if(q.includes("hot")||q.includes("warm")){reply=t>=22&&code<=2?"Hot today — "+t+"C! Light clothes and suncream":t>=18?"Pleasantly warm at "+t+"C":"Not very warm — only "+t+"C";}
+    else if(q.includes("best day")||q.includes("nicest")){const best=week.length?week.reduce((b,d)=>d.max>b.max?d:b):null;reply=best?"Best day: "+best.day+" — "+best.max+"C with "+best.rain+"% rain":"Check the week tab!";}
+    else if(q.includes("weekend")){const sat=week.find(d=>d.day==="Saturday"),sun=week.find(d=>d.day==="Sunday");reply=sat&&sun?"Saturday: "+sat.max+"C, "+sat.rain+"% rain. Sunday: "+sun.max+"C, "+sun.rain+"% rain":"Check the week tab!";}
+    else if(q.includes("tomorrow")){const tmrw=week[1];reply=tmrw?"Tomorrow: "+wmoDesc(tmrw.code)+" — "+tmrw.max+"C, "+tmrw.rain+"% rain":"Check back tomorrow!";}
+    else if(q.includes("suncream")){reply=t>=22&&code<=2?"Yes suncream today!":t>=18?"Worth putting on if out for a while":"No suncream needed today";}
+    else if(q.includes("beanie")||q.includes("hat")){reply=f<=8?"Yes wear a warm beanie!":f<=13?"Could be handy — pop one in your bag":"No beanie needed!";}
+    else{const PE2=plainEnglish(wx||{temp:t,feels:f,wind:20,rain:r,humid:70});reply="Today in "+city+": "+t+"C, feels like "+f+"C. "+PE2.verdict+" Ask me — coat? umbrella? best day?";}
+    setTimeout(()=>setChatMsgs(m=>[...m,{role:"skyla",text:reply}]),300);
   }
 
-  async function searchCityWeather(){
-    const sCity=(window._scity||searchCity).trim();
-    if(!sCity)return;
+  async function searchCity(){
+    const val=window._scity||"";
+    if(!val.trim())return;
     setSearching(true);setSearchWx(null);
     try{
-      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(sCity)+"&count=1").then(r=>r.json());
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(val.trim())+"&count=1").then(r=>r.json());
       if(!g.results||!g.results[0]){setSearching(false);return;}
-      const la=g.results[0].latitude,lo=g.results[0].longitude,cn=g.results[0].name,co=g.results[0].country;
+      const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
       const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,wind_speed_10m,weathercode,is_day,relative_humidity_2m&hourly=precipitation_probability&timezone=auto&forecast_days=1";
       const d=await fetch(url).then(r=>r.json());
       const cu=d.current,h=new Date().getHours();
-      setSearchWx({name:cn+", "+co,temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,rain:d.hourly?.precipitation_probability?.[h]||0,humid:cu.relative_humidity_2m});
+      setSearchWx({name:cn+", "+co,temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,rain:d.hourly&&d.hourly.precipitation_probability?d.hourly.precipitation_probability[h]||0:0});
     }catch{}
     setSearching(false);
   }
 
-  function checkEvent(){
-    const eName=(window._ename||eventName).trim();
-    if(!eventDate||!eName)return;
-    setEventLoading(true);setEventResult(null);
-    const dayIdx=Math.round((new Date(eventDate)-new Date())/86400000);
-    const clampedIdx=Math.min(Math.max(dayIdx,0),6);
-    const dayWx=wx&&wx.week&&wx.week[clampedIdx]?wx.week[clampedIdx]:null;
-    const maxT=dayWx?.max||18,minT=dayWx?.min||10,rainPct=dayWx?.rain||20;
-    const dayLabel=dayIdx===0?"today":dayIdx===1?"tomorrow":"in "+dayIdx+" days";
-    let reply="";
-    if(rainPct>=60){reply=eName+" on "+eventDate+" looks like it could be a rainy one — "+rainPct+"% chance of rain! I'd suggest having a backup plan or covered area. A waterproof jacket is a must and closed shoes would be wise. Keep an eye on the forecast closer to the day! 🌧️";}
-    else if(maxT<12){reply=eName+" on "+eventDate+" is looking cool at around "+maxT+"°C. It should stay dry though — great! Make sure everyone wraps up warm with layers. Should be a lovely day despite the chill! 🧥";}
-    else if(rainPct<40&&maxT>=15){reply=eName+" on "+eventDate+" is looking great — "+maxT+"° high and only "+rainPct+"% chance of rain. Light layers would be ideal and you probably won't need a brolly. Enjoy your event! ☀️";}
-    else{reply=eName+" on "+eventDate+" looks like a mixed bag — "+maxT+"° high with "+rainPct+"% chance of rain. I'd pack a light jacket just in case and maybe have a brolly handy. The afternoon should be the best window! 🌤️";}
-    setTimeout(()=>{setEventResult({text:reply,max:maxT,min:minT,rain:rainPct,code:dayWx?.code||2});setEventLoading(false);},600);
+  async function checkTravel(){
+    const loc=window._tloc||city;
+    setTravelLoading(true);setTravelUpdates(null);
+    const updates=[];
+    const wind=wx?wx.wind:0,rain=wx?wx.rain:0,code=wx?wx.code:0,feels=wx?wx.feels:10;
+    if(code>=95){updates.push("Trains — Storm causing significant disruption. Check before you travel.");updates.push("Flights — Cancellations and delays likely due to storm conditions.");}
+    else if(wind>=55){updates.push("Trains — Strong winds causing speed restrictions and delays.");updates.push("Flights — Possible delays due to strong winds.");}
+    else if(wind>=35){updates.push("Trains — Wind may cause some minor delays.");}
+    if(rain>=70&&code>=61){updates.push("Trains — Heavy rain may affect some services.");updates.push("Walking — Very slippery pavements and steps. Take extra care.");}
+    else if(rain>=40&&code>=61){updates.push("Buses — Rain may cause minor delays.");updates.push("Walking — Wet surfaces — take care on pavements.");}
+    if(feels<=0){updates.push("Trains — Ice on tracks may cause delays.");updates.push("Walking — Icy pavements — take very careful steps.");}
+    const txt=updates.length>0?updates.join("\n\n"):"No weather-related travel disruptions in "+loc+" right now. Conditions look fine for travelling!";
+    setTimeout(()=>{setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});setTravelLoading(false);},600);
   }
 
-  async function checkHoliday(){
-    const hCity=(window._hcity||holidayCity).trim();
-    if(!hCity||!holidayFrom||!holidayTo)return;
-    setHolidayLoading(true);setHolidayResult(null);
+  async function addFam(){
+    const name=window._famname||"",loc=window._famloc||"";
+    if(!name.trim()||!loc.trim())return;
     try{
-      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(hCity)+"&count=1").then(r=>r.json());
-      if(!g.results||!g.results[0]){setHolidayLoading(false);setHolidayResult({city:hCity,text:"I couldn't find that destination — try a nearby city or check the spelling!",avgMax:20,avgMin:12,rainDays:3,isFuture:false});return;}
-      const la=g.results[0].latitude,lo=g.results[0].longitude,cn=g.results[0].name,co=g.results[0].country;
-      const fromDate=new Date(holidayFrom);
-      const daysAway=Math.round((fromDate-new Date())/86400000);
-      const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
-      const tripMonth=fromDate.getMonth();
-      const tripMonthName=monthNames[tripMonth];
-      let avgMax=20,avgMin=12,rainDays=3,isFuture=false;
-      if(daysAway<=14){
-        const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7";
-        const d=await fetch(url).then(r=>r.json());
-        avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
-        avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/7);
-        rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
-      }else{
-        isFuture=true;
-        try{
-          const yr=fromDate.getFullYear()-1;
-          const mm=String(tripMonth+1).padStart(2,"0");
-          const url="https://archive-api.open-meteo.com/v1/archive?latitude="+la+"&longitude="+lo+"&start_date="+yr+"-"+mm+"-01&end_date="+yr+"-"+mm+"-28&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto";
-          const d=await fetch(url).then(r=>r.json());
-          if(d.daily&&d.daily.temperature_2m_max&&d.daily.temperature_2m_max.length>0){
-            avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_max.length);
-            avgMin=Math.round(d.daily.temperature_2m_min.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_min.length);
-            rainDays=d.daily.precipitation_sum.filter(r=>r>1).length;
-          }else throw new Error("no data");
-        }catch{
-          const summerM=la>0?[5,6,7,8]:[11,0,1,2];
-          const winterM=la>0?[11,0,1]:[5,6,7];
-          const isSummerM=summerM.includes(tripMonth),isWinterM=winterM.includes(tripMonth);
-          const base=la>55?{s:18,w:4}:la>45?{s:24,w:6}:la>30?{s:30,w:12}:la>10?{s:33,w:26}:{s:30,w:28};
-          avgMax=isSummerM?base.s:isWinterM?base.w:Math.round((base.s+base.w)/2);
-          avgMin=avgMax-8;rainDays=isSummerM&&la>40?3:isWinterM&&la>40?12:5;
-        }
-      }
-      const isHot=avgMax>=26,isWarm=avgMax>=18,isMild=avgMax>=12,isCold=avgMax<12;
-      const isRainy=rainDays>=10,isSomeRain=rainDays>=5;
-      const src=isFuture?"Based on typical "+tripMonthName+" weather in "+cn+".":"Based on this week's live forecast.";
-      let reply="";
-      if(isHot&&!isRainy){reply=cn+" in "+tripMonthName+" is typically gorgeous — expect around "+avgMax+"°C and mostly sunny! ☀️ Pack light summer clothes, shorts and sandals. Suncream and a sun hat are absolutely essential. A light layer for evenings is handy. "+src;}
-      else if(isHot&&isRainy){reply=cn+" in "+tripMonthName+" is hot at around "+avgMax+"°C but it's the rainy season — expect tropical showers! 🌦️ Pack light breathable clothes plus a compact waterproof. Sandals are fine but have closed shoes too. "+src;}
-      else if(isWarm&&!isSomeRain){reply=cn+" in "+tripMonthName+" is lovely and warm at around "+avgMax+"°C with mainly dry weather! 🌤️ Light clothes and a smart casual outfit would be perfect. Pack a light jacket for evenings. Should be a fantastic trip! "+src;}
-      else if(isWarm&&isSomeRain){reply=cn+" in "+tripMonthName+" is warm at "+avgMax+"°C but expect some rain — about "+rainDays+" days could be wet. 🌧️ Pack light clothes and a waterproof jacket. An umbrella or packable mac would be really useful. "+src;}
-      else if(isMild){reply=cn+" in "+tripMonthName+" is mild at around "+avgMax+"°C — not hot but perfectly pleasant! 🌥️ Pack layers — jeans, jumpers and a good waterproof jacket. A scarf and cardigan for evenings. "+src;}
-      else if(isCold){reply=cn+" in "+tripMonthName+" is cold — typically around "+avgMax+"°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. Gloves, hat and scarf are essential. "+src;}
-      else{reply=cn+" in "+tripMonthName+" typically sees around "+avgMax+"°C with "+rainDays+" rainy days. 🌤️ Pack layers — lighter clothes plus a warm layer and waterproof jacket. A compact umbrella is always handy! "+src;}
-      setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,isFuture,tripMonthName});
-    }catch{setHolidayResult({city:hCity,text:"I had trouble fetching that destination — check the city name and try again!",avgMax:20,avgMin:12,rainDays:2,isFuture:false});}
-    setHolidayLoading(false);
-  }
-
-  async function addFamMember(){
-    if(!newFamName.trim()||!newFamCity.trim())return;
-    setFamLoading(true);
-    try{
-      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(newFamCity)+"&count=1").then(r=>r.json());
-      if(!g.results||!g.results[0]){setFamLoading(false);return;}
-      const la=g.results[0].latitude,lo=g.results[0].longitude;
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(loc.trim())+"&count=1").then(r=>r.json());
+      if(!g.results||!g.results[0])return;
+      const{latitude:la,longitude:lo}=g.results[0];
       const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,weathercode,is_day&hourly=precipitation_probability&timezone=auto&forecast_days=1";
       const d=await fetch(url).then(r=>r.json());
       const cu=d.current,h=new Date().getHours();
-      const member={name:newFamName,city:newFamCity+", "+g.results[0].country,temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),code:cu.weathercode,isDay:cu.is_day,rain:d.hourly?.precipitation_probability?.[h]||0};
-      const updated=[...famMembers,member];
-      setFamMembers(updated);ss("skyla_fam",updated);
-      setNewFamName("");setNewFamCity("");
+      const m={name:name.trim(),city:loc.trim()+", "+g.results[0].country,temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),code:cu.weathercode,isDay:cu.is_day,rain:d.hourly&&d.hourly.precipitation_probability?d.hourly.precipitation_probability[h]||0:0};
+      const updated=[...famMembers,m];setFamMembers(updated);ss("skyla_fam",updated);
+      const ne=document.getElementById("fam-name");const ce=document.getElementById("fam-city");
+      if(ne)ne.value="";if(ce)ce.value="";
+      window._famname="";window._famloc="";
     }catch{}
-    setFamLoading(false);
   }
 
-  function saveBriefing(){
-    ss("skyla_briefing",briefingTime);
-    setBriefingSaved(true);
-    setTimeout(()=>setBriefingSaved(false),2500);
-    if("Notification" in window){Notification.requestPermission();}
+  function checkEvent(){
+    const name=window._ename||"Event";
+    const dayIdx=Math.round((new Date(eventDate)-new Date())/86400000);
+    const clamp=Math.min(Math.max(dayIdx,0),6);
+    const dWx=wx&&wx.week&&wx.week[clamp]?wx.week[clamp]:null;
+    const max=dWx?dWx.max:18,rainPct=dWx?dWx.rain:20;
+    let reply="";
+    if(rainPct>=60)reply=name+" looks like a rainy one — "+rainPct+"% chance of rain! Have a covered area or backup plan. A waterproof jacket is essential.";
+    else if(max<12)reply=name+" should stay dry but it will be cool at around "+max+"C. Make sure everyone wraps up warm with layers!";
+    else if(rainPct<40&&max>=15)reply=name+" is looking great — "+max+"C and only "+rainPct+"% rain chance. Enjoy your event!";
+    else reply=name+" looks like a mixed day — "+max+"C with "+rainPct+"% rain. Pack a light jacket just in case.";
+    setEventResult({text:reply,max,rain:rainPct});
+  }
+
+  async function checkHoliday(){
+    const dest=window._hcity||"";
+    if(!dest.trim())return;
+    try{
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(dest.trim())+"&count=1").then(r=>r.json());
+      if(!g.results||!g.results[0]){setHolidayResult({city:dest,text:"Could not find that destination — try a nearby city!"});return;}
+      const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
+      const from=new Date(holidayFrom);
+      const daysAway=Math.round((from-new Date())/86400000);
+      const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const tripMonth=from.getMonth();
+      let avgMax=20,rainDays=4;
+      if(daysAway<=14){
+        const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=temperature_2m_max,precipitation_probability_max&timezone=auto&forecast_days=7";
+        const d=await fetch(url).then(r=>r.json());
+        avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
+        rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
+      }else{
+        try{
+          const yr=from.getFullYear()-1;
+          const mm=String(tripMonth+1).padStart(2,"0");
+          const url="https://archive-api.open-meteo.com/v1/archive?latitude="+la+"&longitude="+lo+"&start_date="+yr+"-"+mm+"-01&end_date="+yr+"-"+mm+"-28&daily=temperature_2m_max,precipitation_sum&timezone=auto";
+          const d=await fetch(url).then(r=>r.json());
+          if(d.daily&&d.daily.temperature_2m_max&&d.daily.temperature_2m_max.length>0){
+            avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/d.daily.temperature_2m_max.length);
+            rainDays=d.daily.precipitation_sum.filter(r=>r>1).length;
+          }
+        }catch{}
+      }
+      let reply="";
+      if(avgMax>=28)reply=cn+" in "+months[tripMonth]+" is typically hot — around "+avgMax+"C! Pack light summer clothes, suncream and a sun hat. A light layer for evenings is handy.";
+      else if(avgMax>=20)reply=cn+" in "+months[tripMonth]+" is warm and lovely — around "+avgMax+"C. Light clothes with a smart casual layer for evenings. "+rainDays+" rainy days expected.";
+      else if(avgMax>=12)reply=cn+" in "+months[tripMonth]+" is mild — around "+avgMax+"C. Pack layers, a waterproof jacket and comfortable shoes. "+rainDays+" rainy days expected.";
+      else reply=cn+" in "+months[tripMonth]+" is cold — around "+avgMax+"C. Pack a proper warm coat, jumpers and waterproof boots.";
+      setHolidayResult({city:cn+", "+co,text:reply,avgMax,rainDays,month:months[tripMonth]});
+    }catch{setHolidayResult({city:dest,text:"Had trouble fetching that destination — check the city name and try again!"});}
   }
 
   useEffect(()=>{load();},[]);
 
-  const DWX=getDisplayWx();
-  const type=DWX?wxType(DWX.code,DWX.isDay):"partly";
-  const S=SC[type];
-  const PE=DWX?plainEnglish(DWX):{feel:"",windWord:"",rainWord:"",verdict:"",deceiving:false};
-  const G={background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:"1px solid "+S.bdr,borderRadius:24};
+  const TABS=[{id:"home",icon:"🏠",label:"Home"},{id:"chat",icon:"🤖",label:"Ask Skyla"},{id:"search",icon:"🔍",label:"Search"},{id:"event",icon:"🗓️",label:"Event"},{id:"holiday",icon:"✈️",label:"Holiday"},{id:"travel",icon:"🚌",label:"Travel"},{id:"week",icon:"📅",label:"Week"},{id:"more",icon:"✦",label:"More"}];
 
-  const TABS=[
-    {id:"home",icon:"🏠",label:"Home"},
-    {id:"chat",icon:"🤖",label:"Ask Skyla"},
-    {id:"search",icon:"🔍",label:"Search"},
-    {id:"event",icon:"🗓️",label:"Event"},
-    {id:"holiday",icon:"✈️",label:"Holiday"},
-    {id:"week",icon:"📅",label:"Week"},
-    {id:"travel",icon:"🚌",label:"Travel"},
-    {id:"more",icon:"✦",label:"More"},
-  ];
+  function Card({children,style={}}){return<div style={{...G,padding:"18px",marginBottom:12,...style}}>{children}</div>;}
+  function Lbl({children}){return<div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>{children}</div>;}
 
-  function Card({children,style={}}){return<div style={{...G,padding:"20px",marginBottom:12,...style}}>{children}</div>;}
-  function Lbl({children}){return<div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:10}}>{children}</div>;}
-  function PremiumLock({icon,title,desc}){return(
-    <div style={{...G,padding:"36px 24px",textAlign:"center",marginBottom:12}}>
-      <div style={{fontSize:52,marginBottom:12}}>{icon}</div>
-      <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:10}}>{title}</div>
-      <div style={{fontSize:13,opacity:.7,lineHeight:1.7,marginBottom:24}}>{desc}</div>
-      <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"16px 32px",fontSize:15,fontWeight:900,color:"white",cursor:"pointer",width:"100%",boxShadow:"0 8px 32px rgba(233,30,140,.4)"}}>
-        Unlock Premium — £3.98/month 🩷
-      </button>
-      <div style={{fontSize:11,opacity:.45,marginTop:10}}>Cancel anytime · Instant access</div>
+  if(loading)return(
+    <div style={{minHeight:"100vh",background:SC.partly.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
+      <div style={{fontSize:60,animation:"float 2s ease-in-out infinite"}}>🩷</div>
+      <div style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:900,color:"#0C1A3D"}}>Skyla</div>
+      <div style={{fontSize:13,color:"rgba(12,26,61,.6)"}}>Getting your weather ready...</div>
+      <div style={{width:36,height:36,border:"3px solid rgba(255,255,255,.3)",borderTop:"3px solid #2563EB",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
     </div>
-  );}
+  );
 
+  if(error)return(
+    <div style={{minHeight:"100vh",background:SC.partly.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"20px",textAlign:"center"}}>
+      <div style={{fontSize:48}}>📍</div>
+      <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#0C1A3D"}}>Location needed</div>
+      <div style={{fontSize:14,color:"rgba(12,26,61,.7)",lineHeight:1.6}}>{error}</div>
+      <button onClick={load} style={{background:"#2563EB",border:"none",borderRadius:100,padding:"14px 28px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer"}}>Try Again</button>
+    </div>
+  );
 
   return(
-    <div style={{minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:S.text,paddingBottom:80,position:"relative"}}>
+    <div style={{minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:S.text,paddingBottom:80}}>
       <BG type={type}/>
+      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1}}>
 
-      {/* PAYWALL */}
-      {showPaywall&&(
-        <div onClick={()=>setShowPaywall(false)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(4,2,15,.92)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:380,background:"linear-gradient(145deg,#120026 0%,#2d1b69 45%,#120026 100%)",borderRadius:28,padding:"32px 22px 28px",border:"1px solid rgba(233,30,140,.35)",boxShadow:"0 0 100px rgba(233,30,140,.3),0 40px 80px rgba(0,0,0,.6)",position:"relative"}}>
-            <button onClick={()=>setShowPaywall(false)} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.15)",borderRadius:"50%",width:34,height:34,fontSize:16,cursor:"pointer",color:"white"}}>✕</button>
-            <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{fontSize:52,marginBottom:8,filter:"drop-shadow(0 0 24px rgba(233,30,140,.9))"}}>🩷</div>
-              <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,color:"white",letterSpacing:-1,marginBottom:8}}>Skyla Premium</div>
-              <div style={{fontSize:13,color:"rgba(255,255,255,.58)",lineHeight:1.55}}>Join thousands who never get caught out by the weather again</div>
+        {/* TOP BAR */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
+            <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
+              <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
-            <div style={{background:"rgba(233,30,140,.13)",border:"1px solid rgba(233,30,140,.28)",borderRadius:14,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:10}}>
-              <div style={{fontSize:18}}>⭐</div>
-              <div>
-                <div style={{fontSize:12,fontWeight:800,color:"#F48FB1"}}>4.9 stars · Loved by thousands</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.48)",marginTop:2,fontStyle:"italic"}}>{"\"Haven't been caught in rain since I got premium!\" — Sarah"}</div>
-              </div>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:18}}>
-              {[["🤖","AI Chat","Ask anything"],["🔍","Any City","Worldwide search"],["🗓️","Event Check","BBQ safe?"],["✈️","Holiday Pack","What to bring"],["🌅","Morning Brief","Daily at your time"],["👨‍👩‍👧","Family","Everyone's weather"],["📵","No Ads","Clean experience"],["🎙️","Voice","Human Skyla voice"]].map(([icon,title,desc],i)=>(
-                <div key={i} style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)",borderRadius:14,padding:"11px 10px",display:"flex",alignItems:"center",gap:8}}>
-                  <div style={{fontSize:18,flexShrink:0}}>{icon}</div>
-                  <div><div style={{fontSize:11,fontWeight:800,color:"white"}}>{title}</div><div style={{fontSize:10,color:"rgba(255,255,255,.42)",marginTop:1}}>{desc}</div></div>
-                </div>
-              ))}
-            </div>
-            <div style={{background:"rgba(233,30,140,.09)",border:"1px solid rgba(233,30,140,.22)",borderRadius:18,padding:"16px",marginBottom:16,textAlign:"center"}}>
-              <div style={{display:"flex",alignItems:"baseline",justifyContent:"center",gap:5,marginBottom:4}}>
-                <span style={{fontFamily:"'Fraunces',serif",fontSize:42,fontWeight:900,color:"white",lineHeight:1}}>£3.98</span>
-                <span style={{fontSize:14,color:"rgba(255,255,255,.45)"}}>/month</span>
-              </div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,.42)"}}>Just 13p a day — less than a sip of coffee ☕</div>
-            </div>
-            <button onClick={activatePremium} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:18,padding:"18px",fontSize:17,fontWeight:900,color:"white",cursor:"pointer",boxShadow:"0 8px 40px rgba(233,30,140,.55)",letterSpacing:-.3,marginBottom:14,fontFamily:"'DM Sans',sans-serif"}}>
-              Start Premium Now 🩷
-            </button>
-            <div style={{display:"flex",justifyContent:"center",gap:16}}>
-              {["✓ Cancel anytime","✓ Instant access","✓ No hidden fees"].map((t,i)=>(
-                <span key={i} style={{fontSize:10,color:"rgba(255,255,255,.38)",fontWeight:600}}>{t}</span>
-              ))}
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
+            <div style={{display:"flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
+              <div style={{fontSize:10,opacity:.55}}>{city}</div>
+              <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,width:20,height:20,fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>🔍</button>
             </div>
           </div>
         </div>
-      )}
 
-      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1}}>
-
-        {/* LOADING */}
-        {loading&&(
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",gap:20}}>
-            <div style={{fontSize:64,animation:"float 2s ease-in-out infinite"}}>🩷</div>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:900}}>Skyla</div>
-            <div style={{fontSize:14,opacity:.6}}>Getting your weather ready…</div>
-            <div style={{width:40,height:40,border:"3px solid rgba(255,255,255,.2)",borderTop:"3px solid white",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
-          </div>
-        )}
-
-        {/* ERROR */}
-        {error&&!loading&&(
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",gap:16,padding:"0 20px",textAlign:"center"}}>
-            <div style={{fontSize:52}}>📍</div>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900}}>Location needed</div>
-            <div style={{fontSize:14,opacity:.7,lineHeight:1.6}}>{error}</div>
-            <button onClick={load} style={{...G,padding:"14px 28px",fontSize:14,fontWeight:800,cursor:"pointer",border:"none",color:S.text,fontFamily:"'DM Sans',sans-serif"}}>Try Again</button>
-          </div>
-        )}
-
-        {/* MAIN APP */}
-        {!loading&&!error&&DWX&&(
-          <>
-            {/* TOP BAR */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 0 10px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:900,letterSpacing:-1}}>Skyla</span>
-                <div style={{...G,padding:"3px 10px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
-                  <span>🔥</span><span style={{fontSize:12,fontWeight:800,color:S.acc}}>{streak}d</span>
-                </div>
-                {isPremium&&<div style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",borderRadius:100,padding:"3px 12px",fontSize:10,fontWeight:800,color:"white"}}>✦ PREMIUM</div>}
-              </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:17,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")} <span style={{fontSize:10,opacity:.6}}>{clock.getHours()<12?"AM":"PM"}</span></div>
-                <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"flex-end"}}>
-                  <div style={{fontSize:10,opacity:.55}}>{city}</div>
-                  <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,width:22,height:22,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,fontFamily:"'DM Sans',sans-serif"}}>🔍</button>
-                </div>
-              </div>
-            </div>
-
-            {/* WEATHER WARNINGS - TOP OF PAGE */}
-            {alerts.length>0&&(
-              <div style={{marginBottom:10}}>
-                {alerts.map((a,i)=>(
-                  <div key={i} style={{borderRadius:18,background:a.bg,border:"2px solid "+a.color,padding:"14px 16px",marginBottom:6,animation:"slideUp .4s ease"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
-                      <div style={{fontSize:24}}>{a.emoji||"⚠️"}</div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:11,fontWeight:900,color:a.color,letterSpacing:.5,textTransform:"uppercase"}}>{a.level}</div>
-                        <div style={{fontSize:14,fontWeight:800,marginTop:1}}>{a.title}</div>
-                        <div style={{fontSize:11,color:a.color,fontWeight:700,marginTop:1,opacity:.85}}>{a.dayLabel||"Today"}</div>
-                      </div>
-                    </div>
-                    <div style={{fontSize:13,fontWeight:600,lineHeight:1.6}}>{a.msg}</div>
+        {/* WEATHER WARNINGS */}
+        {alerts.length>0?(
+          <div style={{marginBottom:10}}>
+            {alerts.map((a,i)=>(
+              <div key={i} style={{borderRadius:16,background:a.bg,border:"2px solid "+a.color,padding:"12px 16px",marginBottom:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                  <span style={{fontSize:20}}>{a.emoji}</span>
+                  <div>
+                    <div style={{fontSize:10,fontWeight:900,color:a.color,letterSpacing:.5}}>{a.level} — {a.label}</div>
+                    <div style={{fontSize:13,fontWeight:800}}>{a.title}</div>
                   </div>
-                ))}
-              </div>
-            )}
-            {alerts.length===0&&wx&&(
-              <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:14,padding:"10px 14px",marginBottom:10}}>
-                <div style={{fontSize:16}}>✅</div>
-                <div style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</div>
-              </div>
-            )}
-
-            {/* PREMIUM BANNER */}
-            {!isPremium&&(
-              <div onClick={()=>setShowPaywall(true)} style={{marginBottom:10,borderRadius:16,background:"linear-gradient(135deg,#1a0533,#7C3AED)",border:"1px solid rgba(233,30,140,.5)",padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 20px rgba(233,30,140,.3)"}}>
-                <div style={{fontSize:26,filter:"drop-shadow(0 0 8px rgba(233,30,140,.8))"}}>🩷</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:900,color:"white"}}>Unlock Skyla Premium</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:1}}>AI chat · Any city · Events · Holidays · No ads</div>
                 </div>
-                <div style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",borderRadius:10,padding:"8px 14px",boxShadow:"0 4px 12px rgba(233,30,140,.4)"}}>
-                  <div style={{fontSize:12,fontWeight:900,color:"white"}}>£3.98/mo</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,.7)",textAlign:"center"}}>13p a day</div>
-                </div>
+                <div style={{fontSize:12,fontWeight:600,lineHeight:1.5}}>{a.msg}</div>
               </div>
-            )}
+            ))}
+          </div>
+        ):(
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
+            <span>✅</span>
+            <span style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</span>
+          </div>
+        )}
 
-            {/* CHARACTER + TEMP */}
-            <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:8}}>
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-                <Character type={type} gender={gender}/>
-                <div style={{display:"flex",gap:4,background:"rgba(255,255,255,.18)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,padding:"4px"}}>
-                  {[{id:"female",label:"👧 Girl"},{id:"male",label:"👦 Boy"}].map(opt=>(
-                    <button key={opt.id} onClick={()=>toggleGender(opt.id)} style={{background:gender===opt.id?S.acc:"transparent",border:"none",borderRadius:100,padding:"6px 14px",cursor:"pointer",fontSize:11,fontWeight:800,color:gender===opt.id?"white":S.sub,transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{flex:1,paddingBottom:22}}>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:64,fontWeight:900,lineHeight:1,letterSpacing:-4}}>{DWX.temp}°</div>
-                <div style={{fontSize:14,fontWeight:600,opacity:.7,marginTop:3}}>{S.em} {S.name}</div>
-                <div style={{marginTop:10,...G,padding:"12px 14px",borderRadius:16,border:PE.deceiving?"1px solid rgba(245,158,11,.6)":G.border,background:PE.deceiving?"rgba(245,158,11,.15)":G.background}}>
-                  <div style={{fontSize:14,fontWeight:700,lineHeight:1.55,color:PE.deceiving?"#92400E":S.text}}>{PE.verdict}</div>
-                </div>
-                <button onClick={speak} style={{marginTop:10,display:"flex",alignItems:"center",gap:6,background:S.acc+"20",border:"1px solid "+S.acc+"45",borderRadius:100,padding:"7px 16px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:S.acc}}>
-                  {talking?<span style={{display:"flex",gap:2,alignItems:"center"}}>{[0,1,2,3].map(i=><span key={i} style={{display:"inline-block",width:3,height:16,background:S.acc,borderRadius:2,animation:"wave .7s ease-in-out infinite",animationDelay:i*.15+"s"}}/>)}</span>:"🎙️"}
-                  <span>{talking?"Speaking…":"Hear Skyla's briefing"}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* GREETING */}
-            <div style={{...G,padding:"14px 18px",marginBottom:12,borderRadius:"8px 24px 24px 24px"}}>
-              <div style={{fontSize:14,fontWeight:600,lineHeight:1.6}}>{ai?.msg||"Here's your weather sorted! ✨"}</div>
-            </div>
-
-            {/* QUICK ASK SKYLA */}
-            <div style={{marginBottom:12}}>
-              <div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>✦ Quick Ask Skyla</div>
-              <div style={{display:"flex",gap:7,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4}}>
-                {[{icon:"🧣",label:"Warm beanie?",key:"beanie"},{icon:"👒",label:"Sun hat?",key:"sunhat"},{icon:"🧥",label:"Need a coat?",key:"coat"},{icon:"☂️",label:"Umbrella?",key:"umbrella"},{icon:"😎",label:"Suncream?",key:"suncream"},{icon:"👖",label:"Shorts or trousers?",key:"trousers"},{icon:"🧸",label:"Need a jumper?",key:"jumper"}].map((btn,i)=>(
-                  <button key={i} onClick={()=>quickAsk(btn.key,btn.icon)} style={{flexShrink:0,background:quickAns?.icon===btn.icon?S.acc:"rgba(255,255,255,.2)",backdropFilter:"blur(12px)",border:"1px solid "+(quickAns?.icon===btn.icon?"transparent":S.bdr),borderRadius:100,padding:"8px 14px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-                    <span style={{fontSize:20}}>{quickLoading===btn.icon?"⏳":btn.icon}</span>
-                    <span style={{fontSize:9,fontWeight:800,color:quickAns?.icon===btn.icon?"white":S.sub,whiteSpace:"nowrap"}}>{btn.label}</span>
-                  </button>
-                ))}
-              </div>
-              {quickAns&&(
-                <div style={{...G,padding:"12px 16px",marginTop:8,borderRadius:16,border:"1px solid "+S.acc+"40",display:"flex",gap:10,alignItems:"flex-start",animation:"slideUp .3s ease"}}>
-                  <div style={{fontSize:24,flexShrink:0}}>{quickAns.icon}</div>
-                  <div style={{fontSize:13,fontWeight:600,lineHeight:1.6,flex:1}}>{quickAns.text}</div>
-                  <button onClick={()=>setQuickAns(null)} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",opacity:.4,color:S.text,flexShrink:0}}>✕</button>
-                </div>
-              )}
-            </div>
-
-            {/* TABS */}
-            <div style={{...G,padding:"6px",marginBottom:14,display:"flex",gap:3,borderRadius:20,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-              {TABS.map(t=>(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{flexShrink:0,background:tab===t.id?S.acc:"transparent",border:"none",borderRadius:14,padding:"7px 8px",cursor:"pointer",fontSize:9,fontWeight:800,color:tab===t.id?"white":S.sub,transition:"all .2s",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:50,fontFamily:"'DM Sans',sans-serif"}}>
-                  <span style={{fontSize:14}}>{t.icon}</span>{t.label}
+        {/* CHARACTER + TEMP */}
+        <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:8}}>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <SkylaChar type={type} gender={gender}/>
+            <div style={{display:"flex",gap:4,background:"rgba(255,255,255,.18)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,padding:"3px"}}>
+              {[{id:"female",label:"Girl"},{id:"male",label:"Boy"}].map(o=>(
+                <button key={o.id} onClick={()=>{setGender(o.id);ss("skyla_gender",o.id);}} style={{background:gender===o.id?S.acc:"transparent",border:"none",borderRadius:100,padding:"5px 12px",cursor:"pointer",fontSize:10,fontWeight:800,color:gender===o.id?"white":S.sub,fontFamily:"'DM Sans',sans-serif"}}>
+                  {o.label}
                 </button>
               ))}
             </div>
+          </div>
+          <div style={{flex:1,paddingBottom:20}}>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:60,fontWeight:900,lineHeight:1,letterSpacing:-3}}>{DWX?DWX.temp:wx?wx.temp:0}°</div>
+            <div style={{fontSize:13,opacity:.7,marginTop:2}}>{S.em} {wmoDesc(wx?wx.code:0)}</div>
+            <div style={{marginTop:8,...G,padding:"10px 12px",borderRadius:14,border:PE.deceiving?"1px solid rgba(245,158,11,.6)":G.border,background:PE.deceiving?"rgba(245,158,11,.15)":G.background}}>
+              <div style={{fontSize:13,fontWeight:600,lineHeight:1.5}}>{PE.verdict||"Loading your weather..."}</div>
+            </div>
+            <button onClick={speak} style={{marginTop:8,display:"flex",alignItems:"center",gap:6,background:S.acc+"22",border:"1px solid "+S.acc+"45",borderRadius:100,padding:"6px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:11,fontWeight:700,color:S.acc}}>
+              {talking?<span style={{display:"flex",gap:2}}>{[0,1,2,3].map(i=><span key={i} style={{display:"inline-block",width:3,height:14,background:S.acc,borderRadius:2,animation:"wave .7s ease-in-out infinite",animationDelay:i*.15+"s"}}/>)}</span>:"🎙️"}
+              <span>{talking?"Speaking...":"Hear Skyla"}</span>
+            </button>
+          </div>
+        </div>
 
+        {/* GREETING */}
+        {ai&&<div style={{...G,padding:"12px 16px",marginBottom:10,borderRadius:"8px 20px 20px 20px"}}>
+          <div style={{fontSize:13,fontWeight:600,lineHeight:1.6}}>{ai.msg}</div>
+        </div>}
 
-            {/* HOME TAB */}
-            {tab==="home"&&(
-              <div>
+        {/* QUICK ASK */}
+        <div style={{marginBottom:10}}>
+          <Lbl>Quick Ask Skyla — all free</Lbl>
+          <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
+            {[{icon:"🧣",label:"Warm beanie?",key:"beanie"},{icon:"👒",label:"Sun hat?",key:"sunhat"},{icon:"🧥",label:"Need a coat?",key:"coat"},{icon:"☂️",label:"Umbrella?",key:"umbrella"},{icon:"😎",label:"Suncream?",key:"suncream"},{icon:"👖",label:"Shorts or trousers?",key:"trousers"},{icon:"🧸",label:"Need a jumper?",key:"jumper"}].map((b,i)=>(
+              <button key={i} onClick={()=>quickAsk(b.key,b.icon)} style={{flexShrink:0,background:quickAns&&quickAns.icon===b.icon?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:100,padding:"7px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,fontFamily:"'DM Sans',sans-serif"}}>
+                <span style={{fontSize:18}}>{b.icon}</span>
+                <span style={{fontSize:8,fontWeight:800,color:quickAns&&quickAns.icon===b.icon?"white":S.sub,whiteSpace:"nowrap"}}>{b.label}</span>
+              </button>
+            ))}
+          </div>
+          {quickAns&&(
+            <div style={{...G,padding:"10px 14px",marginTop:6,borderRadius:14,display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:22}}>{quickAns.icon}</span>
+              <span style={{fontSize:13,fontWeight:600,lineHeight:1.5,flex:1}}>{quickAns.text}</span>
+              <button onClick={()=>setQuickAns(null)} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",opacity:.4,color:S.text}}>x</button>
+            </div>
+          )}
+        </div>
 
+        {/* TABS */}
+        <div style={{...G,padding:"5px",marginBottom:12,display:"flex",gap:2,borderRadius:18,overflowX:"auto"}}>
+          {TABS.map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{flexShrink:0,background:tab===t.id?S.acc:"transparent",border:"none",borderRadius:12,padding:"6px 7px",cursor:"pointer",fontSize:9,fontWeight:800,color:tab===t.id?"white":S.sub,display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:46,fontFamily:"'DM Sans',sans-serif"}}>
+              <span style={{fontSize:13}}>{t.icon}</span>{t.label}
+            </button>
+          ))}
+        </div>
 
-                {/* Feel cards */}
-                <Card style={{border:"1px solid "+S.acc+"35"}}>
-                  <Lbl>What it actually feels like outside</Lbl>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                    {[{icon:"🌡️",label:"Outside",val:PE.feel},{icon:"💨",label:"Wind",val:PE.windWord},{icon:"🌧️",label:"Rain",val:PE.rainWord}].map((item,i)=>(
-                      <div key={i} style={{background:"rgba(255,255,255,.16)",borderRadius:16,padding:"14px 10px",textAlign:"center"}}>
-                        <div style={{fontSize:22,marginBottom:5}}>{item.icon}</div>
-                        <div style={{fontSize:9,opacity:.55,letterSpacing:2,textTransform:"uppercase",fontWeight:700,marginBottom:4}}>{item.label}</div>
-                        <div style={{fontSize:11,fontWeight:700,lineHeight:1.35}}>{item.val}</div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-                {/* Wear */}
-                <div style={{...G,padding:"16px 20px",marginBottom:12,display:"flex",alignItems:"center",gap:16}}>
-                  <div style={{fontSize:40}}>👕</div>
-                  <div><Lbl>What to Wear Today</Lbl><div style={{fontSize:15,fontWeight:700,lineHeight:1.4}}>{ai?.wear||"Something comfy"}</div></div>
+        {/* HOME TAB */}
+        {tab==="home"&&wx&&(
+          <div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+              {[{icon:"🌡️",label:"Outside",val:PE.feel},{icon:"💨",label:"Wind",val:PE.windWord},{icon:"🌧️",label:"Rain",val:PE.rainWord}].map((item,i)=>(
+                <div key={i} style={{...G,padding:"12px 8px",textAlign:"center",borderRadius:16}}>
+                  <div style={{fontSize:20,marginBottom:4}}>{item.icon}</div>
+                  <div style={{fontSize:8,opacity:.5,letterSpacing:2,textTransform:"uppercase",fontWeight:700,marginBottom:3}}>{item.label}</div>
+                  <div style={{fontSize:10,fontWeight:700,lineHeight:1.3}}>{item.val}</div>
                 </div>
-                {/* Today Feels */}
-                <Card>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                    <div><Lbl>Today Feels</Lbl><div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontStyle:"italic",color:S.acc}}>{ai?.feel||PE.feel}</div></div>
-                    <div style={{fontSize:44}}>{S.em}</div>
-                  </div>
-                  <div style={{height:1,background:"rgba(255,255,255,.18)",margin:"10px 0"}}/>
-                  <div style={{fontSize:13,lineHeight:1.7,fontWeight:500}}>✦ {ai?.tip||"Stay comfortable today!"}</div>
-                </Card>
-                {/* Premium promo card */}
-                {!isPremium&&(
-                  <div onClick={()=>setShowPaywall(true)} style={{marginBottom:14,borderRadius:22,background:"linear-gradient(135deg,#120026 0%,#4c1d95 50%,#120026 100%)",border:"1px solid rgba(233,30,140,.45)",padding:"22px 20px",cursor:"pointer",boxShadow:"0 8px 40px rgba(233,30,140,.25)",position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:"rgba(233,30,140,.18)",filter:"blur(35px)"}}/>
-                    <div style={{position:"relative",zIndex:1}}>
-                      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
-                        <div style={{fontSize:38,filter:"drop-shadow(0 0 12px rgba(233,30,140,.8))"}}>🩷</div>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:16,fontWeight:900,color:"white",letterSpacing:-.3}}>Unlock Skyla Premium</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>Everything you need — never caught out again</div>
-                        </div>
-                        <div style={{background:"rgba(233,30,140,.22)",border:"1px solid rgba(233,30,140,.45)",borderRadius:12,padding:"6px 12px",textAlign:"center",flexShrink:0}}>
-                          <div style={{fontSize:15,fontWeight:900,color:"#F48FB1",lineHeight:1}}>£3.98</div>
-                          <div style={{fontSize:9,color:"rgba(255,255,255,.38)",marginTop:1}}>/month</div>
-                        </div>
-                      </div>
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
-                        {["🤖 Ask Skyla","🔍 Any city","🗓️ Events","✈️ Holidays","📵 No ads","🌅 Morning brief"].map((f,i)=>(
-                          <div key={i} style={{background:"rgba(255,255,255,.1)",borderRadius:100,padding:"5px 11px",fontSize:11,fontWeight:700,color:"rgba(255,255,255,.75)"}}>{f}</div>
-                        ))}
-                      </div>
-                      <div style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",borderRadius:16,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 4px 24px rgba(233,30,140,.45)"}}>
-                        <div>
-                          <div style={{fontSize:14,fontWeight:900,color:"white"}}>Start Premium — just 13p a day ☕</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2}}>Cancel anytime · Instant access</div>
-                        </div>
-                        <div style={{fontSize:22,color:"white"}}>→</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {/* Rain chance + high/low */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-                  <div style={{...G,padding:"18px 14px"}}>
-                    <Lbl>Rain Chance</Lbl>
-                    <div style={{fontFamily:"'Fraunces',serif",fontSize:40,fontWeight:900,lineHeight:1}}>{DWX.rain}%</div>
-                    <div style={{background:"rgba(0,0,0,.1)",borderRadius:100,height:5,margin:"10px 0",overflow:"hidden"}}>
-                      <div style={{height:"100%",width:DWX.rain+"%",background:S.acc,borderRadius:100,transition:"width 1s ease"}}/>
-                    </div>
-                  </div>
-                  <div style={{...G,padding:"18px 14px"}}>
-                    <Lbl>{"Today's Range"}</Lbl>
-                    <div style={{fontSize:24,fontWeight:900}}>{DWX.maxT||wx.maxT}° <span style={{opacity:.4,fontSize:16,fontWeight:400}}>/ {DWX.minT||wx.minT}°</span></div>
-                    <div style={{fontSize:12,opacity:.6,marginTop:8}}>High / Low</div>
-                  </div>
+              ))}
+            </div>
+            {ai&&<div style={{...G,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:14}}>
+              <div style={{fontSize:36}}>👕</div>
+              <div><Lbl>What to Wear Today</Lbl><div style={{fontSize:14,fontWeight:700,lineHeight:1.4}}>{ai.wear}</div></div>
+            </div>}
+            <Card>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <div><Lbl>Today Feels</Lbl><div style={{fontFamily:"'Fraunces',serif",fontSize:20,fontStyle:"italic",color:S.acc}}>{PE.feel}</div></div>
+                <div style={{fontSize:40}}>{S.em}</div>
+              </div>
+              <div style={{height:1,background:"rgba(255,255,255,.15)",margin:"8px 0"}}/>
+              <div style={{fontSize:12,lineHeight:1.6}}>{ai&&ai.tip?ai.tip:"Enjoy your day!"}</div>
+            </Card>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+              <div style={{...G,padding:"16px 14px"}}>
+                <Lbl>Rain Chance</Lbl>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:900}}>{wx.rain}%</div>
+                <div style={{background:"rgba(0,0,0,.1)",borderRadius:100,height:4,marginTop:8,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:wx.rain+"%",background:S.acc,borderRadius:100}}/>
                 </div>
-                {/* Plant care */}
-                {ai?.plant&&(
-                  <div style={{...G,padding:"20px",marginBottom:12,border:"1px solid rgba(16,185,129,.45)"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:14}}>
-                      <div style={{fontSize:38}}>🌱</div>
-                      <div style={{flex:1}}>
-                        <Lbl>Plant Care Today</Lbl>
-                        <div style={{fontSize:13,fontWeight:500,lineHeight:1.55}}>{ai.plant}</div>
-                        <div style={{marginTop:8,display:"inline-block",background:"rgba(16,185,129,.2)",border:"1px solid rgba(16,185,129,.4)",borderRadius:100,padding:"4px 14px",fontSize:11,fontWeight:700,color:"#059669"}}>{ai.plantAction}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {/* Full outfit */}
-                {ai?.items&&(
-                  <Card>
-                    <Lbl>👗 Full Outfit</Lbl>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                      {ai.items.map((item,i)=>(
-                        <div key={i} style={{background:"rgba(255,255,255,.18)",borderRadius:14,padding:"11px 12px",fontSize:13,fontWeight:600,lineHeight:1.3}}>{item}</div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-                {/* Hourly scroll */}
-                <Card>
-                  <Lbl>⏱ Hourly Forecast — tap to dress Skyla</Lbl>
-                  <div style={{display:"flex",gap:8,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4}}>
-                    {wx.hourly.filter(h=>h.h>=new Date().getHours()).slice(0,12).map((h,i)=>{
-                      const htype=wxType(h.code,h.h>=6&&h.h<20?1:0);
-                      const hs=SC[htype];
-                      return(
-                        <button key={i} onClick={()=>{setPickedH(wx.hourly.indexOf(h));setPickedD(null);}} style={{flexShrink:0,background:pickedH===wx.hourly.indexOf(h)?S.acc:"rgba(255,255,255,.16)",border:"1px solid "+(pickedH===wx.hourly.indexOf(h)?"transparent":S.bdr),borderRadius:16,padding:"12px 10px",cursor:"pointer",textAlign:"center",minWidth:62,fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
-                          <div style={{fontSize:11,fontWeight:600,opacity:.65,marginBottom:4,color:pickedH===wx.hourly.indexOf(h)?"white":S.sub}}>{h.lbl}</div>
-                          <div style={{fontSize:18,marginBottom:4}}>{hs.em}</div>
-                          <div style={{fontSize:13,fontWeight:800,color:pickedH===wx.hourly.indexOf(h)?"white":S.text}}>{h.temp}°</div>
-                          <div style={{fontSize:10,color:h.rain>40?(pickedH===wx.hourly.indexOf(h)?"white":hs.acc):(pickedH===wx.hourly.indexOf(h)?"rgba(255,255,255,.7)":S.sub),marginTop:2}}>💧{h.rain}%</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {pickedH!==null&&<button onClick={()=>setPickedH(null)} style={{marginTop:10,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>← Back to now</button>}
-                </Card>
+              </div>
+              <div style={{...G,padding:"16px 14px"}}>
+                <Lbl>Range Today</Lbl>
+                <div style={{fontSize:22,fontWeight:900}}>{wx.maxT}° <span style={{opacity:.4,fontSize:15,fontWeight:400}}>/ {wx.minT}°</span></div>
+                <div style={{fontSize:11,opacity:.6,marginTop:6}}>High / Low</div>
+              </div>
+            </div>
+            {ai&&ai.plant&&(
+              <div style={{...G,padding:"16px",marginBottom:12,border:"1px solid rgba(16,185,129,.4)"}}>
+                <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                  <div style={{fontSize:32}}>🌱</div>
+                  <div style={{flex:1}}><Lbl>Plant Care Today</Lbl><div style={{fontSize:12,lineHeight:1.5}}>{ai.plant}</div></div>
+                </div>
               </div>
             )}
-
-            {/* CHAT TAB */}
-            {tab==="chat"&&(
-              !isPremium?<PremiumLock icon="🤖" title="Ask Skyla Anything" desc={'"Shall I wear a coat today?"\n"Will it rain on Tuesday?"\n"Best day this week to go out?"'}/>:(
-                <div>
-                  <div style={{...G,padding:"16px",marginBottom:10,minHeight:300,maxHeight:400,overflowY:"auto",display:"flex",flexDirection:"column",gap:10}}>
-                    {chatMsgs.map((m,i)=>(
-                      <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-                        {m.role==="skyla"&&<div style={{fontSize:20,marginRight:8,flexShrink:0}}>🩷</div>}
-                        <div style={{maxWidth:"80%",background:m.role==="user"?S.acc:"rgba(255,255,255,.22)",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",padding:"10px 14px",fontSize:13,fontWeight:500,lineHeight:1.55,color:m.role==="user"?"white":S.text}}>
-                          {m.text}
-                        </div>
-                      </div>
-                    ))}
-                    {chatLoading&&<div style={{display:"flex",alignItems:"center",gap:8}}><div style={{fontSize:20}}>🩷</div><div style={{...G,padding:"10px 14px",borderRadius:"18px 18px 18px 4px",fontSize:13,opacity:.7}}>Skyla is thinking…</div></div>}
-                  </div>
-                  <div style={{display:"flex",gap:8,marginBottom:10}}>
-                    <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask Skyla anything…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
-                    <button onClick={sendChat} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>→</button>
-                  </div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                    {["Coat today?","Rain Tuesday?","Best day this week?","Hot weekend?"].map((q,i)=>(
-                      <button key={i} onClick={()=>setChatInput(q)} style={{...G,padding:"6px 12px",fontSize:11,fontWeight:700,color:S.acc,border:"1px solid "+S.acc+"40",borderRadius:100,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",background:S.acc+"15"}}>{q}</button>
-                    ))}
-                  </div>
+            {ai&&ai.items&&(
+              <Card><Lbl>Full Outfit</Lbl>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {ai.items.map((item,i)=><div key={i} style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"10px",fontSize:12,fontWeight:600}}>{item}</div>)}
                 </div>
-              )
-            )}
-
-            {/* SEARCH TAB */}
-            {tab==="search"&&(
-              <div>
-                <div style={{display:"flex",gap:8,marginBottom:14}}>
-                    <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>{if(e.key==="Enter"){setSearchCity(window._scity||"");setTimeout(searchCityWeather,50);}}} placeholder="Search any city…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
-                    <button onClick={()=>{setSearchCity(window._scity||"");setTimeout(searchCityWeather,50);}} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
-                  </div>
-                  {searching&&<div style={{...G,padding:"20px",textAlign:"center",opacity:.6}}>Searching…</div>}
-                  {searchWx&&(()=>{
-                    const stype=wxType(searchWx.code,searchWx.isDay);
-                    const sse=SC[stype];
-                    const spe=plainEnglish({...searchWx,humid:70});
-                    return(
-                      <Card>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-                          <div><div style={{fontSize:16,fontWeight:800}}>{searchWx.name}</div><div style={{fontSize:13,opacity:.6,marginTop:3}}>{sse.em} {sse.name}</div></div>
-                          <div style={{textAlign:"right"}}>
-                            <div style={{fontFamily:"'Fraunces',serif",fontSize:52,fontWeight:900,lineHeight:1}}>{searchWx.temp}°</div>
-                            <div style={{fontSize:12,opacity:.6}}>feels {searchWx.feels}°</div>
-                          </div>
-                        </div>
-                        <div style={{background:"rgba(255,255,255,.15)",borderRadius:16,padding:"14px",fontSize:14,fontWeight:700,lineHeight:1.55,marginBottom:12}}>{spe.verdict}</div>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                          {[{e:"🌡️",l:"Outside",v:spe.feel},{e:"💨",l:"Wind",v:spe.windWord},{e:"🌧️",l:"Rain",v:spe.rainWord}].map((item,i)=>(
-                            <div key={i} style={{background:"rgba(255,255,255,.12)",borderRadius:14,padding:"12px 8px",textAlign:"center"}}>
-                              <div style={{fontSize:18,marginBottom:4}}>{item.e}</div>
-                              <div style={{fontSize:9,opacity:.5,letterSpacing:2,textTransform:"uppercase",fontWeight:700,marginBottom:3}}>{item.l}</div>
-                              <div style={{fontSize:10,fontWeight:700,lineHeight:1.3}}>{item.v}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </Card>
-                    );
-                  })()}
-                  {!searchWx&&!searching&&<div style={{...G,padding:"20px",opacity:.5,textAlign:"center",fontSize:13}}>Type a city name above and tap 🔍</div>}
-                </div>
-              )
-            )}
-
-            {/* EVENT TAB */}
-            {tab==="event"&&(
-              !isPremium?<PremiumLock icon="🗓️" title="Event Planner" desc={'"Will it be dry for my BBQ on Saturday?"\n"Good weather for the school sports day?"\n"Should I book an outdoor wedding?"'}/>:(
-                <div>
-                  <Card>
-                    <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:16}}>🗓️ Plan your event</div>
-                    <div style={{fontSize:12,opacity:.6,marginBottom:6}}>{"What's the event?"}</div>
-                    <input id="ename" onInput={e=>{window._ename=e.target.value;}} autoComplete="off" spellCheck="false" placeholder="e.g. BBQ, Wedding, Sports Day, Party" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
-                    <div style={{fontSize:12,opacity:.6,marginBottom:6}}>What date?</div>
-                    <input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
-                    <button onClick={()=>{setEventName(window._ename||"");setTimeout(checkEvent,50);}} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
-                      {eventLoading?"Checking forecast…":"Ask Skyla 🩷"}
-                    </button>
-                  </Card>
-                  {eventResult&&(
-                    <Card>
-                      <div style={{display:"flex",gap:12,marginBottom:12,alignItems:"center"}}>
-                        <div style={{fontSize:32}}>{SC[wxType(eventResult.code,1)]?.em||"⛅"}</div>
-                        <div><div style={{fontSize:14,fontWeight:800}}>{eventName}</div><div style={{fontSize:11,opacity:.6}}>{eventDate} · {eventResult.max}° high / {eventResult.min}° low · 💧{eventResult.rain}%</div></div>
-                      </div>
-                      <div style={{background:"rgba(255,255,255,.15)",borderRadius:14,padding:"14px",fontSize:13,lineHeight:1.65,fontWeight:500}}>{eventResult.text}</div>
-                    </Card>
-                  )}
-                  <Card>
-                    <div style={{fontSize:11,opacity:.5,marginBottom:8}}>💡 Quick picks</div>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                      {["BBQ","Wedding","School Sports Day","Garden Party","Camping","Birthday Party","Outdoor Concert","Marathon"].map((e,i)=>(
-                        <button key={i} onClick={()=>{setEventName(e);window._ename=e;const el=document.getElementById("ename");if(el)el.value=e;}} style={{background:S.acc+"18",border:"1px solid "+S.acc+"35",borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:700,color:S.acc,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{e}</button>
-                      ))}
-                    </div>
-                  </Card>
-                </div>
-              )
-            )}
-
-            {/* HOLIDAY TAB */}
-            {tab==="holiday"&&(
-              !isPremium?<PremiumLock icon="✈️" title="Holiday Mode" desc="Tell Skyla where you're going and she'll tell you exactly what to pack — from flip flops to raincoats. Works for holidays months away using climate data!"/>:(
-                <div>
-                  <Card>
-                    <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:16}}>✈️ Plan your holiday</div>
-                    <div style={{fontSize:12,opacity:.6,marginBottom:6}}>Where are you going?</div>
-                    <input 
-                      id="hcity"
-                      autoComplete="off" 
-                      spellCheck="false"
-                      onInput={e=>{window._hcity=e.target.value;}}
-                      placeholder="e.g. Tenerife, Paris, New York" 
-                      style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}
-                    />
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-                      <div>
-                        <div style={{fontSize:12,opacity:.6,marginBottom:6}}>From</div>
-                        <input type="date" value={holidayFrom} onChange={e=>setHolidayFrom(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
-                      </div>
-                      <div>
-                        <div style={{fontSize:12,opacity:.6,marginBottom:6}}>To</div>
-                        <input type="date" value={holidayTo} onChange={e=>setHolidayTo(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
-                      </div>
-                    </div>
-                    <button onClick={()=>{setHolidayCity(window._hcity||"");setTimeout(checkHoliday,50);}} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
-                      {holidayLoading?"Checking destination…":"What should I pack? 🧳"}
-                    </button>
-                  </Card>
-                  {holidayResult&&(
-                    <Card>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                        <div>
-                          <div style={{fontSize:16,fontWeight:800}}>{holidayResult.city}</div>
-                          <div style={{fontSize:11,opacity:.6,marginTop:2}}>{holidayResult.isFuture?"Typical "+holidayResult.tripMonthName+" weather":"Live 7-day forecast"}</div>
-                        </div>
-                        <div style={{textAlign:"right"}}>
-                          <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:900,lineHeight:1}}>{holidayResult.avgMax}°</div>
-                          <div style={{fontSize:11,opacity:.6}}>/ {holidayResult.avgMin}°</div>
-                        </div>
-                      </div>
-                      <div style={{display:"flex",gap:8,marginBottom:12}}>
-                        {[{e:"🌡️",l:"Up to "+holidayResult.avgMax+"°",s:"daytime"},{e:"🌧️",l:holidayResult.rainDays+" rainy days",s:"out of 7"},{e:"🧳",l:"Pack check",s:"below ↓"}].map((item,i)=>(
-                          <div key={i} style={{...G,flex:1,padding:"10px 8px",textAlign:"center",borderRadius:14}}>
-                            <div style={{fontSize:18}}>{item.e}</div>
-                            <div style={{fontSize:10,fontWeight:700,marginTop:4}}>{item.l}</div>
-                            <div style={{fontSize:9,opacity:.5}}>{item.s}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{background:"rgba(255,255,255,.15)",borderRadius:14,padding:"14px",fontSize:13,lineHeight:1.65,fontWeight:500}}>{holidayResult.text}</div>
-                    </Card>
-                  )}
-                </div>
-              )
-            )}
-
-            {/* WEEK TAB */}
-            {tab==="week"&&(
-              <Card>
-                <Lbl>📅 7-Day Forecast — tap to dress Skyla</Lbl>
-                {wx.week.map((d,i)=>{
-                  const dtype=wxType(d.code,1);
-                  return(
-                    <div key={i} onClick={()=>{setPickedD(i===pickedD?null:i);setPickedH(null);}} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 10px",borderRadius:16,background:pickedD===i?S.acc+"25":"transparent",border:pickedD===i?"1px solid "+S.acc+"50":"1px solid transparent",marginBottom:4,cursor:"pointer",transition:"all .2s"}}>
-                      <div style={{width:60,fontSize:13,fontWeight:i===0?800:500,opacity:i===0?1:.85}}>{d.short}</div>
-                      <div style={{fontSize:24}}>{SC[dtype]?.em||"🌤️"}</div>
-                      <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{wmoDesc(d.code)}</div></div>
-                      <div style={{textAlign:"right"}}>
-                        <div style={{fontSize:14,fontWeight:800}}>{d.max}°<span style={{opacity:.4,fontWeight:400,fontSize:12}}>/{d.min}°</span></div>
-                        <div style={{fontSize:11,color:d.rain>50?S.acc:"inherit",opacity:d.rain>50?1:.55}}>💧{d.rain}%</div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {pickedD!==null&&<button onClick={()=>setPickedD(null)} style={{marginTop:8,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>← Back to today</button>}
               </Card>
             )}
-
-            {/* TRAVEL TAB */}
-            {tab==="travel"&&(
-              <div>
-                <Card style={{border:"1px solid "+S.acc+"35"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:6}}>🚌 Travel Updates</div>
-                  <div style={{fontSize:12,opacity:.6,marginBottom:16,lineHeight:1.5}}>Weather-related travel disruptions for your area — trains, buses, flights and more.</div>
-                  <button onClick={()=>checkTravel(null)} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginBottom:12}}>
-                    {travelLoading?"Checking updates…":"🚌 Check Travel Updates for "+city}
-                  </button>
-                  <div style={{display:"flex",gap:8}}>
-                    <input 
-                      id="tsearch"
-                      onInput={e=>{window._tsearch=e.target.value;}}
-                      onKeyDown={e=>{if(e.key==="Enter")checkTravel(window._tsearch||"");}}
-                      placeholder="Search another location…" 
-                      autoComplete="off"
-                      style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}
-                    />
-                    <button onClick={()=>checkTravel(window._tsearch||"")} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
-                  </div>
-                </Card>
-                {travelLoading&&(
-                  <div style={{...G,padding:"20px",textAlign:"center"}}>
-                    <div style={{width:32,height:32,border:"3px solid rgba(255,255,255,.2)",borderTop:"3px solid "+S.acc,borderRadius:"50%",animation:"spin 1s linear infinite",margin:"0 auto 12px"}}/>
-                    <div style={{fontSize:13,opacity:.6}}>Checking travel updates…</div>
-                  </div>
-                )}
-                {travelUpdates&&(
-                  <Card>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-                      <div>
-                        <div style={{fontSize:15,fontWeight:800}}>📍 {travelUpdates.location}</div>
-                        <div style={{fontSize:11,opacity:.5,marginTop:2}}>Updated {travelUpdates.time}</div>
-                      </div>
-                      <div style={{fontSize:22}}>{S.em}</div>
-                    </div>
-                    <div style={{background:"rgba(255,255,255,.15)",borderRadius:16,padding:"16px",fontSize:13,lineHeight:1.8,fontWeight:500,whiteSpace:"pre-wrap"}}>{travelUpdates.text}</div>
-                    <button onClick={()=>checkTravel(travelUpdates.location)} style={{marginTop:12,fontSize:11,color:S.acc,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>↻ Refresh updates</button>
-                  </Card>
-                )}
-                {!travelUpdates&&!travelLoading&&(
-                  <div style={{...G,padding:"20px",textAlign:"center",opacity:.5,fontSize:13}}>
-                    Tap the button above to check weather-related travel disruptions for your area
-                  </div>
-                )}
+            <Card>
+              <Lbl>Hourly Forecast</Lbl>
+              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
+                {wx.hourly.filter(h=>h.h>=new Date().getHours()).slice(0,12).map((h,i)=>{
+                  const hidx=wx.hourly.indexOf(h);
+                  return(
+                    <button key={i} onClick={()=>{setPickedH(hidx);setPickedD(null);}} style={{flexShrink:0,background:pickedH===hidx?S.acc:"rgba(255,255,255,.15)",border:"1px solid "+(pickedH===hidx?"transparent":S.bdr),borderRadius:14,padding:"10px 8px",cursor:"pointer",textAlign:"center",minWidth:56,fontFamily:"'DM Sans',sans-serif"}}>
+                      <div style={{fontSize:10,opacity:.7,marginBottom:3,color:pickedH===hidx?"white":S.sub}}>{h.lbl}</div>
+                      <div style={{fontSize:16,marginBottom:3}}>{SC[wxType(h.code,h.h>=6&&h.h<20?1:0)].em}</div>
+                      <div style={{fontSize:12,fontWeight:800,color:pickedH===hidx?"white":S.text}}>{h.temp}°</div>
+                    </button>
+                  );
+                })}
               </div>
-            )}
-
-            {/* MORE TAB */}
-            {tab==="more"&&(
-              <div>
-                {/* Morning Briefing */}
-                {isPremium?(
-                  <div style={{...G,padding:"20px",marginBottom:12,border:"1px solid "+S.acc+"35"}}>
-                    <Lbl>🌅 Morning Briefing</Lbl>
-                    <div style={{fontSize:13,opacity:.7,marginBottom:12,lineHeight:1.6}}>Set your wake-up time and Skyla sends you a weather briefing every morning.</div>
-                    <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                      <input type="time" value={briefingTime} onChange={e=>setBriefingTime(e.target.value)} style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:18,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-                      <button onClick={saveBriefing} style={{background:briefingSaved?"#10B981":S.acc,border:"none",borderRadius:14,padding:"12px 16px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"background .3s"}}>
-                        {briefingSaved?"✓ Saved!":"Set Time"}
-                      </button>
-                    </div>
-                    {briefingSaved&&<div style={{fontSize:12,color:"#10B981",fontWeight:600,marginTop:8}}>✓ Briefing set for {briefingTime} every morning!</div>}
-                  </div>
-                ):(
-                  <div onClick={()=>setShowPaywall(true)} style={{...G,padding:"16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
-                    <div style={{fontSize:28}}>🌅</div>
-                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>Morning Briefing</div><div style={{fontSize:11,opacity:.5}}>{"Wake up to Skyla's daily forecast"}</div></div>
-                    <div style={{background:"#E91E8C",borderRadius:10,padding:"5px 10px",fontSize:10,fontWeight:800,color:"white"}}>PREMIUM</div>
-                  </div>
-                )}
-                {/* Family Weather */}
-                {isPremium?(
-                  <Card>
-                    <Lbl>👨‍👩‍👧 Family Weather</Lbl>
-                    {famMembers.map((m,i)=>{
-                      const ftype=wxType(m.code,m.isDay);
-                      const fS=SC[ftype];
-                      const fPE=plainEnglish({...m,humid:70});
-                      return(
-                        <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:i<famMembers.length-1?"1px solid rgba(255,255,255,.1)":"none"}}>
-                          <div style={{fontSize:28}}>{fS.em}</div>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:14,fontWeight:800}}>{m.name}</div>
-                            <div style={{fontSize:11,opacity:.6}}>{m.city}</div>
-                            <div style={{fontSize:12,fontWeight:500,marginTop:3}}>{fPE.verdict}</div>
-                          </div>
-                          <div style={{textAlign:"right"}}>
-                            <div style={{fontFamily:"'Fraunces',serif",fontSize:28,fontWeight:900,lineHeight:1}}>{m.temp}°</div>
-                            <button onClick={()=>{const u=famMembers.filter((_,j)=>j!==i);setFamMembers(u);ss("skyla_fam",u);}} style={{fontSize:10,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginTop:4}}>Remove</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
-                      <input id="fam-name-input" autoComplete="off" onChange={e=>setNewFamName(e.target.value)} placeholder="Name" style={{flex:1,minWidth:80,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-                      <input id="fam-city-input" autoComplete="off" onChange={e=>setNewFamCity(e.target.value)} placeholder="City" style={{flex:2,minWidth:100,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-                      <button onClick={()=>{const n=document.getElementById("fam-name-input");const ci=document.getElementById("fam-city-input");if(n)setNewFamName(n.value);if(ci)setNewFamCity(ci.value);addFamMember();}} style={{background:S.acc,border:"none",borderRadius:12,padding:"10px 14px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
-                        {famLoading?"…":"Add"}
-                      </button>
-                    </div>
-                  </Card>
-                ):(
-                  <div onClick={()=>setShowPaywall(true)} style={{...G,padding:"16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
-                    <div style={{fontSize:28}}>👨‍👩‍👧</div>
-                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>Family Weather</div><div style={{fontSize:11,opacity:.5}}>Track weather for everyone you love</div></div>
-                    <div style={{background:"#E91E8C",borderRadius:10,padding:"5px 10px",fontSize:10,fontWeight:800,color:"white"}}>PREMIUM</div>
-                  </div>
-                )}
-                {/* Personalise */}
-                <Card style={{border:"1px solid "+S.acc+"35"}}>
-                  <Lbl>🎨 Personalise Skyla</Lbl>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                    {[{id:"female",icon:"👧",label:"Skyla Girl",desc:"Pink girl 🩷"},{id:"male",icon:"👦",label:"Skyla Boy",desc:"Cool boy 💙"}].map(opt=>(
-                      <button key={opt.id} onClick={()=>toggleGender(opt.id)} style={{background:gender===opt.id?S.acc+"25":"rgba(255,255,255,.12)",border:gender===opt.id?"2px solid "+S.acc:"1px solid "+S.bdr,borderRadius:18,padding:"16px 12px",cursor:"pointer",textAlign:"center",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-                        <div style={{fontSize:34,marginBottom:6}}>{opt.icon}</div>
-                        <div style={{fontSize:13,fontWeight:800,color:gender===opt.id?S.acc:"inherit"}}>{opt.label}</div>
-                        <div style={{fontSize:11,opacity:.6,marginTop:2}}>{opt.desc}</div>
-                        {gender===opt.id&&<div style={{fontSize:10,color:S.acc,fontWeight:700,marginTop:4}}>✓ Active</div>}
-                      </button>
-                    ))}
-                  </div>
-                </Card>
-                {/* Secret Tester Unlock */}
-                <SecretUnlock isPremium={isPremium} setIsPremium={setIsPremium}/>
-
-                {/* Streak */}
-                <Card>
-                  <Lbl>🔥 Your Streak</Lbl>
-                  <div style={{display:"flex",alignItems:"center",gap:16}}>
-                    <div style={{fontSize:52}}>🔥</div>
-                    <div>
-                      <div style={{fontFamily:"'Fraunces',serif",fontSize:46,fontWeight:900,color:S.acc,lineHeight:1}}>{streak}</div>
-                      <div style={{fontSize:13,opacity:.6,marginTop:4}}>day{streak!==1?"s":""} in a row</div>
-                      <div style={{fontSize:12,opacity:.5,marginTop:2}}>{streak<3?"Keep going!":streak<7?"Building a habit 🎯":streak<30?"On fire! 🔥":"Legendary! 👑"}</div>
-                    </div>
-                  </div>
-                </Card>
-                {!isPremium&&(
-                  <button onClick={()=>setShowPaywall(true)} style={{width:"100%",...G,borderRadius:18,padding:"18px",fontSize:15,fontWeight:800,cursor:"pointer",background:"linear-gradient(135deg,rgba(233,30,140,.2),rgba(194,24,91,.2))",border:"1px solid rgba(233,30,140,.45)",color:"#E91E8C",marginBottom:10,fontFamily:"'DM Sans',sans-serif"}}>
-                    🩷 Upgrade to Premium — £3.98/month
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* REFRESH */}
-            <button onClick={load} style={{width:"100%",marginTop:4,...G,borderRadius:100,padding:"15px",color:S.sub,fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:700,cursor:"pointer",transition:"all .25s",border:"none"}}
-              onMouseEnter={e=>{e.currentTarget.style.background=S.acc;e.currentTarget.style.color="white";}}
-              onMouseLeave={e=>{e.currentTarget.style.background=G.background;e.currentTarget.style.color=S.sub;}}>
-              ↻  Refresh Skyla
-            </button>
-          </>
+              {pickedH!==null&&<button onClick={()=>setPickedH(null)} style={{marginTop:8,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Back to now</button>}
+            </Card>
+          </div>
         )}
+
+        {/* CHAT TAB */}
+        {tab==="chat"&&(
+          <div>
+            <div style={{...G,padding:"14px",marginBottom:10,minHeight:280,maxHeight:380,overflowY:"auto",display:"flex",flexDirection:"column",gap:8}}>
+              {chatMsgs.map((m,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+                  {m.role==="skyla"&&<div style={{fontSize:18,marginRight:6}}>🩷</div>}
+                  <div style={{maxWidth:"82%",background:m.role==="user"?S.acc:"rgba(255,255,255,.2)",borderRadius:m.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",padding:"9px 12px",fontSize:13,fontWeight:500,lineHeight:1.5,color:m.role==="user"?"white":S.text}}>
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:8}}>
+              <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask Skyla anything..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+              <button onClick={sendChat} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer"}}>→</button>
+            </div>
+            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+              {["Coat today?","Rain Tuesday?","Best day?","Weekend?"].map((q,i)=>(
+                <button key={i} onClick={()=>setChatInput(q)} style={{background:S.acc+"18",border:"1px solid "+S.acc+"35",borderRadius:100,padding:"5px 11px",fontSize:11,fontWeight:700,color:S.acc,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{q}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SEARCH TAB */}
+        {tab==="search"&&(
+          <div>
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+              <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer",flexShrink:0}}>🔍</button>
+            </div>
+            {searching&&<div style={{...G,padding:"16px",textAlign:"center",opacity:.6,fontSize:13}}>Searching...</div>}
+            {searchWx&&(()=>{
+              const st=wxType(searchWx.code,searchWx.isDay);
+              const spe=plainEnglish({...searchWx,humid:70});
+              return(
+                <Card>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                    <div><div style={{fontSize:15,fontWeight:800}}>{searchWx.name}</div><div style={{fontSize:12,opacity:.6,marginTop:2}}>{SC[st].em} {wmoDesc(searchWx.code)}</div></div>
+                    <div style={{textAlign:"right"}}><div style={{fontFamily:"'Fraunces',serif",fontSize:48,fontWeight:900,lineHeight:1}}>{searchWx.temp}°</div><div style={{fontSize:11,opacity:.6}}>feels {searchWx.feels}°</div></div>
+                  </div>
+                  <div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"12px",fontSize:13,fontWeight:600,lineHeight:1.5}}>{spe.verdict}</div>
+                </Card>
+              );
+            })()}
+            {!searchWx&&!searching&&<div style={{...G,padding:"18px",textAlign:"center",opacity:.5,fontSize:13}}>Type a city name above and search</div>}
+          </div>
+        )}
+
+        {/* EVENT TAB */}
+        {tab==="event"&&(
+          <div>
+            <Card>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:14}}>Plan your event</div>
+              <div style={{fontSize:12,opacity:.6,marginBottom:5}}>Event name</div>
+              <input id="ename" onInput={e=>{window._ename=e.target.value;}} placeholder="e.g. BBQ, Wedding, Party" autoComplete="off" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:10,boxSizing:"border-box"}}/>
+              <div style={{fontSize:12,opacity:.6,marginBottom:5}}>What date?</div>
+              <input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
+              <button onClick={checkEvent} style={{width:"100%",background:S.acc,border:"none",borderRadius:12,padding:"13px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Ask Skyla</button>
+            </Card>
+            {eventResult&&(
+              <Card>
+                <div style={{fontSize:13,fontWeight:600,lineHeight:1.65}}>{eventResult.text}</div>
+                <div style={{display:"flex",gap:10,marginTop:12}}>
+                  <div style={{...G,flex:1,padding:"10px",textAlign:"center",borderRadius:12}}><div style={{fontSize:18}}>🌡️</div><div style={{fontSize:12,fontWeight:700,marginTop:3}}>{eventResult.max}°C high</div></div>
+                  <div style={{...G,flex:1,padding:"10px",textAlign:"center",borderRadius:12}}><div style={{fontSize:18}}>🌧️</div><div style={{fontSize:12,fontWeight:700,marginTop:3}}>{eventResult.rain}% rain</div></div>
+                </div>
+              </Card>
+            )}
+            <Card>
+              <div style={{fontSize:11,opacity:.5,marginBottom:6}}>Quick picks</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                {["BBQ","Wedding","School Sports Day","Garden Party","Birthday Party","Camping"].map((e,i)=>(
+                  <button key={i} onClick={()=>{window._ename=e;const el=document.getElementById("ename");if(el)el.value=e;}} style={{background:S.acc+"18",border:"1px solid "+S.acc+"35",borderRadius:100,padding:"5px 11px",fontSize:11,fontWeight:700,color:S.acc,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{e}</button>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* HOLIDAY TAB */}
+        {tab==="holiday"&&(
+          <div>
+            <Card>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:14}}>Plan your holiday</div>
+              <div style={{fontSize:12,opacity:.6,marginBottom:5}}>Where are you going?</div>
+              <input id="hcity" onInput={e=>{window._hcity=e.target.value;}} placeholder="e.g. Tenerife, Paris, New York" autoComplete="off" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:10,boxSizing:"border-box"}}/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:12,opacity:.6,marginBottom:5}}>From</div>
+                  <input type="date" value={holidayFrom} onChange={e=>setHolidayFrom(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:12,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                </div>
+                <div>
+                  <div style={{fontSize:12,opacity:.6,marginBottom:5}}>To</div>
+                  <input type="date" value={holidayTo} onChange={e=>setHolidayTo(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:12,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                </div>
+              </div>
+              <button onClick={checkHoliday} style={{width:"100%",background:S.acc,border:"none",borderRadius:12,padding:"13px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>What should I pack?</button>
+            </Card>
+            {holidayResult&&(
+              <Card>
+                <div style={{fontSize:15,fontWeight:800,marginBottom:10}}>{holidayResult.city}</div>
+                {holidayResult.avgMax&&(
+                  <div style={{display:"flex",gap:10,marginBottom:12}}>
+                    <div style={{...G,flex:1,padding:"10px",textAlign:"center",borderRadius:12}}><div style={{fontSize:18}}>🌡️</div><div style={{fontSize:12,fontWeight:700,marginTop:3}}>{holidayResult.avgMax}°C</div></div>
+                    <div style={{...G,flex:1,padding:"10px",textAlign:"center",borderRadius:12}}><div style={{fontSize:18}}>🌧️</div><div style={{fontSize:12,fontWeight:700,marginTop:3}}>{holidayResult.rainDays} rainy days</div></div>
+                  </div>
+                )}
+                <div style={{fontSize:13,fontWeight:600,lineHeight:1.65}}>{holidayResult.text}</div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* TRAVEL TAB */}
+        {tab==="travel"&&(
+          <div>
+            <Card style={{border:"1px solid "+S.acc+"35"}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:6}}>Travel Updates</div>
+              <div style={{fontSize:12,opacity:.6,marginBottom:14,lineHeight:1.5}}>Weather-related travel disruptions for your area.</div>
+              <button onClick={checkTravel} style={{width:"100%",background:S.acc,border:"none",borderRadius:12,padding:"13px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginBottom:10}}>
+                {travelLoading?"Checking...":"Check Travel Updates for "+city}
+              </button>
+              <div style={{display:"flex",gap:8}}>
+                <input id="tloc" onInput={e=>{window._tloc=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&checkTravel()} placeholder="Search another location..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:12,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                <button onClick={checkTravel} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 14px",fontSize:12,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Search</button>
+              </div>
+            </Card>
+            {travelUpdates&&(
+              <Card>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+                  <div style={{fontSize:14,fontWeight:800}}>{travelUpdates.location}</div>
+                  <div style={{fontSize:11,opacity:.5}}>{travelUpdates.time}</div>
+                </div>
+                <div style={{fontSize:13,fontWeight:600,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{travelUpdates.text}</div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* WEEK TAB */}
+        {tab==="week"&&wx&&(
+          <Card>
+            <Lbl>7-Day Forecast</Lbl>
+            {wx.week.map((d,i)=>(
+              <div key={i} onClick={()=>{setPickedD(i===pickedD?null:i);setPickedH(null);}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 8px",borderRadius:14,background:pickedD===i?S.acc+"25":"transparent",border:pickedD===i?"1px solid "+S.acc+"50":"1px solid transparent",marginBottom:3,cursor:"pointer"}}>
+                <div style={{width:52,fontSize:12,fontWeight:i===0?800:500}}>{d.short}</div>
+                <div style={{fontSize:22}}>{SC[wxType(d.code,1)].em}</div>
+                <div style={{flex:1,fontSize:12,fontWeight:500}}>{wmoDesc(d.code)}</div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:13,fontWeight:800}}>{d.max}° <span style={{opacity:.4,fontWeight:400}}>/{d.min}°</span></div>
+                  <div style={{fontSize:10,color:d.rain>50?S.acc:"inherit",opacity:d.rain>50?1:.5}}>{d.rain}% rain</div>
+                </div>
+              </div>
+            ))}
+            {pickedD!==null&&<button onClick={()=>setPickedD(null)} style={{marginTop:8,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Back to today</button>}
+          </Card>
+        )}
+
+        {/* MORE TAB */}
+        {tab==="more"&&(
+          <div>
+            <div style={{...G,padding:"18px",marginBottom:12,border:"1px solid "+S.acc+"35"}}>
+              <Lbl>Morning Briefing</Lbl>
+              <div style={{fontSize:12,opacity:.6,marginBottom:10}}>Get a daily weather briefing at your chosen time.</div>
+              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                <input type="time" value={briefingTime} onChange={e=>setBriefingTime(e.target.value)} style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"11px 14px",fontSize:16,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                <button onClick={()=>{ss("skyla_briefing",briefingTime);setBriefingSaved(true);setTimeout(()=>setBriefingSaved(false),2500);}} style={{background:briefingSaved?"#10B981":S.acc,border:"none",borderRadius:12,padding:"11px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{briefingSaved?"Saved!":"Set Time"}</button>
+              </div>
+            </div>
+            <Card>
+              <Lbl>Family Weather</Lbl>
+              {famMembers.map((m,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:i<famMembers.length-1?"1px solid rgba(255,255,255,.1)":"none"}}>
+                  <div style={{fontSize:24}}>{SC[wxType(m.code,m.isDay)].em}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:800}}>{m.name}</div>
+                    <div style={{fontSize:11,opacity:.6}}>{m.city}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900}}>{m.temp}°</div>
+                    <button onClick={()=>{const u=famMembers.filter((_,j)=>j!==i);setFamMembers(u);ss("skyla_fam",u);}} style={{fontSize:10,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Remove</button>
+                  </div>
+                </div>
+              ))}
+              <div style={{marginTop:10,display:"flex",gap:6,flexWrap:"wrap"}}>
+                <input id="fam-name" onInput={e=>{window._famname=e.target.value;}} placeholder="Name" style={{flex:1,minWidth:70,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:10,padding:"9px 11px",fontSize:12,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                <input id="fam-city" onInput={e=>{window._famloc=e.target.value;}} placeholder="City" style={{flex:2,minWidth:90,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:10,padding:"9px 11px",fontSize:12,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                <button onClick={addFam} style={{background:S.acc,border:"none",borderRadius:10,padding:"9px 12px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Add</button>
+              </div>
+            </Card>
+            <Card>
+              <Lbl>Personalise Skyla</Lbl>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {[{id:"female",icon:"👧",label:"Skyla Girl"},{id:"male",icon:"👦",label:"Skyla Boy"}].map(o=>(
+                  <button key={o.id} onClick={()=>{setGender(o.id);ss("skyla_gender",o.id);}} style={{background:gender===o.id?S.acc+"25":"rgba(255,255,255,.12)",border:gender===o.id?"2px solid "+S.acc:"1px solid "+S.bdr,borderRadius:16,padding:"14px",cursor:"pointer",textAlign:"center",fontFamily:"'DM Sans',sans-serif"}}>
+                    <div style={{fontSize:30,marginBottom:5}}>{o.icon}</div>
+                    <div style={{fontSize:12,fontWeight:800,color:gender===o.id?S.acc:"inherit"}}>{o.label}</div>
+                    {gender===o.id&&<div style={{fontSize:9,color:S.acc,marginTop:3}}>Active</div>}
+                  </button>
+                ))}
+              </div>
+            </Card>
+            <Card>
+              <Lbl>Your Streak</Lbl>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <div style={{fontSize:44}}>🔥</div>
+                <div>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:42,fontWeight:900,color:S.acc,lineHeight:1}}>{streak}</div>
+                  <div style={{fontSize:12,opacity:.6,marginTop:3}}>day{streak!==1?"s":""} in a row</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        <button onClick={load} style={{width:"100%",marginTop:4,...G,borderRadius:100,padding:"13px",color:S.sub,fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",border:"none"}}>
+          Refresh Skyla
+        </button>
       </div>
     </div>
   );
