@@ -19,15 +19,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Invalid JSON" });
   }
 
-  if (!text || !voiceId) return res.status(400).json({ error: "Missing text or voiceId" });
+  if (!text || !voiceId) return res.status(400).json({ error: "Missing fields" });
 
   const KEY = "sk_032976f800904cea65184d02375073ebc528f0066def603e";
-  const GIRL_ID = "PoHUWWWMHFrA8z7Q88pu";
-
-  // Use ElevenLabs default settings so voices sound exactly like on their website
-  const voiceSettings = voiceId === GIRL_ID
-    ? { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true }
-    : { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true };
 
   try {
     const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
@@ -36,13 +30,14 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         text: text,
         model_id: "eleven_turbo_v2_5",
-        voice_settings: voiceSettings
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true }
       })
     });
 
     if (!r.ok) {
       const err = await r.text();
-      return res.status(500).json({ error: err });
+      console.error("ElevenLabs error:", r.status, err);
+      return res.status(r.status).json({ error: err });
     }
 
     const buffer = await r.arrayBuffer();
@@ -50,6 +45,7 @@ export default async function handler(req, res) {
     res.status(200).send(Buffer.from(buffer));
 
   } catch(e) {
+    console.error("Fetch error:", e.message);
     res.status(500).json({ error: e.message });
   }
 }
