@@ -356,7 +356,7 @@ function App(){
   const [error,setError]=useState(null);
   const [tab,setTab]=useState("home");
   const [gender,setGender]=useState(()=>sg("skyla_gender")||"female");
-  const [isPremium,setIsPremium]=useState(true); // SET TO TRUE FOR TESTING
+  const [isPremium,setIsPremium]=useState(()=>sg("skyla_premium")||false);
   const [showPaywall,setShowPaywall]=useState(false);
   const [talking,setTalking]=useState(false);
   const [ai,setAi]=useState(null);
