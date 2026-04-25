@@ -667,9 +667,17 @@ function App(){
       // Heavy rain - lower threshold
       if(rain>=70&&(code>=61&&code<=82)){addAlert("🟠 AMBER","Heavy Rain Warning","Heavy rain likely "+when+". Take your umbrella and a waterproof coat — you will really need them.","#2563EB","rgba(37,99,235,.15)",i);}
       else if(rain>=50&&code>=61){addAlert("🟡 YELLOW","Rain Warning","Rain expected "+when+". Pack your umbrella just in case — it could be a wet one.","#60A5FA","rgba(96,165,250,.12)",i);}
-      // Strong wind (today only since we don't have weekly wind data)
-      if(i===0&&wind>=80){addAlert("🔴 RED","Dangerous Wind Warning","Extremely dangerous winds today. Stay indoors. Do not go near trees or exposed areas — it really is not safe today.","#DC2626","rgba(220,38,38,.15)",i);}
-      else if(i===0&&wind>=55){addAlert("🟠 AMBER","Strong Wind Warning","Strong winds today. Avoid tall trees and exposed areas. Take extra care if you need to go out.","#D97706","rgba(217,119,6,.15)",i);}
+      // Wind warnings (today only - no weekly wind data)
+      if(i===0&&wind>=80){addAlert("🔴 RED","Dangerous Wind Warning","Extremely dangerous winds today. Stay indoors and away from trees and exposed areas.","#DC2626","rgba(220,38,38,.15)",i);}
+      else if(i===0&&wind>=55){addAlert("🟠 AMBER","Strong Wind Warning","Strong winds today. Avoid tall trees and exposed areas. Take extra care if you go out.","#D97706","rgba(217,119,6,.15)",i);}
+      else if(i===0&&wind>=35){addAlert("🟡 YELLOW","Windy Today","It is quite windy today — hold onto your hat and take extra care in open areas.","#CA8A04","rgba(202,138,4,.12)",i);}
+      else if(i===0&&wind>=25){addAlert("🟡 YELLOW","Breezy Today","A noticeable breeze today. Good to know before you head out — you might want an extra layer.","#CA8A04","rgba(202,138,4,.10)",i);}
+      // Rain warnings - more sensitive for UK
+      if(rain>=70&&code>=61){addAlert("🟠 AMBER","Heavy Rain","Heavy rain expected "+when+". Take your umbrella and a waterproof coat — you will really need them.","#2563EB","rgba(37,99,235,.15)",i);}
+      else if(rain>=40&&code>=61){addAlert("🟡 YELLOW","Rain Expected","Rain likely "+when+". Pack your umbrella — it could be a wet one.","#60A5FA","rgba(96,165,250,.12)",i);}
+      else if(rain>=50&&code>=61){addAlert("🟡 YELLOW","Chance of Rain","Possible rain "+when+". Worth having an umbrella handy just in case.","#60A5FA","rgba(96,165,250,.10)",i);}
+      // Feels cold
+      if(feels<=8&&feels>4){addAlert("🟡 YELLOW","Feel the Chill","It is going to feel cold "+when+" — around "+feels+"°C. Wrap up with a warm coat, hat and gloves.","#3B82F6","rgba(59,130,246,.10)",i);}
     });
 
     // Remove duplicates — keep earliest day for same alert type
