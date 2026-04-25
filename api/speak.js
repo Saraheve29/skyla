@@ -22,6 +22,11 @@ export default async function handler(req, res) {
   if (!text || !voiceId) return res.status(400).json({ error: "Missing fields" });
 
   const KEY = "sk_032976f800904cea65184d02375073ebc528f0066def603e";
+  const GIRL_ID = "oeyHnQ7m56GJsOmhKb8l";
+
+  const voiceSettings = voiceId === GIRL_ID
+    ? { stability: 0.4, similarity_boost: 0.85, style: 0.6, use_speaker_boost: true }
+    : { stability: 0.5, similarity_boost: 0.80, style: 0.5, use_speaker_boost: true };
 
   try {
     const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
@@ -30,7 +35,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         text: text,
         model_id: "eleven_turbo_v2_5",
-        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true }
+        voice_settings: voiceSettings
       })
     });
 
