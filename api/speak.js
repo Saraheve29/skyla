@@ -24,6 +24,12 @@ export default async function handler(req, res) {
 
   const KEY = "sk_032976f800904cea65184d02375073ebc528f0066def603e";
 
+  // Make girl voice happy and upbeat, boy voice confident
+  const isGirl = voiceId === "56AoDkrOh6qfVPDXZ7Pt";
+  const voiceSettings = isGirl
+    ? { stability: 0.15, similarity_boost: 0.9, style: 1.0, use_speaker_boost: true }
+    : { stability: 0.4, similarity_boost: 0.85, style: 0.6, use_speaker_boost: true };
+
   try {
     const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
       method: "POST",
@@ -31,7 +37,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         text: text,
         model_id: "eleven_multilingual_v2",
-        voice_settings: { stability: 0.3, similarity_boost: 0.85, style: 0.8, use_speaker_boost: true }
+        voice_settings: voiceSettings
       })
     });
 
