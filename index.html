@@ -659,13 +659,14 @@ function App(){
       // Extreme heat
       if(max>=35){addAlert("🔴 RED","Extreme Heat Warning","Dangerously hot "+when+" — up to "+max+"°C. Stay indoors in the coolest room. Drink water every hour and keep your curtains closed to stay cool.","#DC2626","rgba(220,38,38,.15)",i);}
       else if(max>=30){addAlert("🟠 AMBER","Heat Wave Alert","Very hot "+when+" — up to "+max+"°C. Keep yourself cool, drink plenty of water and wear suncream if you head outside.","#D97706","rgba(217,119,6,.15)",i);}
-      else if(max>=28){addAlert("🟡 YELLOW","Hot Weather","It's going to be warm "+when+" — "+max+"°C. Stay hydrated and use suncream if you're outside for long.","#CA8A04","rgba(202,138,4,.12)",i);}
+      else if(max>=25){addAlert("🟡 YELLOW","Hot Weather","It is going to be warm "+when+" — "+max+"°C. Stay hydrated and use suncream if you are outside for long.","#CA8A04","rgba(202,138,4,.12)",i);}
       // Severe cold
-      if(feels<=-10){addAlert("🔴 RED","Severe Cold Warning","Dangerously cold "+when+". Stay indoors if you can. If you do go out cover all your skin and wear as many layers as possible.","#1D4ED8","rgba(29,78,216,.15)",i);}
-      else if(feels<=-5){addAlert("🟠 AMBER","Freezing Conditions","Very cold "+when+" — it will feel like "+feels+"°C. Wear your warmest coat and thermals — watch your step as paths could be icy.","#2563EB","rgba(37,99,235,.15)",i);}
-      else if(feels<=0){addAlert("🟡 YELLOW","Cold Weather","It's going to feel freezing "+when+" — around "+feels+"°C. Make sure you have your hat, scarf and gloves before you step outside.","#3B82F6","rgba(59,130,246,.12)",i);}
-      // Heavy rain
-      if(rain>=85&&(code>=61&&code<=82)){addAlert("🟠 AMBER","Heavy Rain Warning","Very heavy rain likely "+when+". Take your umbrella and a waterproof coat — you will really need them today.","#2563EB","rgba(37,99,235,.15)",i);}
+      if(feels<=-5){addAlert("🔴 RED","Severe Cold Warning","Dangerously cold "+when+". Stay indoors if you can. If you do go out cover all your skin and wear as many layers as possible.","#1D4ED8","rgba(29,78,216,.15)",i);}
+      else if(feels<=0){addAlert("🟠 AMBER","Freezing Conditions","Very cold "+when+" — it will feel like "+feels+"°C. Wear your warmest coat and thermals — watch your step as paths could be icy.","#2563EB","rgba(37,99,235,.15)",i);}
+      else if(feels<=4){addAlert("🟡 YELLOW","Cold Snap","It is going to feel cold "+when+" — around "+feels+"°C. Make sure you have your hat, scarf and gloves before you step outside.","#3B82F6","rgba(59,130,246,.12)",i);}
+      // Heavy rain - lower threshold
+      if(rain>=70&&(code>=61&&code<=82)){addAlert("🟠 AMBER","Heavy Rain Warning","Heavy rain likely "+when+". Take your umbrella and a waterproof coat — you will really need them.","#2563EB","rgba(37,99,235,.15)",i);}
+      else if(rain>=50&&code>=61){addAlert("🟡 YELLOW","Rain Warning","Rain expected "+when+". Pack your umbrella just in case — it could be a wet one.","#60A5FA","rgba(96,165,250,.12)",i);}
       // Strong wind (today only since we don't have weekly wind data)
       if(i===0&&wind>=80){addAlert("🔴 RED","Dangerous Wind Warning","Extremely dangerous winds today. Stay indoors. Do not go near trees or exposed areas — it really is not safe today.","#DC2626","rgba(220,38,38,.15)",i);}
       else if(i===0&&wind>=55){addAlert("🟠 AMBER","Strong Wind Warning","Strong winds today. Avoid tall trees and exposed areas. Take extra care if you need to go out.","#D97706","rgba(217,119,6,.15)",i);}
@@ -885,7 +886,7 @@ function App(){
   const type=DWX?wxType(DWX.code,DWX.isDay):"partly";
   const S=SC[type];
   const PE=DWX?plainEnglish(DWX):{feel:"",windWord:"",rainWord:"",verdict:"",deceiving:false};
-  const G={background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:"1px solid "+S.bdr,borderRadius:24};
+  const G=React.useMemo(()=>({background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:"1px solid "+S.bdr,borderRadius:24}),[S.bdr]);
 
   const TABS=[
     {id:"home",icon:"🏠",label:"Home"},
@@ -931,7 +932,7 @@ function App(){
               <div style={{fontSize:18}}>⭐</div>
               <div>
                 <div style={{fontSize:12,fontWeight:800,color:"#F48FB1"}}>4.9 stars · Loved by thousands</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.48)",marginTop:2,fontStyle:"italic"}}>"Haven't been caught in rain since I got premium!" — Sarah</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.48)",marginTop:2,fontStyle:"italic"}}>{"\"Haven't been caught in rain since I got premium!\" — Sarah"}</div>
               </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:18}}>
@@ -1166,7 +1167,7 @@ function App(){
                     </div>
                   </div>
                   <div style={{...G,padding:"18px 14px"}}>
-                    <Lbl>Today's Range</Lbl>
+                    <Lbl>{"Today's Range"}</Lbl>
                     <div style={{fontSize:24,fontWeight:900}}>{DWX.maxT||wx.maxT}° <span style={{opacity:.4,fontSize:16,fontWeight:400}}>/ {DWX.minT||wx.minT}°</span></div>
                     <div style={{fontSize:12,opacity:.6,marginTop:8}}>High / Low</div>
                   </div>
@@ -1233,7 +1234,7 @@ function App(){
                     {chatLoading&&<div style={{display:"flex",alignItems:"center",gap:8}}><div style={{fontSize:20}}>🩷</div><div style={{...G,padding:"10px 14px",borderRadius:"18px 18px 18px 4px",fontSize:13,opacity:.7}}>Skyla is thinking…</div></div>}
                   </div>
                   <div style={{display:"flex",gap:8,marginBottom:10}}>
-                    <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask Skyla anything…" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+                    <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask Skyla anything…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
                     <button onClick={sendChat} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>→</button>
                   </div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
@@ -1250,7 +1251,7 @@ function App(){
               !isPremium?<PremiumLock icon="🔍" title="Search Any City" desc="Check the weather anywhere in the world — Paris, New York, Tokyo, anywhere."/>:(
                 <div>
                   <div style={{display:"flex",gap:8,marginBottom:14}}>
-                    <input value={searchCity} onChange={e=>setSearchCity(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchCityWeather()} placeholder="Search any city…" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+                    <input value={searchCity} onChange={e=>setSearchCity(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchCityWeather()} placeholder="Search any city…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
                     <button onClick={searchCityWeather} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
                   </div>
                   {searching&&<div style={{...G,padding:"20px",textAlign:"center",opacity:.6}}>Searching…</div>}
@@ -1291,7 +1292,7 @@ function App(){
                 <div>
                   <Card>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:16}}>🗓️ Plan your event</div>
-                    <div style={{fontSize:12,opacity:.6,marginBottom:6}}>What's the event?</div>
+                    <div style={{fontSize:12,opacity:.6,marginBottom:6}}>{"What's the event?"}</div>
                     <input value={eventName} onChange={e=>setEventName(e.target.value)} placeholder="e.g. BBQ, Wedding, Sports Day, Party" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
                     <div style={{fontSize:12,opacity:.6,marginBottom:6}}>What date?</div>
                     <input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
@@ -1458,7 +1459,7 @@ function App(){
                 ):(
                   <div onClick={()=>setShowPaywall(true)} style={{...G,padding:"16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
                     <div style={{fontSize:28}}>🌅</div>
-                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>Morning Briefing</div><div style={{fontSize:11,opacity:.5}}>Wake up to Skyla's daily forecast</div></div>
+                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>Morning Briefing</div><div style={{fontSize:11,opacity:.5}}>{"Wake up to Skyla's daily forecast"}</div></div>
                     <div style={{background:"#E91E8C",borderRadius:10,padding:"5px 10px",fontSize:10,fontWeight:800,color:"white"}}>PREMIUM</div>
                   </div>
                 )}
