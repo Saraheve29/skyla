@@ -1053,9 +1053,37 @@ function App(){
                 </div>
                 {isPremium&&<div style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",borderRadius:100,padding:"3px 12px",fontSize:10,fontWeight:800,color:"white"}}>✦ PREMIUM</div>}
               </div>
-              <div style={{textAlign:"right"}}>
+              <div style={{textAlign:"right",position:"relative"}}>
                 <div style={{fontSize:17,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")} <span style={{fontSize:10,opacity:.6}}>{clock.getHours()<12?"AM":"PM"}</span></div>
-                <div style={{fontSize:10,opacity:.55}}>{city}</div>
+                <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"flex-end"}}>
+                  <div style={{fontSize:10,opacity:.55}}>{city}</div>
+                  <button onClick={()=>setShowCitySearch(s=>!s)} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,width:22,height:22,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,fontFamily:"'DM Sans',sans-serif"}}>🔍</button>
+                </div>
+                {showCitySearch&&(
+                  <div style={{position:"absolute",right:0,top:44,zIndex:200,background:"rgba(15,15,25,.95)",backdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,.15)",borderRadius:16,padding:"12px",boxShadow:"0 8px 32px rgba(0,0,0,.4)",minWidth:260}}>
+                    <div style={{display:"flex",gap:8,marginBottom:8}}>
+                      <input id="topbar-search" onInput={e=>{window._topsearch=e.target.value;}} onKeyDown={e=>{if(e.key==="Enter"){setSearchCity(window._topsearch||"");setTimeout(searchCityWeather,50);}}} placeholder="Search any city…" autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:10,padding:"8px 12px",fontSize:13,color:"white",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                      <button onClick={()=>{setSearchCity(window._topsearch||"");setTimeout(searchCityWeather,50);}} style={{background:"#E91E8C",border:"none",borderRadius:10,padding:"8px 12px",fontSize:13,cursor:"pointer",color:"white",fontWeight:800,fontFamily:"'DM Sans',sans-serif"}}>Go</button>
+                    </div>
+                    {searching&&<div style={{fontSize:12,color:"rgba(255,255,255,.5)",padding:"4px 0"}}>Searching…</div>}
+                    {searchWx&&(
+                      <div style={{borderTop:"1px solid rgba(255,255,255,.1)",paddingTop:10,marginTop:4}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:800,color:"white"}}>{searchWx.name}</div>
+                            <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>{SC[wxType(searchWx.code,searchWx.isDay)]?.em} {wmoDesc(searchWx.code)}</div>
+                          </div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:26,fontWeight:900,color:"white"}}>{searchWx.temp}°</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,.5)"}}>feels {searchWx.feels}°</div>
+                          </div>
+                        </div>
+                        <div style={{fontSize:12,color:"rgba(255,255,255,.7)",lineHeight:1.5,background:"rgba(255,255,255,.08)",borderRadius:10,padding:"8px 10px"}}>{plainEnglish({...searchWx,humid:70}).verdict}</div>
+                        <button onClick={()=>{setShowCitySearch(false);setSearchWx(null);}} style={{marginTop:8,fontSize:10,color:"rgba(255,255,255,.4)",background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✕ Close</button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
