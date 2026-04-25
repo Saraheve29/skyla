@@ -421,16 +421,7 @@ function App(){
   const [travelUpdates,setTravelUpdates]=useState(null);
   const [travelLoading,setTravelLoading]=useState(false);
   const [travelSearch,setTravelSearch]=useState("");
-  const [alerts,setAlerts]=useState([{
-    level:"🟡 YELLOW",
-    title:"Weather Check",
-    msg:"Skyla is checking weather warnings for your area...",
-    color:"#CA8A04",
-    bg:"rgba(202,138,4,.12)",
-    day:0,
-    emoji:"🟡",
-    dayLabel:"Today"
-  }]);
+  const [alerts,setAlerts]=useState([]);
   const [quickLoading,setQuickLoading]=useState(null);
   // Hourly/week picker
   const [pickedH,setPickedH]=useState(null);
@@ -479,7 +470,7 @@ function App(){
       });
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:d.hourly.precipitation_probability[hr]||0,week,hourly};
       setWx(newWx);
-      checkAlerts(newWx);
+      try{checkAlerts(newWx);}catch(e){console.error("checkAlerts error:",e);}
       // Update streak
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
@@ -699,7 +690,22 @@ function App(){
 
     // Sort by day then severity
     unique.sort((a,b)=>a.day-b.day);
-    setAlerts(unique.slice(0,5)); // max 5 alerts
+    // Always add a daily summary if no warnings
+    if(unique.length===0){
+      try{
+        unique.push({
+          level:"ALL CLEAR",
+          title:"No Weather Warnings",
+          msg:"No severe weather expected for the next 7 days.",
+          color:"#059669",
+          bg:"rgba(5,150,105,.1)",
+          day:0,
+          emoji:"✅",
+          dayLabel:"Today"
+        });
+      }catch(e){}
+    }
+    setAlerts(unique.slice(0,6));
   }
 
 
