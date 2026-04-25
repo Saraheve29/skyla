@@ -23,13 +23,11 @@ export default async function handler(req, res) {
 
   const KEY = "sk_032976f800904cea65184d02375073ebc528f0066def603e";
   const GIRL_ID = "PoHUWWWMHFrA8z7Q88pu";
-  const BOY_ID = "MYiFAKeVwcvm4z9VsFAR";
 
-  // Girl: upbeat and lively
-  // Boy: stable and deep so he sounds masculine
+  // Use ElevenLabs default settings so voices sound exactly like on their website
   const voiceSettings = voiceId === GIRL_ID
-    ? { stability: 0.10, similarity_boost: 0.95, style: 1.0, use_speaker_boost: true }
-    : { stability: 0.65, similarity_boost: 0.95, style: 0.45, use_speaker_boost: true };
+    ? { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true }
+    : { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true };
 
   try {
     const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
