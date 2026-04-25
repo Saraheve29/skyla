@@ -1025,6 +1025,31 @@ function App(){
               </div>
             </div>
 
+            {/* WEATHER WARNINGS - TOP OF PAGE */}
+            {alerts.length>0&&(
+              <div style={{marginBottom:10}}>
+                {alerts.map((a,i)=>(
+                  <div key={i} style={{borderRadius:18,background:a.bg,border:"2px solid "+a.color,padding:"14px 16px",marginBottom:6,animation:"slideUp .4s ease"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                      <div style={{fontSize:24}}>{a.emoji||"⚠️"}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:11,fontWeight:900,color:a.color,letterSpacing:.5,textTransform:"uppercase"}}>{a.level}</div>
+                        <div style={{fontSize:14,fontWeight:800,marginTop:1}}>{a.title}</div>
+                        <div style={{fontSize:11,color:a.color,fontWeight:700,marginTop:1,opacity:.85}}>{a.dayLabel||"Today"}</div>
+                      </div>
+                    </div>
+                    <div style={{fontSize:13,fontWeight:600,lineHeight:1.6}}>{a.msg}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {alerts.length===0&&wx&&(
+              <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:14,padding:"10px 14px",marginBottom:10}}>
+                <div style={{fontSize:16}}>✅</div>
+                <div style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</div>
+              </div>
+            )}
+
             {/* PREMIUM BANNER */}
             {!isPremium&&(
               <div onClick={()=>setShowPaywall(true)} style={{marginBottom:10,borderRadius:16,background:"linear-gradient(135deg,#1a0533,#7C3AED)",border:"1px solid rgba(233,30,140,.5)",padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 20px rgba(233,30,140,.3)"}}>
@@ -1103,28 +1128,7 @@ function App(){
             {/* HOME TAB */}
             {tab==="home"&&(
               <div>
-                {/* WEATHER WARNINGS */}
-                <div style={{marginBottom:12}}>
-                  {alerts.length>0
-                    ? alerts.map((a,i)=>(
-                        <div key={i} style={{borderRadius:18,background:a.bg,border:"2px solid "+a.color,padding:"16px 18px",marginBottom:8,animation:"slideUp .4s ease"}}>
-                          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                            <div style={{fontSize:26}}>{a.emoji||"⚠️"}</div>
-                            <div style={{flex:1}}>
-                              <div style={{fontSize:12,fontWeight:900,color:a.color,letterSpacing:.5,textTransform:"uppercase"}}>{a.level}</div>
-                              <div style={{fontSize:14,fontWeight:800,marginTop:2}}>{a.title}</div>
-                              <div style={{fontSize:11,color:a.color,fontWeight:700,marginTop:2,opacity:.8}}>{a.dayLabel||"Today"}</div>
-                            </div>
-                          </div>
-                          <div style={{fontSize:13,fontWeight:600,lineHeight:1.65}}>{a.msg}</div>
-                        </div>
-                      ))
-                    : <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,.12)",borderRadius:16,padding:"12px 16px",marginBottom:8}}>
-                        <div style={{fontSize:20}}>✅</div>
-                        <div style={{fontSize:13,fontWeight:600,opacity:.7}}>No weather warnings for the next 7 days</div>
-                      </div>
-                  }
-                </div>
+
 
                 {/* Feel cards */}
                 <Card style={{border:"1px solid "+S.acc+"35"}}>
@@ -1139,10 +1143,10 @@ function App(){
                     ))}
                   </div>
                 </Card>
-                {/* Wear / Take */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-                  <div style={{...G,padding:"20px 16px"}}><Lbl>Wear</Lbl><div style={{fontSize:36,marginBottom:10}}>👕</div><div style={{fontSize:14,fontWeight:700,lineHeight:1.4}}>{ai?.wear||"Something comfy"}</div></div>
-                  <div style={{...G,padding:"20px 16px",background:ai?.umbrella?S.acc+"20":G.background,border:ai?.umbrella?"1px solid "+S.acc+"50":G.border}}><Lbl>Take</Lbl><div style={{fontSize:36,marginBottom:10}}>{ai?.umbrella?"☔":"🎒"}</div><div style={{fontSize:14,fontWeight:700,lineHeight:1.4,color:ai?.umbrella?S.acc:"inherit"}}>{ai?.take||"Your essentials"}</div></div>
+                {/* Wear */}
+                <div style={{...G,padding:"16px 20px",marginBottom:12,display:"flex",alignItems:"center",gap:16}}>
+                  <div style={{fontSize:40}}>👕</div>
+                  <div><Lbl>What to Wear Today</Lbl><div style={{fontSize:15,fontWeight:700,lineHeight:1.4}}>{ai?.wear||"Something comfy"}</div></div>
                 </div>
                 {/* Today Feels */}
                 <Card>
