@@ -478,36 +478,86 @@ function App(){
   async function speak(){
     if(!wx)return;
     if(talking){
-      window.speechSynthesis?.cancel();
+      window.speechSynthesis.cancel();
       if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}
       setTalking(false);return;
     }
     const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
     const PE=plainEnglish(wx);
-    const txt="Good "+gr+"! I am Skyla. "+PE.verdict+" In "+city+" it is "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
-    const voiceId=gender==="male"?"MYiFAKeVwcvm4z9VsFAR":"56AoDkrOh6qfVPDXZ7Pt";
-    setTalking(true);
+    const txt="Good "+gr+"! I am Skyla! "+PE.verdict+" In "+city+" it is "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
+    const isMale=gender==="male";
+    
+    // First try ElevenLabs via our server
     try{
       const r=await fetch("/api/speak",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:txt,voiceId:voiceId})
+        body:JSON.stringify({text:txt,voiceId:isMale?"MYiFAKeVwcvm4z9VsFAR":"56AoDkrOh6qfVPDXZ7Pt"})
       });
-      if(!r.ok){const err=await r.text();console.error("Speak error:",err);throw new Error(err);}
-      const blob=await r.blob();
-      const url=URL.createObjectURL(blob);
-      const audio=new Audio(url);
-      window._skylaAudio=audio;
-      audio.onended=()=>{setTalking(false);URL.revokeObjectURL(url);};
-      audio.onerror=()=>{setTalking(false);fallbackSpeak(txt,gender==="male");};
-      await audio.play();
-    }catch(e){
-      console.error("Speak error:",e);
-      fallbackSpeak(txt,gender==="male");
+      if(r.ok){
+        const blob=await r.blob();
+        const url=URL.createObjectURL(blob);
+        const audio=new Audio(url);
+        window._skylaAudio=audio;
+        audio.onended=()=>{setTalking(false);URL.revokeObjectURL(url);};
+        audio.onerror=()=>{setTalking(false);};
+        setTalking(true);
+        await audio.play();
+        return;
+      }
+    }catch(e){console.log("ElevenLabs unavailable, using browser voice");}
+    
+    // Browser voice fallback
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(txt);
+    u.volume=1;
+    
+    if(isMale){
+      u.pitch=0.85;u.rate=1.0;
+    }else{
+      u.pitch=1.8;u.rate=1.1;
+    }
+    
+    function pickVoice(voices){
+      if(isMale){
+        return voices.find(v=>v.name==="Daniel")||
+               voices.find(v=>v.name==="Google UK English Male")||
+               voices.find(v=>v.name.includes("Male")&&v.lang.startsWith("en"))||
+               voices.find(v=>v.lang==="en-GB")||
+               voices.find(v=>v.lang.startsWith("en"));
+      }else{
+        return voices.find(v=>v.name==="Samantha")||
+               voices.find(v=>v.name==="Karen")||
+               voices.find(v=>v.name==="Google UK English Female")||
+               voices.find(v=>v.name==="Microsoft Zira - English (United States)")||
+               voices.find(v=>v.name==="Zira")||
+               voices.find(v=>v.name==="Hazel")||
+               voices.find(v=>v.name.toLowerCase().includes("female")&&v.lang.startsWith("en"))||
+               voices.filter(v=>v.lang.startsWith("en"))[1]||
+               voices.find(v=>v.lang.startsWith("en"));
+      }
+    }
+    
+    u.onend=()=>setTalking(false);
+    u.onerror=()=>setTalking(false);
+    setTalking(true);
+    
+    const voices=window.speechSynthesis.getVoices();
+    if(voices.length>0){
+      const v=pickVoice(voices);
+      if(v)u.voice=v;
+      window.speechSynthesis.speak(u);
+    }else{
+      window.speechSynthesis.onvoiceschanged=()=>{
+        const vs=window.speechSynthesis.getVoices();
+        const v=pickVoice(vs);
+        if(v)u.voice=v;
+        window.speechSynthesis.speak(u);
+      };
     }
   }
 
-  function fallbackSpeak(txt,isMale){
+    function fallbackSpeak(txt,isMale){
     function doSpeak(voices){
       const u=new SpeechSynthesisUtterance(txt);
       u.rate=isMale?1.05:1.1;
