@@ -775,20 +775,46 @@ function App(){
     setTravelLoading(false);
   }
 
-  async function sendChat(){
+  function sendChat(){
     if(!chatInput.trim()||chatLoading)return;
     const userMsg=chatInput.trim();
+    const q=userMsg.toLowerCase();
     setChatInput("");
     setChatMsgs(m=>[...m,{role:"user",text:userMsg}]);
     setChatLoading(true);
-    try{
-      const pr="You are Skyla, a warm friendly AI weather assistant. Current weather in "+city+": "+(wx?wx.temp:"?")+"C feels "+(wx?wx.feels:"?")+"C "+(wx?wmoDesc(wx.code):"")+" rain "+(wx?wx.rain:"?")+"% wind "+(wx?wx.wind:"?")+"kmh. Week: "+(wx?wx.week.map(d=>d.day+" "+wmoDesc(d.code)+" "+d.max+"°").join(", "):"unknown")+". Answer in plain simple English like a caring friend. Max 3 sentences. No jargon.";
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,messages:[{role:"user",content:pr+"\n\nUser asks: "+userMsg}]})});
-      const d=await r.json();
-      const reply=d.content?.find(b=>b.type==="text")?.text||"Sorry, let me try again!";
-      setChatMsgs(m=>[...m,{role:"skyla",text:reply}]);
-    }catch{setChatMsgs(m=>[...m,{role:"skyla",text:"Sorry, I had trouble connecting. Try again! 🩷"}]);}
-    setChatLoading(false);
+    const t=wx?.temp||15,f=wx?.feels||12,r=wx?.rain||20,w2=wx?.wind||10,code=wx?.code||2;
+    const week=wx?.week||[];
+    let reply="";
+    if(q.includes("coat")||q.includes("jacket")){
+      reply=f<=10?"Yes definitely wear a coat today — it feels like "+f+"°C out there! 🧥":f<=15?"A light jacket would be perfect today 🧥":"No coat needed — warm enough at "+f+"°C 😊";
+    }else if(q.includes("umbrella")||q.includes("rain")||q.includes("wet")){
+      reply=r>=70?"Yes take your umbrella — "+r+"% chance of rain! ☔":r>=40?"Maybe pop one in your bag — "+r+"% rain chance 🌂":"No umbrella needed today — looks dry! ☀️";
+    }else if(q.includes("wear")||q.includes("dress")||q.includes("outfit")){
+      reply=f<=8?"Bundle up! Warmest coat, hat and gloves today — feels like "+f+"°C 🧥":f<=14?"A good jacket and comfy layers today 👕":f<=20?"Light clothes with a layer just in case — lovely "+f+"°C 👗":"Summer clothes! "+f+"°C and gorgeous ☀️";
+    }else if(q.includes("hot")||q.includes("warm")||q.includes("sun")){
+      reply=t>=22&&code<=2?"Hot one today — "+t+"°C! Light clothes and suncream ☀️":t>=18?"Pleasantly warm at "+t+"°C 🌤️":"Not very warm — only "+t+"°C. A layer would help 🌥️";
+    }else if(q.includes("cold")||q.includes("freez")||q.includes("chilly")){
+      reply=f<=4?"Very cold — feels like "+f+"°C! Thermals and a warm coat 🥶":f<=10?"Chilly — feels like "+f+"°C. A good coat is a must 🧥":"Not too bad — feels like "+f+"°C 😊";
+    }else if(q.includes("best day")||q.includes("nicest")||q.includes("good day")){
+      const best=week.reduce((b,d)=>(!b||d.max>b.max)?d:b,null);
+      reply=best?"Best day this week: "+best.day+" — "+best.max+"°C with "+best.rain+"% rain ☀️":"Check the week tab for the full forecast 📅";
+    }else if(q.includes("weekend")||q.includes("saturday")||q.includes("sunday")){
+      const sat=week.find(d=>d.day==="Saturday"),sun=week.find(d=>d.day==="Sunday");
+      reply=sat&&sun?"Saturday: "+sat.max+"°C, "+wmoDesc(sat.code)+", "+sat.rain+"% rain. Sunday: "+sun.max+"°C, "+wmoDesc(sun.code)+", "+sun.rain+"% rain. "+(sat.rain<40&&sun.rain<40?"Decent weekend! 🌤️":"Mixed — have a backup plan 🌧️"):"Check the week tab for the weekend forecast 📅";
+    }else if(q.includes("tomorrow")||q.includes("tmrw")){
+      const tmrw=week[1];
+      reply=tmrw?"Tomorrow: "+wmoDesc(tmrw.code)+" — "+tmrw.max+"°C with "+tmrw.rain+"% rain. "+(tmrw.rain<40?"Should be nice! 🌤️":"Take your umbrella! ☔"):"Check back tomorrow!";
+    }else if(q.includes("suncream")||q.includes("sunscreen")){
+      reply=t>=22&&code<=2?"Yes suncream today — hot and sunny ☀️":t>=18?"Worth putting on if out for a while 🌤️":"No suncream needed today!";
+    }else if(q.includes("beanie")||q.includes("hat")){
+      reply=f<=8?"Yes wear a warm beanie — feels like "+f+"°C 🧣":f<=13?"Could be handy — pop one in your bag 🧣":"No beanie needed — too warm! 😊";
+    }else if(q.includes("jumper")||q.includes("sweater")){
+      reply=f<=16?"Yes wear a jumper today — feels like "+f+"°C 🧸":f<=20?"A light jumper or cardigan would be comfy 🧸":"No jumper needed — warm enough! ☀️";
+    }else{
+      const PE2=plainEnglish(wx||{temp:t,feels:f,wind:w2,rain:r,humid:70});
+      reply="Today in "+city+": "+t+"°C, feels like "+f+"°C. "+PE2.verdict+" "+PE2.rainWord+" Ask me anything — coat? umbrella? best day this week? 🩷";
+    }
+    setTimeout(()=>{setChatMsgs(m=>[...m,{role:"skyla",text:reply}]);setChatLoading(false);},400);
   }
 
   async function searchCityWeather(){
