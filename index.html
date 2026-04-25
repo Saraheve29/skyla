@@ -418,6 +418,12 @@ function App(){
   const [famLoading,setFamLoading]=useState(false);
   // Quick ask
   const [quickAns,setQuickAns]=useState(null);
+  const [weatherWarnings,setWeatherWarnings]=useState([]);
+  const [travelUpdates,setTravelUpdates]=useState(null);
+  const [travelLoading,setTravelLoading]=useState(false);
+  const [travelSearch,setTravelSearch]=useState("");
+  const [travelCity,setTravelCity]=useState("");
+  const [alerts,setAlerts]=useState([]);
   const [quickLoading,setQuickLoading]=useState(null);
   // Hourly/week picker
   const [pickedH,setPickedH]=useState(null);
@@ -466,6 +472,7 @@ function App(){
       });
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:d.hourly.precipitation_probability[hr]||0,week,hourly};
       setWx(newWx);
+      checkAlerts(newWx);
       // Update streak
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
@@ -622,6 +629,105 @@ function App(){
     },400);
   }
 
+  function checkAlerts(w){
+    if(!w)return;
+    const als=[];
+
+    function dayLabel(i){
+      return i===0?"today":i===1?"tomorrow":w.week[i]?.day||"day "+i;
+    }
+
+    function addAlert(level,title,msg,color,bg,day){
+      const when=day===0?"today":day===1?"tomorrow":"on "+dayLabel(day);
+      const whenCap=day===0?"Today":day===1?"Tomorrow":w.week[day]?.day||"Soon";
+      als.push({level,title:whenCap+" — "+title,msg,color,bg,day});
+    }
+
+    // Check today AND next 6 days
+    const days=[{temp:w.temp,feels:w.feels,wind:w.wind,rain:w.rain,code:w.code,max:w.maxT,min:w.minT},...(w.week||[]).slice(1,7).map(d=>({temp:d.max,feels:d.feels||d.max-2,wind:30,rain:d.rain,code:d.code,max:d.max,min:d.min}))];
+
+    days.forEach((d,i)=>{
+      const{temp,feels,wind,rain,code,max}=d;
+      const when=dayLabel(i);
+
+      // Thunderstorm
+      if(code>=95){addAlert("🔴 RED","Thunderstorm Warning","Dangerous thunderstorm expected "+when+". Stay indoors, away from windows. Unplug your devices and avoid open water. Plan ahead if you need to go anywhere.","#7C3AED","rgba(124,58,237,.15)",i);}
+      // Heavy snow
+      else if(code>=73&&code<=77){addAlert("🔴 RED","Heavy Snow Warning","Heavy snow expected "+when+". Only travel if essential. Stock up on what you need today and stay warm at home — roads will be dangerous.","#0369A1","rgba(3,105,161,.15)",i);}
+      // Light snow
+      else if(code===71||code===72){addAlert("🟡 YELLOW","Snow Warning","Snow is expected "+when+". Allow extra travel time and wear warm waterproof boots. Roads may be slippery.","#0369A1","rgba(3,105,161,.12)",i);}
+      // Extreme heat
+      if(max>=35){addAlert("🔴 RED","Extreme Heat Warning","Dangerously hot "+when+" — up to "+max+"°C. Stay indoors in the coolest room. Drink water every hour and keep your curtains closed to stay cool.","#DC2626","rgba(220,38,38,.15)",i);}
+      else if(max>=30){addAlert("🟠 AMBER","Heat Wave Alert","Very hot "+when+" — up to "+max+"°C. Keep yourself cool, drink plenty of water and wear suncream if you head outside.","#D97706","rgba(217,119,6,.15)",i);}
+      else if(max>=28){addAlert("🟡 YELLOW","Hot Weather","It's going to be warm "+when+" — "+max+"°C. Stay hydrated and use suncream if you're outside for long.","#CA8A04","rgba(202,138,4,.12)",i);}
+      // Severe cold
+      if(feels<=-10){addAlert("🔴 RED","Severe Cold Warning","Dangerously cold "+when+". Stay indoors if you can. If you do go out cover all your skin and wear as many layers as possible.","#1D4ED8","rgba(29,78,216,.15)",i);}
+      else if(feels<=-5){addAlert("🟠 AMBER","Freezing Conditions","Very cold "+when+" — it will feel like "+feels+"°C. Wear your warmest coat and thermals — watch your step as paths could be icy.","#2563EB","rgba(37,99,235,.15)",i);}
+      else if(feels<=0){addAlert("🟡 YELLOW","Cold Weather","It's going to feel freezing "+when+" — around "+feels+"°C. Make sure you have your hat, scarf and gloves before you step outside.","#3B82F6","rgba(59,130,246,.12)",i);}
+      // Heavy rain
+      if(rain>=85&&(code>=61&&code<=82)){addAlert("🟠 AMBER","Heavy Rain Warning","Very heavy rain likely "+when+". Take your umbrella and a waterproof coat — you will really need them today.","#2563EB","rgba(37,99,235,.15)",i);}
+      // Strong wind (today only since we don't have weekly wind data)
+      if(i===0&&wind>=80){addAlert("🔴 RED","Dangerous Wind Warning","Extremely dangerous winds today. Stay indoors. Do not go near trees or exposed areas — it really is not safe today.","#DC2626","rgba(220,38,38,.15)",i);}
+      else if(i===0&&wind>=55){addAlert("🟠 AMBER","Strong Wind Warning","Strong winds today. Avoid tall trees and exposed areas. Take it steady if you are driving today.","#D97706","rgba(217,119,6,.15)",i);}
+    });
+
+    // Remove duplicates — keep earliest day for same alert type
+    const seen=new Set();
+    const unique=als.filter(a=>{
+      const key=a.level+a.title.split("—")[1];
+      if(seen.has(key))return false;
+      seen.add(key);return true;
+    });
+
+    // Sort by day then severity
+    unique.sort((a,b)=>a.day-b.day);
+    setAlerts(unique.slice(0,5)); // max 5 alerts
+  }
+
+  // Fetch weather warnings based on weather data
+  function getWarnings(w){
+    if(!w)return[];
+    const warnings=[];
+    const feels=w.feels,temp=w.temp,wind=w.wind,rain=w.rain,code=w.code;
+    // Red warnings
+    if(wind>=80){warnings.push({level:"red",color:"#DC2626",bg:"rgba(220,38,38,.15)",emoji:"🔴",title:"RED WARNING — Dangerous Winds",day:"Today",advice:"Extremely dangerous winds expected. Stay indoors and away from windows. Avoid going outside if at all possible."});}
+    else if(wind>=55){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.15)",emoji:"🟠",title:"AMBER WARNING — Strong Winds",day:"Today",advice:"Very strong winds — stay away from trees and open exposed areas. Secure anything in your garden."});}
+    else if(wind>=35){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.12)",emoji:"🟡",title:"YELLOW WARNING — Windy",day:"Today",advice:"Gusty winds today — hold onto your hat! Take extra care if you're out and about."});}
+    if(temp>=35){warnings.push({level:"red",color:"#DC2626",bg:"rgba(220,38,38,.15)",emoji:"🔴",title:"RED WARNING — Extreme Heat",day:"Today",advice:"Dangerously hot today. Stay in the shade, wear loose light clothing and keep a cool water bottle with you at all times."});}
+    else if(temp>=30){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.15)",emoji:"🟠",title:"AMBER WARNING — Heat Wave",day:"Today",advice:"Very hot today. Drink plenty of water, wear light loose clothing and avoid going out between 11am and 3pm."});}
+    else if(temp>=25){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.12)",emoji:"🟡",title:"YELLOW WARNING — Hot Weather",day:"Today",advice:"Warm day ahead — take a water bottle out with you and apply suncream before heading out."});}
+    if(code>=95){warnings.push({level:"red",color:"#DC2626",bg:"rgba(220,38,38,.15)",emoji:"🔴",title:"RED WARNING — Thunderstorm",day:"Today",advice:"Severe thunderstorm warning. Stay indoors, keep away from windows and avoid using electrical items."});}
+    else if(code>=80&&rain>=70){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.15)",emoji:"🟠",title:"AMBER WARNING — Heavy Rain",day:"Today",advice:"Heavy rain expected — flooding possible in low-lying areas. Keep wellies handy and stay on higher ground."});}
+    else if(rain>=60){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.12)",emoji:"🟡",title:"YELLOW WARNING — Rain",day:"Today",advice:"Wet day ahead — take your umbrella and a waterproof jacket. Watch your step on slippery surfaces."});}
+    if(feels<=-5){warnings.push({level:"red",color:"#DC2626",bg:"rgba(220,38,38,.15)",emoji:"🔴",title:"RED WARNING — Extreme Cold",day:"Today",advice:"Dangerously cold conditions. Wear thermal layers, cover your face and keep your time outdoors as short as possible."});}
+    else if(feels<=0){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.15)",emoji:"🟠",title:"AMBER WARNING — Ice & Frost",day:"Today",advice:"Icy conditions likely — wear warm grippy shoes and take extra care on pavements and steps."});}
+    else if(feels<=4){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.12)",emoji:"🟡",title:"YELLOW WARNING — Cold Snap",day:"Today",advice:"Cold snap today — wrap up warm with layers, a hat and gloves before heading out."});}
+    // Check upcoming week for warnings
+    if(w.week){
+      w.week.slice(1,4).forEach((d,i)=>{
+        const dayLabel=i===0?"Tomorrow":i===1?"In 2 days":"In 3 days";
+        if(d.rain>=80&&d.max<5){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.12)",emoji:"🟠",title:"UPCOMING — Cold & Wet",day:dayLabel,advice:"Cold wet weather coming "+dayLabel.toLowerCase()+". Plan ahead — get your warm waterproof gear ready now."});}
+        if(d.max>=30){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.1)",emoji:"🟡",title:"UPCOMING — Hot Weather",day:dayLabel,advice:"Hot weather arriving "+dayLabel.toLowerCase()+". Stock up on water and plan any outdoor activities for early morning."});}
+      });
+    }
+    return warnings;
+  }
+
+  async function checkTravel(locationName){
+    setTravelLoading(true);setTravelUpdates(null);
+    const loc=locationName||city;
+    try{
+      const pr="You are Skyla, a friendly AI assistant. Give weather-related travel disruption updates for "+loc+". Current weather: "+(wx?wx.temp+"C "+wmoDesc(wx.code)+" wind "+wx.wind+"kmh rain "+wx.rain+"%":"unknown")+". List ONLY travel disruptions caused by weather conditions. For each disruption say: mode of transport, what disruption, and one plain English tip for the user. If no weather disruptions say so clearly. Max 4 disruptions. Be specific to "+loc+". Format each as a short clear sentence.";
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:300,messages:[{role:"user",content:pr}]})});
+      const d=await r.json();
+      const txt=d.content?.find(b=>b.type==="text")?.text||"No weather-related travel disruptions found for "+loc+" right now.";
+      setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})});
+    }catch{
+      setTravelUpdates({location:loc,text:"Unable to fetch travel updates right now — try again shortly.",time:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})});
+    }
+    setTravelLoading(false);
+  }
+
   async function sendChat(){
     if(!chatInput.trim()||chatLoading)return;
     const userMsg=chatInput.trim();
@@ -765,6 +871,7 @@ function App(){
     {id:"event",icon:"🗓️",label:"Event"},
     {id:"holiday",icon:"✈️",label:"Holiday"},
     {id:"week",icon:"📅",label:"Week"},
+    {id:"travel",icon:"🚌",label:"Travel"},
     {id:"more",icon:"✦",label:"More"},
   ];
 
@@ -949,6 +1056,21 @@ function App(){
             {/* HOME TAB */}
             {tab==="home"&&(
               <div>
+                {/* WEATHER ALERTS */}
+                {alerts.length>0&&(
+                  <div style={{marginBottom:12}}>
+                    {alerts.map((a,i)=>(
+                      <div key={i} style={{background:a.bg,border:"1px solid "+a.color+"50",borderRadius:18,padding:"16px 18px",marginBottom:8,borderLeft:"4px solid "+a.color}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                          <div style={{fontSize:13,fontWeight:900,color:a.color}}>{a.level}</div>
+                          <div style={{fontSize:13,fontWeight:800}}>{a.title}</div>
+                        </div>
+                        <div style={{fontSize:13,lineHeight:1.6,fontWeight:500}}>{a.msg}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* Feel cards */}
                 <Card style={{border:"1px solid "+S.acc+"35"}}>
                   <Lbl>What it actually feels like outside</Lbl>
@@ -1241,6 +1363,47 @@ function App(){
                 })}
                 {pickedD!==null&&<button onClick={()=>setPickedD(null)} style={{marginTop:8,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>← Back to today</button>}
               </Card>
+            )}
+
+            {/* TRAVEL TAB */}
+            {tab==="travel"&&(
+              <div>
+                <Card style={{border:"1px solid "+S.acc+"35"}}>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:6}}>🚌 Travel Updates</div>
+                  <div style={{fontSize:12,opacity:.6,marginBottom:16,lineHeight:1.5}}>Weather-related travel disruptions for your area — trains, buses, flights and more.</div>
+                  <button onClick={()=>checkTravel(null)} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginBottom:12}}>
+                    {travelLoading?"Checking updates…":"🚌 Check Travel Updates for "+city}
+                  </button>
+                  <div style={{display:"flex",gap:8}}>
+                    <input value={travelSearch} onChange={e=>setTravelSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&checkTravel(travelSearch)} placeholder="Search another location…" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                    <button onClick={()=>checkTravel(travelSearch)} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
+                  </div>
+                </Card>
+                {travelLoading&&(
+                  <div style={{...G,padding:"20px",textAlign:"center"}}>
+                    <div style={{width:32,height:32,border:"3px solid rgba(255,255,255,.2)",borderTop:"3px solid "+S.acc,borderRadius:"50%",animation:"spin 1s linear infinite",margin:"0 auto 12px"}}/>
+                    <div style={{fontSize:13,opacity:.6}}>Checking travel updates…</div>
+                  </div>
+                )}
+                {travelUpdates&&(
+                  <Card>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+                      <div>
+                        <div style={{fontSize:15,fontWeight:800}}>📍 {travelUpdates.location}</div>
+                        <div style={{fontSize:11,opacity:.5,marginTop:2}}>Updated {travelUpdates.time}</div>
+                      </div>
+                      <div style={{fontSize:22}}>{S.em}</div>
+                    </div>
+                    <div style={{background:"rgba(255,255,255,.15)",borderRadius:16,padding:"16px",fontSize:13,lineHeight:1.8,fontWeight:500,whiteSpace:"pre-wrap"}}>{travelUpdates.text}</div>
+                    <button onClick={()=>checkTravel(travelUpdates.location)} style={{marginTop:12,fontSize:11,color:S.acc,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>↻ Refresh</button>
+                  </Card>
+                )}
+                {!travelUpdates&&!travelLoading&&(
+                  <div style={{...G,padding:"20px",textAlign:"center",opacity:.5,fontSize:13}}>
+                    Tap the button above to check weather-related travel disruptions for your area
+                  </div>
+                )}
+              </div>
             )}
 
             {/* MORE TAB */}
