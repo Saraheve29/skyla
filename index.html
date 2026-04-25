@@ -421,7 +421,16 @@ function App(){
   const [travelUpdates,setTravelUpdates]=useState(null);
   const [travelLoading,setTravelLoading]=useState(false);
   const [travelSearch,setTravelSearch]=useState("");
-  const [alerts,setAlerts]=useState([]);
+  const [alerts,setAlerts]=useState([{
+    level:"🟡 YELLOW",
+    title:"Weather Check",
+    msg:"Skyla is checking weather warnings for your area...",
+    color:"#CA8A04",
+    bg:"rgba(202,138,4,.12)",
+    day:0,
+    emoji:"🟡",
+    dayLabel:"Today"
+  }]);
   const [quickLoading,setQuickLoading]=useState(null);
   // Hourly/week picker
   const [pickedH,setPickedH]=useState(null);
