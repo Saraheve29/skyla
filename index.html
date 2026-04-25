@@ -260,12 +260,26 @@ function App(){
       await audio.play();
     }catch{
       const u=new SpeechSynthesisUtterance(txt);
-      u.rate=gender==="male"?1.05:1.1;u.pitch=gender==="male"?0.88:1.5;
+      const isMale=gender==="male";
+      u.rate=isMale?1.0:1.1;
+      u.pitch=isMale?0.85:1.6;
+      u.volume=1;
+      function doSpeak(){
+        const vs=window.speechSynthesis.getVoices();
+        let v=null;
+        if(isMale){
+          v=vs.find(x=>x.name==="Daniel")||vs.find(x=>x.name.includes("Oliver"))||vs.find(x=>x.name.includes("Arthur"))||vs.find(x=>x.name==="Google UK English Male")||vs.find(x=>x.lang==="en-GB"&&x.name.toLowerCase().includes("male"))||vs.find(x=>x.lang.startsWith("en-GB"))||vs.find(x=>x.lang.startsWith("en"));
+        }else{
+          v=vs.find(x=>x.name==="Samantha")||vs.find(x=>x.name==="Karen")||vs.find(x=>x.name==="Serena")||vs.find(x=>x.name==="Google UK English Female")||vs.find(x=>x.name.includes("Zira"))||vs.find(x=>x.name.includes("Hazel"))||vs.find(x=>x.lang==="en-GB"&&x.name.toLowerCase().includes("female"))||vs.filter(x=>x.lang.startsWith("en-GB"))[1]||vs.find(x=>x.lang.startsWith("en-GB"));
+        }
+        if(v)u.voice=v;
+        u.onend=()=>setTalking(false);
+        u.onerror=()=>setTalking(false);
+        window.speechSynthesis.speak(u);
+      }
       const vs=window.speechSynthesis.getVoices();
-      const v=gender==="male"?vs.find(v=>v.name.includes("Daniel")||v.name.includes("Oliver")):vs.find(v=>v.name.includes("Samantha")||v.name.includes("Karen")||v.name.includes("Zira"));
-      if(v)u.voice=v;
-      u.onend=()=>setTalking(false);
-      window.speechSynthesis.speak(u);
+      if(vs.length>0){doSpeak();}
+      else{window.speechSynthesis.onvoiceschanged=()=>doSpeak();}
     }
   }
 
@@ -455,27 +469,36 @@ function App(){
         </div>
 
         {/* WEATHER WARNINGS */}
-        {alerts.length>0?(
-          <div style={{marginBottom:10}}>
-            {alerts.map((a,i)=>(
-              <div key={i} style={{borderRadius:16,background:a.bg,border:"2px solid "+a.color,padding:"12px 16px",marginBottom:6}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
-                  <span style={{fontSize:20}}>{a.emoji}</span>
-                  <div>
-                    <div style={{fontSize:10,fontWeight:900,color:a.color,letterSpacing:.5}}>{a.level} — {a.label}</div>
-                    <div style={{fontSize:13,fontWeight:800}}>{a.title}</div>
+        {(()=>{
+          const [showAll,setShowAll]=React.useState(false);
+          if(alerts.length===0)return(
+            <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
+              <span>✅</span><span style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</span>
+            </div>
+          );
+          const shown=showAll?alerts:alerts.slice(0,1);
+          return(
+            <div style={{marginBottom:10}}>
+              {shown.map((a,i)=>(
+                <div key={i} style={{borderRadius:16,background:a.bg,border:"2px solid "+a.color,padding:"12px 16px",marginBottom:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                    <span style={{fontSize:20}}>{a.emoji}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:10,fontWeight:900,color:a.color,letterSpacing:.5}}>{a.level} — {a.label}</div>
+                      <div style={{fontSize:13,fontWeight:800}}>{a.title}</div>
+                    </div>
                   </div>
+                  <div style={{fontSize:12,fontWeight:600,lineHeight:1.5}}>{a.msg}</div>
                 </div>
-                <div style={{fontSize:12,fontWeight:600,lineHeight:1.5}}>{a.msg}</div>
-              </div>
-            ))}
-          </div>
-        ):(
-          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
-            <span>✅</span>
-            <span style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</span>
-          </div>
-        )}
+              ))}
+              {alerts.length>1&&(
+                <button onClick={()=>setShowAll(s=>!s)} style={{fontSize:11,fontWeight:700,color:alerts[0].color,background:alerts[0].bg,border:"1px solid "+alerts[0].color+"50",borderRadius:100,padding:"5px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginTop:2}}>
+                  {showAll?"Show less":"See all "+alerts.length+" warnings"}
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* CHARACTER + TEMP */}
         <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:8}}>
