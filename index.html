@@ -424,6 +424,7 @@ function App(){
   const [travelUpdates,setTravelUpdates]=useState(null);
   const [travelLoading,setTravelLoading]=useState(false);
   const [travelSearch,setTravelSearch]=useState("");
+  const [showCitySearch,setShowCitySearch]=useState(false);
   const travelSearchRef=React.useRef("");
   const [alerts,setAlerts]=useState([]);
   const [quickLoading,setQuickLoading]=useState(null);
@@ -1312,9 +1313,8 @@ function App(){
 
             {/* SEARCH TAB */}
             {tab==="search"&&(
-              !isPremium?<PremiumLock icon="🔍" title="Search Any City" desc="Check the weather anywhere in the world — Paris, New York, Tokyo, anywhere."/>:(
-                <div>
-                  <div style={{display:"flex",gap:8,marginBottom:14}}>
+              <div>
+                <div style={{display:"flex",gap:8,marginBottom:14}}>
                     <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>{if(e.key==="Enter"){setSearchCity(window._scity||"");setTimeout(searchCityWeather,50);}}} placeholder="Search any city…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
                     <button onClick={()=>{setSearchCity(window._scity||"");setTimeout(searchCityWeather,50);}} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
                   </div>
