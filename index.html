@@ -734,9 +734,7 @@ function App(){
       if(updates.length===0){
         txt="No weather-related travel disruptions in "+loc+" right now. Conditions look fine for travelling! "+S.em;
       } else {
-        txt=updates.join("
-
-");
+        txt=updates.join("\n\n");
       }
       setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),hasIssues:updates.length>0});
     }catch(e){
@@ -747,9 +745,7 @@ function App(){
         if(wx.rain>=60)updates.push("🚶 Walking — Wet and slippery conditions. Take care on pavements.");
         if(wx.code>=95)updates.push("✈️ Flights — Storm conditions may affect travel. Check with your airline.");
       }
-      const txt=updates.length>0?updates.join("
-
-"):"No major weather-related disruptions expected in "+loc+" right now.";
+      const txt=updates.length>0?updates.join("\n\n"):"No major weather-related disruptions expected in "+loc+" right now.";
       setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),hasIssues:updates.length>0});
     }
     setTravelLoading(false);
