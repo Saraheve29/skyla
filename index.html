@@ -165,6 +165,7 @@ function App(){
   const [briefingTime,setBriefingTime]=useState(()=>sg("skyla_briefing")||"07:00");
   const [briefingSaved,setBriefingSaved]=useState(false);
   const [showPaywall,setShowPaywall]=useState(false);
+  const [showAllWarnings,setShowAllWarnings]=useState(false);
   const clock=new Date();
   const DWX=(()=>{
     if(!wx)return null;
@@ -469,36 +470,31 @@ function App(){
         </div>
 
         {/* WEATHER WARNINGS */}
-        {(()=>{
-          const [showAll,setShowAll]=React.useState(false);
-          if(alerts.length===0)return(
-            <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
-              <span>✅</span><span style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</span>
-            </div>
-          );
-          const shown=showAll?alerts:alerts.slice(0,1);
-          return(
-            <div style={{marginBottom:10}}>
-              {shown.map((a,i)=>(
-                <div key={i} style={{borderRadius:16,background:a.bg,border:"2px solid "+a.color,padding:"12px 16px",marginBottom:6}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
-                    <span style={{fontSize:20}}>{a.emoji}</span>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:10,fontWeight:900,color:a.color,letterSpacing:.5}}>{a.level} — {a.label}</div>
-                      <div style={{fontSize:13,fontWeight:800}}>{a.title}</div>
-                    </div>
+        {alerts.length===0?(
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
+            <span>✅</span><span style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</span>
+          </div>
+        ):(
+          <div style={{marginBottom:10}}>
+            {(showAllWarnings?alerts:alerts.slice(0,1)).map((a,i)=>(
+              <div key={i} style={{borderRadius:16,background:a.bg,border:"2px solid "+a.color,padding:"12px 16px",marginBottom:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                  <span style={{fontSize:20}}>{a.emoji}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:10,fontWeight:900,color:a.color,letterSpacing:.5}}>{a.level} — {a.label}</div>
+                    <div style={{fontSize:13,fontWeight:800}}>{a.title}</div>
                   </div>
-                  <div style={{fontSize:12,fontWeight:600,lineHeight:1.5}}>{a.msg}</div>
                 </div>
-              ))}
-              {alerts.length>1&&(
-                <button onClick={()=>setShowAll(s=>!s)} style={{fontSize:11,fontWeight:700,color:alerts[0].color,background:alerts[0].bg,border:"1px solid "+alerts[0].color+"50",borderRadius:100,padding:"5px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginTop:2}}>
-                  {showAll?"Show less":"See all "+alerts.length+" warnings"}
-                </button>
-              )}
-            </div>
-          );
-        })()}
+                <div style={{fontSize:12,fontWeight:600,lineHeight:1.5}}>{a.msg}</div>
+              </div>
+            ))}
+            {alerts.length>1&&(
+              <button onClick={()=>setShowAllWarnings(s=>!s)} style={{fontSize:11,fontWeight:700,color:alerts[0].color,background:alerts[0].bg,border:"1px solid "+alerts[0].color+"50",borderRadius:100,padding:"5px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginTop:2}}>
+                {showAllWarnings?"Show less ↑":"See all "+alerts.length+" warnings ↓"}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* CHARACTER + TEMP */}
         <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:8}}>
