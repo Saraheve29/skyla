@@ -703,11 +703,14 @@ function App(){
     else if(feels<=0){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.15)",emoji:"🟠",title:"AMBER WARNING — Ice & Frost",day:"Today",advice:"Icy conditions likely — wear warm grippy shoes and take extra care on pavements and steps."});}
     else if(feels<=4){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.12)",emoji:"🟡",title:"YELLOW WARNING — Cold Snap",day:"Today",advice:"Cold snap today — wrap up warm with layers, a hat and gloves before heading out."});}
     // Check upcoming week for warnings
-    if(w.week){
-      w.week.slice(1,4).forEach((d,i)=>{
-        const dayLabel=i===0?"Tomorrow":i===1?"In 2 days":"In 3 days";
-        if(d.rain>=80&&d.max<5){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.12)",emoji:"🟠",title:"UPCOMING — Cold & Wet",day:dayLabel,advice:"Cold wet weather coming "+dayLabel.toLowerCase()+". Plan ahead — get your warm waterproof gear ready now."});}
-        if(d.max>=30){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.1)",emoji:"🟡",title:"UPCOMING — Hot Weather",day:dayLabel,advice:"Hot weather arriving "+dayLabel.toLowerCase()+". Stock up on water and plan any outdoor activities for early morning."});}
+    if(w&&w.week&&w.week.length>1){
+      w.week.slice(1,7).forEach((d,i)=>{
+        if(!d)return;
+        const dayLabel=i===0?"Tomorrow":d.day||("In "+(i+1)+" days");
+        if(d.rain>=80&&d.max<=5){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.12)",emoji:"🟠",title:"UPCOMING — Cold & Wet",day:dayLabel,advice:"Cold wet weather expected "+dayLabel.toLowerCase()+". Get your warm waterproof gear ready now."});}
+        if(d.max>=30){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.1)",emoji:"🟡",title:"UPCOMING — Hot Weather",day:dayLabel,advice:"Hot weather arriving "+dayLabel.toLowerCase()+". Stock up on water and plan outdoor activities for early morning."});}
+        if(d.code>=95){warnings.push({level:"amber",color:"#D97706",bg:"rgba(217,119,6,.12)",emoji:"🟠",title:"UPCOMING — Storm Warning",day:dayLabel,advice:"Thunderstorms forecast for "+dayLabel.toLowerCase()+". Plan to stay indoors if possible."});}
+        if(d.rain>=70&&d.max>18){warnings.push({level:"yellow",color:"#CA8A04",bg:"rgba(202,138,4,.1)",emoji:"🟡",title:"UPCOMING — Heavy Rain",day:dayLabel,advice:"Heavy rain expected "+dayLabel.toLowerCase()+". Get your umbrella and waterproof jacket ready tonight."});}
       });
     }
     return warnings;
@@ -715,15 +718,70 @@ function App(){
 
   async function checkTravel(locationName){
     setTravelLoading(true);setTravelUpdates(null);
-    const loc=locationName||city;
+    const loc=(locationName&&locationName.trim())||city;
     try{
-      const pr="You are Skyla, a friendly AI assistant. Give weather-related travel disruption updates for "+loc+". Current weather: "+(wx?wx.temp+"C "+wmoDesc(wx.code)+" wind "+wx.wind+"kmh rain "+wx.rain+"%":"unknown")+". List ONLY travel disruptions caused by weather conditions. For each disruption say: mode of transport, what disruption, and one plain English tip for the user. If no weather disruptions say so clearly. Max 4 disruptions. Be specific to "+loc+". Format each as a short clear sentence.";
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:300,messages:[{role:"user",content:pr}]})});
-      const d=await r.json();
-      const txt=d.content?.find(b=>b.type==="text")?.text||"No weather-related travel disruptions found for "+loc+" right now.";
-      setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})});
-    }catch{
-      setTravelUpdates({location:loc,text:"Unable to fetch travel updates right now — try again shortly.",time:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})});
+      // Get weather for searched location if different from current
+      let tw=wx;
+      if(locationName&&locationName.trim()&&locationName.trim().toLowerCase()!==city.toLowerCase()){
+        const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(locationName.trim())+"&count=1").then(r=>r.json());
+        if(g.results&&g.results[0]){
+          const la=g.results[0].latitude,lo=g.results[0].longitude;
+          const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,wind_speed_10m,weathercode,precipitation_probability&hourly=precipitation_probability&timezone=auto&forecast_days=1";
+          const d=await fetch(url).then(r=>r.json());
+          const cu=d.current;
+          tw={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,rain:cu.precipitation_probability||0};
+        }
+      }
+      // Generate travel updates from weather data - no API needed
+      const updates=[];
+      const wind=tw?.wind||0,rain=tw?.rain||0,code=tw?.code||0,temp=tw?.temp||15;
+      if(wind>=60){
+        updates.push("🚂 Trains — High winds are causing delays and speed restrictions. Allow extra time for your journey.");
+        updates.push("✈️ Flights — Possible delays or turbulence due to strong winds. Check with your airline before travelling.");
+        updates.push("🚌 Buses — Some services may be diverted or delayed due to dangerous wind conditions.");
+      } else if(wind>=40){
+        updates.push("🚂 Trains — Wind may cause minor delays on some routes. Check live departures before you leave.");
+        updates.push("✈️ Flights — Minor delays possible. Worth checking your flight status.");
+      }
+      if(rain>=70||(code>=61&&code<=67)){
+        updates.push("🚂 Trains — Heavy rain may affect some services. Check live departures.");
+        updates.push("🚌 Buses — Wet weather may cause some delays. Allow extra time.");
+        updates.push("🚶 Walking — Pavements and steps will be slippery. Take extra care and wear grippy shoes.");
+      } else if(rain>=40){
+        updates.push("🚌 Buses — Rain may cause minor delays in busy areas.");
+        updates.push("🚶 Walking — Wet surfaces — take care on pavements and steps.");
+      }
+      if(code>=95){
+        updates.push("🚂 Trains — Thunderstorm causing significant disruption. Check before you travel.");
+        updates.push("✈️ Flights — Storm conditions causing delays and cancellations. Contact your airline.");
+        updates.push("🚌 Buses — Services severely disrupted. Consider waiting until storm passes.");
+      }
+      if(temp<=0||tw?.feels<=0){
+        updates.push("🚂 Trains — Ice on the tracks may cause delays on some routes.");
+        updates.push("🚌 Buses — Icy roads causing delays. Services may be running late.");
+        updates.push("🚶 Walking — Icy pavements and steps — take very careful steps and wear grippy shoes.");
+      }
+      let txt="";
+      if(updates.length===0){
+        txt="No weather-related travel disruptions in "+loc+" right now. Conditions look fine for travelling! "+S.em;
+      } else {
+        txt=updates.join("
+
+");
+      }
+      setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),hasIssues:updates.length>0});
+    }catch(e){
+      // Even if fetch fails, show basic info from current weather
+      const updates=[];
+      if(wx){
+        if(wx.wind>=40)updates.push("🚂 Trains — Wind may cause delays. Check live departures before you leave.");
+        if(wx.rain>=60)updates.push("🚶 Walking — Wet and slippery conditions. Take care on pavements.");
+        if(wx.code>=95)updates.push("✈️ Flights — Storm conditions may affect travel. Check with your airline.");
+      }
+      const txt=updates.length>0?updates.join("
+
+"):"No major weather-related disruptions expected in "+loc+" right now.";
+      setTravelUpdates({location:loc,text:txt,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),hasIssues:updates.length>0});
     }
     setTravelLoading(false);
   }
@@ -1375,8 +1433,16 @@ function App(){
                     {travelLoading?"Checking updates…":"🚌 Check Travel Updates for "+city}
                   </button>
                   <div style={{display:"flex",gap:8}}>
-                    <input value={travelSearch} onChange={e=>setTravelSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&checkTravel(travelSearch)} placeholder="Search another location…" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-                    <button onClick={()=>checkTravel(travelSearch)} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
+                    <input 
+                      defaultValue={travelSearch}
+                      onChange={e=>setTravelSearch(e.target.value)}
+                      onKeyDown={e=>{if(e.key==="Enter"){checkTravel(e.target.value);}}}
+                      placeholder="Search another location…" 
+                      style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}
+                      autoComplete="off"
+                      spellCheck="false"
+                    />
+                    <button onClick={()=>{const inp=document.querySelector(".travel-search");if(inp)checkTravel(inp.value);else checkTravel(travelSearch);}} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
                   </div>
                 </Card>
                 {travelLoading&&(
@@ -1395,7 +1461,7 @@ function App(){
                       <div style={{fontSize:22}}>{S.em}</div>
                     </div>
                     <div style={{background:"rgba(255,255,255,.15)",borderRadius:16,padding:"16px",fontSize:13,lineHeight:1.8,fontWeight:500,whiteSpace:"pre-wrap"}}>{travelUpdates.text}</div>
-                    <button onClick={()=>checkTravel(travelUpdates.location)} style={{marginTop:12,fontSize:11,color:S.acc,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>↻ Refresh</button>
+                    <button onClick={()=>checkTravel(travelUpdates.location)} style={{marginTop:12,fontSize:11,color:S.acc,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>↻ Refresh updates</button>
                   </Card>
                 )}
                 {!travelUpdates&&!travelLoading&&(
