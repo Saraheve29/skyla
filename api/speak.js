@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   const KEY = "sk_032976f800904cea65184d02375073ebc528f0066def603e";
 
   // Make girl voice happy and upbeat, boy voice confident
-  const isGirl = voiceId === "56AoDkrOh6qfVPDXZ7Pt";
+  const isGirl = voiceId === "PoHUWWWMHFrA8z7Q88pu";
   const voiceSettings = isGirl
     ? { stability: 0.15, similarity_boost: 0.9, style: 1.0, use_speaker_boost: true }
     : { stability: 0.4, similarity_boost: 0.85, style: 0.6, use_speaker_boost: true };
