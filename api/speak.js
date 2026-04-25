@@ -22,13 +22,14 @@ export default async function handler(req, res) {
   if (!text || !voiceId) return res.status(400).json({ error: "Missing text or voiceId" });
 
   const KEY = "sk_032976f800904cea65184d02375073ebc528f0066def603e";
-  const GIRL = "PoHUWWWMHFrA8z7Q88pu";
+  const GIRL_ID = "PoHUWWWMHFrA8z7Q88pu";
+  const BOY_ID = "MYiFAKeVwcvm4z9VsFAR";
 
-  // Girl: very low stability = expressive & upbeat, high style = emotional & lively
-  // Boy: medium stability = natural & warm, medium style = friendly human feel
-  const voiceSettings = voiceId === GIRL
+  // Girl: upbeat and lively
+  // Boy: stable and deep so he sounds masculine
+  const voiceSettings = voiceId === GIRL_ID
     ? { stability: 0.10, similarity_boost: 0.95, style: 1.0, use_speaker_boost: true }
-    : { stability: 0.25, similarity_boost: 0.90, style: 0.75, use_speaker_boost: true };
+    : { stability: 0.65, similarity_boost: 0.95, style: 0.45, use_speaker_boost: true };
 
   try {
     const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
