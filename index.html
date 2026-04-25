@@ -899,9 +899,9 @@ function App(){
     {id:"more",icon:"✦",label:"More"},
   ];
 
-  function Card({children,style={}}){return<div style={{...G,padding:"20px",marginBottom:12,...style}}>{children}</div>;}
-  function Lbl({children}){return<div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:10}}>{children}</div>;}
-  function PremiumLock({icon,title,desc}){return(
+  const Card=React.useCallback(({children,style={}})=><div style={{...G,padding:"20px",marginBottom:12,...style}}>{children}</div>,[G]);
+  const Lbl=React.useCallback(({children})=><div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:10}}>{children}</div>,[]);
+  const PremiumLock=React.useCallback(({icon,title,desc})=>(
     <div style={{...G,padding:"36px 24px",textAlign:"center",marginBottom:12}}>
       <div style={{fontSize:52,marginBottom:12}}>{icon}</div>
       <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:10}}>{title}</div>
@@ -911,7 +911,7 @@ function App(){
       </button>
       <div style={{fontSize:11,opacity:.45,marginTop:10}}>Cancel anytime · Instant access</div>
     </div>
-  );}
+  )),[showPaywall,S]);
 
 
   return(
@@ -1081,23 +1081,27 @@ function App(){
             {tab==="home"&&(
               <div>
                 {/* WEATHER WARNINGS */}
-                {alerts.length>0&&(
-                  <div style={{marginBottom:12}}>
-                    {alerts.map((a,i)=>(
-                      <div key={i} style={{borderRadius:18,background:a.bg,border:"2px solid "+a.color,padding:"16px 18px",marginBottom:8,animation:"slideUp .4s ease"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                          <div style={{fontSize:26}}>{a.emoji||"⚠️"}</div>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:12,fontWeight:900,color:a.color,letterSpacing:.5,textTransform:"uppercase"}}>{a.level}</div>
-                            <div style={{fontSize:14,fontWeight:800,marginTop:2}}>{a.title}</div>
-                            <div style={{fontSize:11,color:a.color,fontWeight:700,marginTop:2,opacity:.8}}>{a.dayLabel||"Today"}</div>
+                <div style={{marginBottom:12}}>
+                  {alerts.length>0
+                    ? alerts.map((a,i)=>(
+                        <div key={i} style={{borderRadius:18,background:a.bg,border:"2px solid "+a.color,padding:"16px 18px",marginBottom:8,animation:"slideUp .4s ease"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                            <div style={{fontSize:26}}>{a.emoji||"⚠️"}</div>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:12,fontWeight:900,color:a.color,letterSpacing:.5,textTransform:"uppercase"}}>{a.level}</div>
+                              <div style={{fontSize:14,fontWeight:800,marginTop:2}}>{a.title}</div>
+                              <div style={{fontSize:11,color:a.color,fontWeight:700,marginTop:2,opacity:.8}}>{a.dayLabel||"Today"}</div>
+                            </div>
                           </div>
+                          <div style={{fontSize:13,fontWeight:600,lineHeight:1.65}}>{a.msg}</div>
                         </div>
-                        <div style={{fontSize:13,fontWeight:600,lineHeight:1.65}}>{a.msg}</div>
+                      ))
+                    : <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,.12)",borderRadius:16,padding:"12px 16px",marginBottom:8}}>
+                        <div style={{fontSize:20}}>✅</div>
+                        <div style={{fontSize:13,fontWeight:600,opacity:.7}}>No weather warnings for the next 7 days</div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                  }
+                </div>
 
                 {/* Feel cards */}
                 <Card style={{border:"1px solid "+S.acc+"35"}}>
@@ -1251,8 +1255,8 @@ function App(){
               !isPremium?<PremiumLock icon="🔍" title="Search Any City" desc="Check the weather anywhere in the world — Paris, New York, Tokyo, anywhere."/>:(
                 <div>
                   <div style={{display:"flex",gap:8,marginBottom:14}}>
-                    <input value={searchCity} onChange={e=>setSearchCity(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchCityWeather()} placeholder="Search any city…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
-                    <button onClick={searchCityWeather} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
+                    <input id="search-city-input" defaultValue={searchCity} onChange={e=>setSearchCity(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){setSearchCity(e.target.value);searchCityWeather();}}} placeholder="Search any city…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+                    <button onClick={()=>{const el=document.getElementById("search-city-input");if(el){setSearchCity(el.value);searchCityWeather();}}} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
                   </div>
                   {searching&&<div style={{...G,padding:"20px",textAlign:"center",opacity:.6}}>Searching…</div>}
                   {searchWx&&(()=>{
@@ -1293,7 +1297,7 @@ function App(){
                   <Card>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:16}}>🗓️ Plan your event</div>
                     <div style={{fontSize:12,opacity:.6,marginBottom:6}}>{"What's the event?"}</div>
-                    <input value={eventName} onChange={e=>setEventName(e.target.value)} placeholder="e.g. BBQ, Wedding, Sports Day, Party" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
+                    <input id="event-name-input" defaultValue={eventName} onChange={e=>setEventName(e.target.value)} placeholder="e.g. BBQ, Wedding, Sports Day, Party" autoComplete="off" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
                     <div style={{fontSize:12,opacity:.6,marginBottom:6}}>What date?</div>
                     <input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
                     <button onClick={checkEvent} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
@@ -1328,7 +1332,7 @@ function App(){
                   <Card>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:16}}>✈️ Plan your holiday</div>
                     <div style={{fontSize:12,opacity:.6,marginBottom:6}}>Where are you going?</div>
-                    <input value={holidayCity} onChange={e=>setHolidayCity(e.target.value)} placeholder="e.g. Tenerife, Paris, New York" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
+                    <input id="holiday-city-input" defaultValue={holidayCity} onChange={e=>setHolidayCity(e.target.value)} placeholder="e.g. Tenerife, Paris, New York" autoComplete="off" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
                       <div>
                         <div style={{fontSize:12,opacity:.6,marginBottom:6}}>From</div>
@@ -1404,13 +1408,14 @@ function App(){
                   </button>
                   <div style={{display:"flex",gap:8}}>
                     <input 
-                      value={travelSearch}
-                      onChange={e=>setTravelSearch(e.target.value)}
-                      onKeyDown={e=>e.key==="Enter"&&checkTravel(travelSearch)}
+                      id="travel-input"
+                      defaultValue=""
+                      onKeyDown={e=>{if(e.key==="Enter"){checkTravel(e.target.value);}}}
                       placeholder="Search another location…" 
+                      autoComplete="off"
                       style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}
                     />
-                    <button onClick={()=>checkTravel(travelSearch)} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
+                    <button onClick={()=>{const el=document.getElementById("travel-input");if(el)checkTravel(el.value);}} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
                   </div>
                 </Card>
                 {travelLoading&&(
