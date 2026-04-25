@@ -492,7 +492,7 @@ function App(){
       const r=await fetch("/api/speak",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:txt,voiceId:isMale?"MYiFAKeVwcvm4z9VsFAR":"56AoDkrOh6qfVPDXZ7Pt"})
+        body:JSON.stringify({text:txt,voiceId:isMale?"MYiFAKeVwcvm4z9VsFAR":"PoHUWWWMHFrA8z7Q88pu"})
       });
       if(r.ok){
         const blob=await r.blob();
