@@ -395,15 +395,18 @@ function App(){
   const [chatLoading,setChatLoading]=useState(false);
   // Search
   const [searchCity,setSearchCity]=useState("");
+  const searchCityRef=React.useRef("");
   const [searchWx,setSearchWx]=useState(null);
   const [searching,setSearching]=useState(false);
   // Event planner
   const [eventName,setEventName]=useState("");
+  const eventNameRef=React.useRef("");
   const [eventDate,setEventDate]=useState("");
   const [eventResult,setEventResult]=useState(null);
   const [eventLoading,setEventLoading]=useState(false);
   // Holiday
   const [holidayCity,setHolidayCity]=useState("");
+  const holidayCityRef=React.useRef("");
   const [holidayFrom,setHolidayFrom]=useState("");
   const [holidayTo,setHolidayTo]=useState("");
   const [holidayResult,setHolidayResult]=useState(null);
@@ -421,6 +424,7 @@ function App(){
   const [travelUpdates,setTravelUpdates]=useState(null);
   const [travelLoading,setTravelLoading]=useState(false);
   const [travelSearch,setTravelSearch]=useState("");
+  const travelSearchRef=React.useRef("");
   const [alerts,setAlerts]=useState([]);
   const [quickLoading,setQuickLoading]=useState(null);
   // Hourly/week picker
@@ -818,10 +822,11 @@ function App(){
   }
 
   async function searchCityWeather(){
-    if(!searchCity.trim())return;
+    const sCity=(searchCityRef.current?.value||searchCity).trim();
+    if(!sCity)return;
     setSearching(true);setSearchWx(null);
     try{
-      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(searchCity)+"&count=1").then(r=>r.json());
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(sCity)+"&count=1").then(r=>r.json());
       if(!g.results||!g.results[0]){setSearching(false);return;}
       const la=g.results[0].latitude,lo=g.results[0].longitude,cn=g.results[0].name,co=g.results[0].country;
       const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,wind_speed_10m,weathercode,is_day,relative_humidity_2m&hourly=precipitation_probability&timezone=auto&forecast_days=1";
@@ -833,7 +838,8 @@ function App(){
   }
 
   function checkEvent(){
-    if(!eventDate||!eventName.trim())return;
+    const eName=(eventNameRef.current?.value||eventName).trim();
+    if(!eventDate||!eName)return;
     setEventLoading(true);setEventResult(null);
     const dayIdx=Math.round((new Date(eventDate)-new Date())/86400000);
     const clampedIdx=Math.min(Math.max(dayIdx,0),6);
@@ -841,19 +847,20 @@ function App(){
     const maxT=dayWx?.max||18,minT=dayWx?.min||10,rainPct=dayWx?.rain||20;
     const dayLabel=dayIdx===0?"today":dayIdx===1?"tomorrow":"in "+dayIdx+" days";
     let reply="";
-    if(rainPct>=60){reply=eventName+" on "+eventDate+" looks like it could be a rainy one — "+rainPct+"% chance of rain! I'd suggest having a backup plan or covered area. A waterproof jacket is a must and closed shoes would be wise. Keep an eye on the forecast closer to the day! 🌧️";}
-    else if(maxT<12){reply=eventName+" on "+eventDate+" is looking cool at around "+maxT+"°C. It should stay dry though — great! Make sure everyone wraps up warm with layers. Should be a lovely day despite the chill! 🧥";}
-    else if(rainPct<40&&maxT>=15){reply=eventName+" on "+eventDate+" is looking great — "+maxT+"° high and only "+rainPct+"% chance of rain. Light layers would be ideal and you probably won't need a brolly. Enjoy your event! ☀️";}
-    else{reply=eventName+" on "+eventDate+" looks like a mixed bag — "+maxT+"° high with "+rainPct+"% chance of rain. I'd pack a light jacket just in case and maybe have a brolly handy. The afternoon should be the best window! 🌤️";}
+    if(rainPct>=60){reply=eName+" on "+eventDate+" looks like it could be a rainy one — "+rainPct+"% chance of rain! I'd suggest having a backup plan or covered area. A waterproof jacket is a must and closed shoes would be wise. Keep an eye on the forecast closer to the day! 🌧️";}
+    else if(maxT<12){reply=eName+" on "+eventDate+" is looking cool at around "+maxT+"°C. It should stay dry though — great! Make sure everyone wraps up warm with layers. Should be a lovely day despite the chill! 🧥";}
+    else if(rainPct<40&&maxT>=15){reply=eName+" on "+eventDate+" is looking great — "+maxT+"° high and only "+rainPct+"% chance of rain. Light layers would be ideal and you probably won't need a brolly. Enjoy your event! ☀️";}
+    else{reply=eName+" on "+eventDate+" looks like a mixed bag — "+maxT+"° high with "+rainPct+"% chance of rain. I'd pack a light jacket just in case and maybe have a brolly handy. The afternoon should be the best window! 🌤️";}
     setTimeout(()=>{setEventResult({text:reply,max:maxT,min:minT,rain:rainPct,code:dayWx?.code||2});setEventLoading(false);},600);
   }
 
   async function checkHoliday(){
-    if(!holidayCity.trim()||!holidayFrom||!holidayTo)return;
+    const hCity=(holidayCityRef.current?.value||holidayCity).trim();
+    if(!hCity||!holidayFrom||!holidayTo)return;
     setHolidayLoading(true);setHolidayResult(null);
     try{
-      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(holidayCity)+"&count=1").then(r=>r.json());
-      if(!g.results||!g.results[0]){setHolidayLoading(false);setHolidayResult({city:holidayCity,text:"I couldn't find that destination — try a nearby city or check the spelling!",avgMax:20,avgMin:12,rainDays:3,isFuture:false});return;}
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(hCity)+"&count=1").then(r=>r.json());
+      if(!g.results||!g.results[0]){setHolidayLoading(false);setHolidayResult({city:hCity,text:"I couldn't find that destination — try a nearby city or check the spelling!",avgMax:20,avgMin:12,rainDays:3,isFuture:false});return;}
       const la=g.results[0].latitude,lo=g.results[0].longitude,cn=g.results[0].name,co=g.results[0].country;
       const fromDate=new Date(holidayFrom);
       const daysAway=Math.round((fromDate-new Date())/86400000);
@@ -900,7 +907,7 @@ function App(){
       else if(isCold){reply=cn+" in "+tripMonthName+" is cold — typically around "+avgMax+"°C! 🧥 Pack a proper warm coat, jumpers, thermals and waterproof boots. Gloves, hat and scarf are essential. "+src;}
       else{reply=cn+" in "+tripMonthName+" typically sees around "+avgMax+"°C with "+rainDays+" rainy days. 🌤️ Pack layers — lighter clothes plus a warm layer and waterproof jacket. A compact umbrella is always handy! "+src;}
       setHolidayResult({city:cn+", "+co,text:reply,avgMax,avgMin,rainDays,isFuture,tripMonthName});
-    }catch{setHolidayResult({city:holidayCity,text:"I had trouble fetching that destination — check the city name and try again!",avgMax:20,avgMin:12,rainDays:2,isFuture:false});}
+    }catch{setHolidayResult({city:hCity,text:"I had trouble fetching that destination — check the city name and try again!",avgMax:20,avgMin:12,rainDays:2,isFuture:false});}
     setHolidayLoading(false);
   }
 
@@ -1308,8 +1315,8 @@ function App(){
               !isPremium?<PremiumLock icon="🔍" title="Search Any City" desc="Check the weather anywhere in the world — Paris, New York, Tokyo, anywhere."/>:(
                 <div>
                   <div style={{display:"flex",gap:8,marginBottom:14}}>
-                    <input id="search-city-input" defaultValue={searchCity} onChange={e=>setSearchCity(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){setSearchCity(e.target.value);searchCityWeather();}}} placeholder="Search any city…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
-                    <button onClick={()=>{const el=document.getElementById("search-city-input");if(el){setSearchCity(el.value);searchCityWeather();}}} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
+                    <input ref={searchCityRef} onKeyDown={e=>{if(e.key==="Enter"){setSearchCity(searchCityRef.current?.value||"");searchCityWeather();}}} placeholder="Search any city…" autoComplete="off" style={{flex:1,...G,padding:"13px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+                    <button onClick={()=>{setSearchCity(searchCityRef.current?.value||"");setTimeout(()=>searchCityWeather(),50);}} style={{background:S.acc,border:"none",borderRadius:100,width:48,height:48,fontSize:20,cursor:"pointer",flexShrink:0}}>🔍</button>
                   </div>
                   {searching&&<div style={{...G,padding:"20px",textAlign:"center",opacity:.6}}>Searching…</div>}
                   {searchWx&&(()=>{
@@ -1350,10 +1357,10 @@ function App(){
                   <Card>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:16}}>🗓️ Plan your event</div>
                     <div style={{fontSize:12,opacity:.6,marginBottom:6}}>{"What's the event?"}</div>
-                    <input id="event-name-input" defaultValue={eventName} onChange={e=>setEventName(e.target.value)} placeholder="e.g. BBQ, Wedding, Sports Day, Party" autoComplete="off" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
+                    <input ref={eventNameRef} autoComplete="off" spellCheck="false" placeholder="e.g. BBQ, Wedding, Sports Day, Party" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
                     <div style={{fontSize:12,opacity:.6,marginBottom:6}}>What date?</div>
                     <input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
-                    <button onClick={checkEvent} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                    <button onClick={()=>{setEventName(eventNameRef.current?.value||"");setTimeout(()=>checkEvent(),50);}} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
                       {eventLoading?"Checking forecast…":"Ask Skyla 🩷"}
                     </button>
                   </Card>
@@ -1370,7 +1377,7 @@ function App(){
                     <div style={{fontSize:11,opacity:.5,marginBottom:8}}>💡 Quick picks</div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                       {["BBQ","Wedding","School Sports Day","Garden Party","Camping","Birthday Party","Outdoor Concert","Marathon"].map((e,i)=>(
-                        <button key={i} onClick={()=>setEventName(e)} style={{background:S.acc+"18",border:"1px solid "+S.acc+"35",borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:700,color:S.acc,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{e}</button>
+                        <button key={i} onClick={()=>{setEventName(e);if(eventNameRef.current)eventNameRef.current.value=e;}} style={{background:S.acc+"18",border:"1px solid "+S.acc+"35",borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:700,color:S.acc,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{e}</button>
                       ))}
                     </div>
                   </Card>
@@ -1385,7 +1392,13 @@ function App(){
                   <Card>
                     <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:900,marginBottom:16}}>✈️ Plan your holiday</div>
                     <div style={{fontSize:12,opacity:.6,marginBottom:6}}>Where are you going?</div>
-                    <input id="holiday-city-input" defaultValue={holidayCity} onChange={e=>setHolidayCity(e.target.value)} placeholder="e.g. Tenerife, Paris, New York" autoComplete="off" style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
+                    <input 
+                      autoComplete="off" 
+                      spellCheck="false"
+                      ref={holidayCityRef}
+                      placeholder="e.g. Tenerife, Paris, New York" 
+                      style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"12px 16px",fontSize:14,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:12,boxSizing:"border-box"}}
+                    />
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
                       <div>
                         <div style={{fontSize:12,opacity:.6,marginBottom:6}}>From</div>
@@ -1396,7 +1409,7 @@ function App(){
                         <input type="date" value={holidayTo} onChange={e=>setHolidayTo(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
                       </div>
                     </div>
-                    <button onClick={checkHoliday} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                    <button onClick={()=>{if(holidayCityRef.current)setHolidayCity(holidayCityRef.current.value);setTimeout(()=>checkHoliday(),50);}} style={{width:"100%",background:S.acc,border:"none",borderRadius:14,padding:"14px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
                       {holidayLoading?"Checking destination…":"What should I pack? 🧳"}
                     </button>
                   </Card>
@@ -1461,14 +1474,13 @@ function App(){
                   </button>
                   <div style={{display:"flex",gap:8}}>
                     <input 
-                      id="travel-input"
-                      defaultValue=""
-                      onKeyDown={e=>{if(e.key==="Enter"){checkTravel(e.target.value);}}}
+                      ref={travelSearchRef}
+                      onKeyDown={e=>{if(e.key==="Enter")checkTravel(travelSearchRef.current?.value||"");}}
                       placeholder="Search another location…" 
                       autoComplete="off"
                       style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}
                     />
-                    <button onClick={()=>{const el=document.getElementById("travel-input");if(el)checkTravel(el.value);}} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
+                    <button onClick={()=>checkTravel(travelSearchRef.current?.value||"")} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:14,padding:"11px 16px",fontSize:13,fontWeight:800,color:S.text,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>Search</button>
                   </div>
                 </Card>
                 {travelLoading&&(
@@ -1545,9 +1557,9 @@ function App(){
                       );
                     })}
                     <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
-                      <input value={newFamName} onChange={e=>setNewFamName(e.target.value)} placeholder="Name" style={{flex:1,minWidth:80,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-                      <input value={newFamCity} onChange={e=>setNewFamCity(e.target.value)} placeholder="City" style={{flex:2,minWidth:100,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-                      <button onClick={addFamMember} style={{background:S.acc,border:"none",borderRadius:12,padding:"10px 14px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                      <input id="fam-name-input" autoComplete="off" onChange={e=>setNewFamName(e.target.value)} placeholder="Name" style={{flex:1,minWidth:80,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                      <input id="fam-city-input" autoComplete="off" onChange={e=>setNewFamCity(e.target.value)} placeholder="City" style={{flex:2,minWidth:100,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                      <button onClick={()=>{const n=document.getElementById("fam-name-input");const ci=document.getElementById("fam-city-input");if(n)setNewFamName(n.value);if(ci)setNewFamCity(ci.value);addFamMember();}} style={{background:S.acc,border:"none",borderRadius:12,padding:"10px 14px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
                         {famLoading?"…":"Add"}
                       </button>
                     </div>
