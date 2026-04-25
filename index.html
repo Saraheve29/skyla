@@ -886,7 +886,7 @@ function App(){
   const type=DWX?wxType(DWX.code,DWX.isDay):"partly";
   const S=SC[type];
   const PE=DWX?plainEnglish(DWX):{feel:"",windWord:"",rainWord:"",verdict:"",deceiving:false};
-  const G=React.useMemo(()=>({background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:"1px solid "+S.bdr,borderRadius:24}),[S.bdr]);
+  const G={background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:"1px solid "+S.bdr,borderRadius:24};
 
   const TABS=[
     {id:"home",icon:"🏠",label:"Home"},
@@ -899,9 +899,9 @@ function App(){
     {id:"more",icon:"✦",label:"More"},
   ];
 
-  const Card=React.useCallback(({children,style={}})=><div style={{...G,padding:"20px",marginBottom:12,...style}}>{children}</div>,[G]);
-  const Lbl=React.useCallback(({children})=><div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:10}}>{children}</div>,[]);
-  const PremiumLock=React.useCallback(({icon,title,desc})=>(
+  function Card({children,style={}}){return<div style={{...G,padding:"20px",marginBottom:12,...style}}>{children}</div>;}
+  function Lbl({children}){return<div style={{fontSize:9,letterSpacing:3,opacity:.5,textTransform:"uppercase",fontWeight:700,marginBottom:10}}>{children}</div>;}
+  function PremiumLock({icon,title,desc}){return(
     <div style={{...G,padding:"36px 24px",textAlign:"center",marginBottom:12}}>
       <div style={{fontSize:52,marginBottom:12}}>{icon}</div>
       <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,marginBottom:10}}>{title}</div>
@@ -911,7 +911,7 @@ function App(){
       </button>
       <div style={{fontSize:11,opacity:.45,marginTop:10}}>Cancel anytime · Instant access</div>
     </div>
-  )),[showPaywall,S]);
+  );}
 
 
   return(
