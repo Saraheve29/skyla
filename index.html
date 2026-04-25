@@ -486,19 +486,14 @@ function App(){
     const PE=plainEnglish(wx);
     const txt="Good "+gr+"! I am Skyla. "+PE.verdict+" In "+city+" it is "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
     const voiceId=gender==="male"?"MYiFAKeVwcvm4z9VsFAR":"56AoDkrOh6qfVPDXZ7Pt";
-    const KEY="sk_032976f800904cea65184d02375073ebc528f0066def603e";
     setTalking(true);
     try{
-      const r=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+voiceId,{
+      const r=await fetch("/api/speak",{
         method:"POST",
-        headers:{"Content-Type":"application/json","xi-api-key":KEY},
-        body:JSON.stringify({
-          text:txt,
-          model_id:"eleven_multilingual_v2",
-          voice_settings:{stability:0.5,similarity_boost:0.75}
-        })
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text:txt,voiceId:voiceId})
       });
-      if(!r.ok){const err=await r.text();console.error("ElevenLabs error:",err);throw new Error(err);}
+      if(!r.ok){const err=await r.text();console.error("Speak error:",err);throw new Error(err);}
       const blob=await r.blob();
       const url=URL.createObjectURL(blob);
       const audio=new Audio(url);
