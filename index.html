@@ -482,48 +482,33 @@ function App(){
       if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}
       setTalking(false);return;
     }
-    // Both girl and boy use ElevenLabs
     const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
     const PE=plainEnglish(wx);
-    const txt="Good "+gr+"! I'm Skyla. "+PE.verdict+" In "+city+" it's "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
-    const isMale=gender==="male";
-    // Try girl voices in order until one works
-    const GIRL_VOICES=["56AoDkrOh6qfVPDXZ7Pt"];
-    const GIRL_VOICE=GIRL_VOICES[0]; // Aria - bright upbeat young female
-    const BOY_VOICE="MYiFAKeVwcvm4z9VsFAR";  // Adam - natural male
-    const voiceId=isMale?BOY_VOICE:GIRL_VOICE;
-    const ELEVEN_KEY="sk_032976f800904cea65184d02375073ebc528f0066def603e";
+    const txt="Good "+gr+"! I am Skyla. "+PE.verdict+" In "+city+" it is "+wx.temp+" degrees. "+PE.feel+". "+PE.windWord+" "+PE.rainWord+" "+(ai?.tip||"")+" Have a wonderful "+gr+"!";
+    const voiceId=gender==="male"?"MYiFAKeVwcvm4z9VsFAR":"56AoDkrOh6qfVPDXZ7Pt";
+    const KEY="sk_032976f800904cea65184d02375073ebc528f0066def603e";
     setTalking(true);
-    async function tryElevenVoice(vid){
-      const resp=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+vid+"/stream",{
-        method:"POST",
-        headers:{"Content-Type":"application/json","xi-api-key":ELEVEN_KEY},
-        body:JSON.stringify({text:txt,model_id:"eleven_turbo_v2",voice_settings:{stability:0.35,similarity_boost:0.85,style:0.65,use_speaker_boost:true}})
-      });
-      if(!resp.ok)throw new Error("failed");
-      return resp;
-    }
     try{
-      let resp;
-      if(!isMale){
-        // Try girl voices in order
-        for(const vid of GIRL_VOICES){
-          try{resp=await tryElevenVoice(vid);break;}catch{}
-        }
-        if(!resp)throw new Error("all girl voices failed");
-      }else{
-        resp=await tryElevenVoice(BOY_VOICE);
-      }
-      if(!resp||!resp.ok)throw new Error("ElevenLabs failed");
-      const blob=await resp.blob();
+      const r=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+voiceId,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","xi-api-key":KEY},
+        body:JSON.stringify({
+          text:txt,
+          model_id:"eleven_multilingual_v2",
+          voice_settings:{stability:0.5,similarity_boost:0.75}
+        })
+      });
+      if(!r.ok){const err=await r.text();console.error("ElevenLabs error:",err);throw new Error(err);}
+      const blob=await r.blob();
       const url=URL.createObjectURL(blob);
       const audio=new Audio(url);
       window._skylaAudio=audio;
       audio.onended=()=>{setTalking(false);URL.revokeObjectURL(url);};
-      audio.onerror=()=>{setTalking(false);fallbackSpeak(txt,isMale);};
+      audio.onerror=()=>{setTalking(false);fallbackSpeak(txt,gender==="male");};
       await audio.play();
     }catch(e){
-      fallbackSpeak(txt,isMale);
+      console.error("Speak error:",e);
+      fallbackSpeak(txt,gender==="male");
     }
   }
 
