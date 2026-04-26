@@ -608,7 +608,32 @@ function App(){
                   })()}</div>
                 </div>
               </div>
-              <div style={{height:1,background:"rgba(255,255,255,.2)",marginBottom:10}}/>
+              {(()=>{
+                const pickedDay=pickedD!==null?wx.week[pickedD]:null;
+                const rainPct=pickedDay?pickedDay.rain:wx.rain;
+                if(rainPct<40)return null;
+                const fmt=h=>h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
+                let rainMsg="Take your umbrella!";
+                if(pickedD===null&&wx.hourly){
+                  const now=new Date().getHours();
+                  const rainy=wx.hourly.filter(h=>h.h>=now&&h.rain>=40);
+                  if(rainy.length>0){
+                    const first=rainy[0],last=rainy[rainy.length-1];
+                    rainMsg=first.h===last.h
+                      ?"Take your umbrella — rain expected around "+fmt(first.h)+"! ("+rainPct+"%)"
+                      :"Take your umbrella — rain expected between "+fmt(first.h)+" and "+fmt(last.h)+"! ("+rainPct+"%)";
+                  }else{rainMsg="Take your umbrella — "+rainPct+"% chance of rain today!";}
+                }else if(pickedDay){
+                  rainMsg="Take your umbrella on "+pickedDay.day+" — "+rainPct+"% chance of rain!";
+                }
+                return(
+                  <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(96,165,250,.18)",border:"1px solid rgba(96,165,250,.4)",borderRadius:12,padding:"8px 12px",marginTop:6}}>
+                    <span style={{fontSize:20}}>☂️</span>
+                    <div style={{fontSize:12,fontWeight:700}}>{rainMsg}</div>
+                  </div>
+                );
+              })()}
+              <div style={{height:1,background:"rgba(255,255,255,.2)",margin:"10px 0"}}/>
               <div style={{display:"flex",gap:5,overflowX:"auto",paddingBottom:2}}>
                 <button onClick={()=>setPickedD(null)} style={{flexShrink:0,background:pickedD===null?S.acc:"rgba(255,255,255,.18)",border:"1px solid "+(pickedD===null?"transparent":S.bdr),borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:800,color:pickedD===null?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Today</button>
                 {wx.week.slice(1).map((d,i)=>(
