@@ -152,6 +152,34 @@ function SkylaChar({type,gender}){
   );
 }
 
+function getWeatherWindows(hourlyData){
+  if(!hourlyData)return{};
+  const now=new Date().getHours();
+  const fmt=h=>h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
+  function win(hours){
+    if(!hours||hours.length===0)return null;
+    const first=hours[0],last=hours[hours.length-1];
+    return first.h===last.h?"around "+fmt(first.h):fmt(first.h)+" – "+fmt(last.h);
+  }
+  const upcoming=hourlyData.filter(h=>h.h>=now);
+  const rain=upcoming.filter(h=>h.rain>=40);
+  const heavyRain=upcoming.filter(h=>h.rain>=70);
+  const wind=upcoming.filter(h=>h.wind>=35);
+  const strongWind=upcoming.filter(h=>h.wind>=55);
+  const storm=upcoming.filter(h=>h.code>=95);
+  const snow=upcoming.filter(h=>h.code>=71&&h.code<=77);
+  const hail=upcoming.filter(h=>h.code>=96);
+  const result={};
+  if(hail.length>0)result.hail="Hail: "+win(hail);
+  if(storm.length>0)result.storm="Storm: "+win(storm);
+  if(snow.length>0)result.snow="Snow: "+win(snow);
+  if(heavyRain.length>0)result.rain="Heavy rain: "+win(heavyRain);
+  else if(rain.length>0)result.rain="Rain: "+win(rain);
+  if(strongWind.length>0)result.wind="Strong winds: "+win(strongWind);
+  else if(wind.length>0)result.wind="Windy: "+win(wind);
+  return result;
+}
+
 function App(){
   const [wx,setWx]=useState(null);
   const [city,setCity]=useState("Your location");
@@ -850,17 +878,53 @@ function App(){
         {tab==="week"&&wx&&(
           <Card>
             <Lbl>7-Day Forecast</Lbl>
-            {wx.week.map((d,i)=>(
-              <div key={i} onClick={()=>{setPickedD(i===pickedD?null:i);setPickedH(null);}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 8px",borderRadius:14,background:pickedD===i?S.acc+"25":"transparent",border:pickedD===i?"1px solid "+S.acc+"50":"1px solid transparent",marginBottom:3,cursor:"pointer"}}>
-                <div style={{width:52,fontSize:12,fontWeight:i===0?800:500}}>{d.short}</div>
-                <div style={{fontSize:22}}>{SC[wxType(d.code,1)].em}</div>
-                <div style={{flex:1,fontSize:12,fontWeight:500}}>{wmoDesc(d.code)}</div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:13,fontWeight:800}}>{d.max}° <span style={{opacity:.4,fontWeight:400}}>/{d.min}°</span></div>
-                  <div style={{fontSize:10,color:d.rain>50?S.acc:"inherit",opacity:d.rain>50?1:.5}}>{d.rain}% rain</div>
+            {wx.week.map((d,i)=>{
+              const dtype=wxType(d.code,1);
+              const hasStorm=d.code>=95;
+              const hasHail=d.code>=96;
+              const hasSnow=d.code>=71&&d.code<=77;
+              const hasRain=d.rain>=40;
+              const heavyRain=d.rain>=70;
+              const hasFrost=d.min<=0;
+              // Build plain English alerts
+              const alerts=[];
+              if(i===0&&wx.hourly){
+                // Today - use exact hourly times
+                const wins=getWeatherWindows(wx.hourly);
+                if(wins.hail)alerts.push(wins.hail);
+                if(wins.storm)alerts.push(wins.storm);
+                if(wins.snow)alerts.push(wins.snow);
+                if(wins.rain)alerts.push(wins.rain);
+                if(wins.wind)alerts.push(wins.wind);
+                if(hasFrost)alerts.push("🌡️ Frost risk overnight");
+              }else{
+                // Future days - plain English from daily data
+                const pat=d.rain>=70?"all day":d.rain>=50?"likely afternoon":d.rain>=40?"possible morning shower":"";
+                if(hasHail)alerts.push("🧊 Hail expected");
+                if(hasStorm)alerts.push("⛈️ Thunderstorm");
+                if(hasSnow)alerts.push("❄️ Snow — "+d.rain+"% chance");
+                if(heavyRain)alerts.push("🌧️ Heavy rain — "+pat+" ("+d.rain+"%)");
+                else if(hasRain)alerts.push("🌂 Rain — "+pat+" ("+d.rain+"%)");
+                if(d.min<=0&&!hasSnow)alerts.push("🌡️ Frost risk overnight");
+              }
+              return(
+                <div key={i} onClick={()=>{setPickedD(i===pickedD?null:i);setPickedH(null);}} style={{borderRadius:14,background:pickedD===i?S.acc+"20":"transparent",border:pickedD===i?"1px solid "+S.acc+"50":"1px solid transparent",marginBottom:5,cursor:"pointer",padding:"10px 8px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:52,fontSize:12,fontWeight:i===0?800:500,flexShrink:0}}>{d.short}</div>
+                    <div style={{fontSize:22,flexShrink:0}}>{SC[dtype].em}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:600}}>{wmoDesc(d.code)}</div>
+                      {alerts.length>0&&<div style={{marginTop:4,display:"flex",flexDirection:"column",gap:2}}>
+                        {alerts.map((a,j)=><div key={j} style={{fontSize:11,fontWeight:700,color:S.text,opacity:.85}}>{a}</div>)}
+                      </div>}
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:13,fontWeight:800}}>{d.max}° <span style={{opacity:.4,fontWeight:400}}>/{d.min}°</span></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {pickedD!==null&&<button onClick={()=>setPickedD(null)} style={{marginTop:8,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Back to today</button>}
           </Card>
         )}
