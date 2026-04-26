@@ -701,15 +701,15 @@ function App(){
             </Card>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
               <div style={{...G,padding:"16px 14px"}}>
-                <Lbl>Rain Chance</Lbl>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:900}}>{wx.rain}%</div>
+                <Lbl>{pickedD!==null&&DWX?DWX.day+" — Rain Chance":"Rain Chance"}</Lbl>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:900}}>{DWX?DWX.rain:wx.rain}%</div>
                 <div style={{background:"rgba(0,0,0,.1)",borderRadius:100,height:4,marginTop:8,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:wx.rain+"%",background:S.acc,borderRadius:100}}/>
+                  <div style={{height:"100%",width:(DWX?DWX.rain:wx.rain)+"%",background:S.acc,borderRadius:100}}/>
                 </div>
               </div>
               <div style={{...G,padding:"16px 14px"}}>
-                <Lbl>Range Today</Lbl>
-                <div style={{fontSize:22,fontWeight:900}}>{wx.maxT}° <span style={{opacity:.4,fontSize:15,fontWeight:400}}>/ {wx.minT}°</span></div>
+                <Lbl>{pickedD!==null&&DWX?DWX.day+" Range":"Range Today"}</Lbl>
+                <div style={{fontSize:22,fontWeight:900}}>{pickedD!==null&&DWX?DWX.max:wx.maxT}° <span style={{opacity:.4,fontSize:15,fontWeight:400}}>/ {pickedD!==null&&DWX?DWX.min:wx.minT}°</span></div>
                 <div style={{fontSize:11,opacity:.6,marginTop:6}}>High / Low</div>
               </div>
             </div>
