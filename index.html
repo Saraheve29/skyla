@@ -572,8 +572,16 @@ function App(){
         </div>
 
         {/* GREETING */}
-        {ai&&<div style={{...G,padding:"12px 16px",marginBottom:10,borderRadius:"8px 20px 20px 20px"}}>
+        {ai&&<div style={{...G,padding:"12px 16px",marginBottom:8,borderRadius:"8px 20px 20px 20px"}}>
           <div style={{fontSize:13,fontWeight:600,lineHeight:1.6}}>{ai.msg}</div>
+        </div>}
+        {wx&&wx.week&&<div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:10,paddingBottom:2}}>
+          <button onClick={()=>{setPickedD(null);setPickedH(null);}} style={{flexShrink:0,background:pickedD===null?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===null?"transparent":S.bdr),borderRadius:100,padding:"6px 14px",fontSize:12,fontWeight:800,color:pickedD===null?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Today</button>
+          {wx.week.slice(1).map((d,i)=>(
+            <button key={i} onClick={()=>{setPickedD(i+1);setPickedH(null);}} style={{flexShrink:0,background:pickedD===i+1?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===i+1?"transparent":S.bdr),borderRadius:100,padding:"6px 14px",fontSize:12,fontWeight:800,color:pickedD===i+1?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+              {d.short}
+            </button>
+          ))}
         </div>}
 
         {/* QUICK ASK */}
@@ -667,15 +675,6 @@ function App(){
                   </div>
                 );
               })()}
-              <div style={{height:1,background:"rgba(255,255,255,.2)",margin:"10px 0"}}/>
-              <div style={{display:"flex",gap:5,overflowX:"auto",paddingBottom:2}}>
-                <button onClick={()=>setPickedD(null)} style={{flexShrink:0,background:pickedD===null?S.acc:"rgba(255,255,255,.18)",border:"1px solid "+(pickedD===null?"transparent":S.bdr),borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:800,color:pickedD===null?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Today</button>
-                {wx.week.slice(1).map((d,i)=>(
-                  <button key={i} onClick={()=>{setPickedD(i+1);setPickedH(null);}} style={{flexShrink:0,background:pickedD===i+1?S.acc:"rgba(255,255,255,.18)",border:"1px solid "+(pickedD===i+1?"transparent":S.bdr),borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:800,color:pickedD===i+1?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
-                    {d.short}
-                  </button>
-                ))}
-              </div>
             </div>}
             <Card>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
