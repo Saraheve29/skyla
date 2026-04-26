@@ -599,12 +599,13 @@ function App(){
                     const d=wx.week[pickedD];
                     if(!d)return ai.wear;
                     const g=gender==="male";
-                    if(d.max>=25&&d.code<=2)return g?"Shorts, t-shirt and light trainers":"Summer dress or shorts with a t-shirt";
-                    if(d.max>=20)return g?"Light trousers and a short sleeve top":"Light trousers or skirt, short sleeve top";
-                    if(d.max>=15)return g?"Jeans, long sleeve top and a light jacket":"Jeans, long sleeve top and a light jacket";
-                    if(d.max>=10)return g?"Warm jumper, thick jeans and a coat":"Warm jumper, thick trousers and a coat";
-                    if(d.max>=5)return g?"Thermal base layer, thick jumper, warm coat":"Thermal layers, thick jumper, warmest coat";
-                    return g?"Full thermals, thick jumper, heaviest coat":"Full thermals, thick jumper, heaviest coat";
+                    const wet=d.rain>=40;
+                    if(d.max>=25&&d.code<=2)return g?"Shorts, t-shirt and light trainers"+(wet?" + umbrella ☂️":""):"Summer dress or shorts with a t-shirt"+(wet?" + umbrella ☂️":"");
+                    if(d.max>=20)return(g?"Light trousers and a short sleeve top":"Light trousers or skirt, short sleeve top")+(wet?" + umbrella ☂️":"");
+                    if(d.max>=15)return(g?"Jeans, long sleeve top and a light jacket":"Jeans, long sleeve top and a light jacket")+(wet?" + umbrella ☂️":"");
+                    if(d.max>=10)return(g?"Warm jumper, thick jeans and a coat":"Warm jumper, thick trousers and a coat")+(wet?" + umbrella ☂️":"");
+                    if(d.max>=5)return(g?"Thermal base layer, thick jumper, warm coat":"Thermal layers, thick jumper, warmest coat")+(wet?" + umbrella ☂️":"");
+                    return(g?"Full thermals, thick jumper, heaviest coat":"Full thermals, thick jumper, heaviest coat")+(wet?" + umbrella ☂️":"");
                   })()}</div>
                 </div>
               </div>
@@ -613,23 +614,28 @@ function App(){
                 const rainPct=pickedDay?pickedDay.rain:wx.rain;
                 if(rainPct<40)return null;
                 const fmt=h=>h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
-                let rainMsg="Take your umbrella!";
+                let rainMsg="";
+                let rainTip="";
                 if(pickedD===null&&wx.hourly){
                   const now=new Date().getHours();
                   const rainy=wx.hourly.filter(h=>h.h>=now&&h.rain>=40);
                   if(rainy.length>0){
                     const first=rainy[0],last=rainy[rainy.length-1];
-                    rainMsg=first.h===last.h
-                      ?"Take your umbrella — rain expected around "+fmt(first.h)+"! ("+rainPct+"%)"
-                      :"Take your umbrella — rain expected between "+fmt(first.h)+" and "+fmt(last.h)+"! ("+rainPct+"%)";
-                  }else{rainMsg="Take your umbrella — "+rainPct+"% chance of rain today!";}
+                    const window=first.h===last.h?"around "+fmt(first.h):"between "+fmt(first.h)+" and "+fmt(last.h);
+                    rainMsg="☂️ Umbrella needed — rain expected "+window;
+                    rainTip="If you are going out outside this window you should be fine without one!";
+                  }else{
+                    rainMsg="☂️ "+rainPct+"% chance of rain — pop an umbrella in your bag";
+                    rainTip="";
+                  }
                 }else if(pickedDay){
-                  rainMsg="Take your umbrella on "+pickedDay.day+" — "+rainPct+"% chance of rain!";
+                  rainMsg="☂️ Take your umbrella on "+pickedDay.day+" — "+rainPct+"% chance of rain";
+                  rainTip="Check the hourly forecast closer to the day to see exactly when the rain is due!";
                 }
                 return(
-                  <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(96,165,250,.18)",border:"1px solid rgba(96,165,250,.4)",borderRadius:12,padding:"8px 12px",marginTop:6}}>
-                    <span style={{fontSize:20}}>☂️</span>
-                    <div style={{fontSize:12,fontWeight:700}}>{rainMsg}</div>
+                  <div style={{background:"rgba(96,165,250,.18)",border:"1px solid rgba(96,165,250,.4)",borderRadius:12,padding:"10px 12px",marginTop:6}}>
+                    <div style={{fontSize:12,fontWeight:800,marginBottom:rainTip?4:0}}>{rainMsg}</div>
+                    {rainTip&&<div style={{fontSize:11,opacity:.75,lineHeight:1.5}}>{rainTip}</div>}
                   </div>
                 );
               })()}
