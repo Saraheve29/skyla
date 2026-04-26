@@ -589,9 +589,31 @@ function App(){
                 </div>
               ))}
             </div>
-            {ai&&<div style={{...G,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:14}}>
+            {ai&&<div style={{...G,padding:"14px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:14}}>
               <div style={{fontSize:36}}>👕</div>
-              <div><Lbl>What to Wear Today</Lbl><div style={{fontSize:14,fontWeight:700,lineHeight:1.4}}>{ai.wear}</div></div>
+              <div>
+                <Lbl>{pickedD!==null&&wx.week[pickedD]?wx.week[pickedD].day+" — What to Wear":"What to Wear Today"}</Lbl>
+                <div style={{fontSize:14,fontWeight:700,lineHeight:1.4}}>{(()=>{
+                  if(pickedD===null)return ai.wear;
+                  const d=wx.week[pickedD];
+                  if(!d)return ai.wear;
+                  const g=gender==="male";
+                  if(d.max>=25&&d.code<=2)return g?"Shorts, t-shirt and light trainers":"Summer dress or shorts with a t-shirt";
+                  if(d.max>=20)return g?"Light trousers and a short sleeve top":"Light trousers or skirt, short sleeve top";
+                  if(d.max>=15)return g?"Jeans, long sleeve top and a light jacket":"Jeans, long sleeve top and a light jacket";
+                  if(d.max>=10)return g?"Warm jumper, thick jeans and a coat":"Warm jumper, thick trousers and a coat";
+                  if(d.max>=5)return g?"Thermal base layer, thick jumper, warm coat":"Thermal layers, thick jumper, warmest coat";
+                  return g?"Full thermals, thick jumper, heaviest coat":"Full thermals, thick jumper, heaviest coat";
+                })()}</div>
+              </div>
+            </div>}
+            {wx&&wx.week&&<div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:12,paddingBottom:2}}>
+              <button onClick={()=>setPickedD(null)} style={{flexShrink:0,background:pickedD===null?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===null?"transparent":S.bdr),borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:800,color:pickedD===null?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Today</button>
+              {wx.week.slice(1).map((d,i)=>(
+                <button key={i} onClick={()=>{setPickedD(i+1);setPickedH(null);}} style={{flexShrink:0,background:pickedD===i+1?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===i+1?"transparent":S.bdr),borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:800,color:pickedD===i+1?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                  {d.short}
+                </button>
+              ))}
             </div>}
             <Card>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
