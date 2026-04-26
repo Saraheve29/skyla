@@ -689,7 +689,15 @@ function App(){
                 <div style={{fontSize:40}}>{S.em}</div>
               </div>
               <div style={{height:1,background:"rgba(255,255,255,.15)",margin:"8px 0"}}/>
-              <div style={{fontSize:12,lineHeight:1.6}}>{ai&&ai.tip?ai.tip:"Enjoy your day!"}</div>
+              <div style={{fontSize:12,lineHeight:1.6}}>{(()=>{
+              const t=DWX?DWX.temp:15;const r=DWX?DWX.rain:20;
+              if(r>=70)return"Rain likely today — waterproof jacket and umbrella essential!";
+              if(t>=25)return"Hot day — drink water regularly and stay in the shade between 11am and 3pm!";
+              if(t>=19)return"Lovely warm day — perfect for being outside. Light clothes and enjoy it!";
+              if(t>=14)return"Pleasant day — a light jacket keeps you comfy if it gets breezy!";
+              if(t>=8)return"Cool day — layers are your friend today. Easy to add or remove!";
+              return"Cold one today — warm drinks and warm layers will make it much better!";
+            })()}</div>
             </Card>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
               <div style={{...G,padding:"16px 14px"}}>
@@ -705,21 +713,44 @@ function App(){
                 <div style={{fontSize:11,opacity:.6,marginTop:6}}>High / Low</div>
               </div>
             </div>
-            {ai&&ai.plant&&(
-              <div style={{...G,padding:"16px",marginBottom:12,border:"1px solid rgba(16,185,129,.4)"}}>
-                <div style={{display:"flex",gap:12,alignItems:"center"}}>
-                  <div style={{fontSize:32}}>🌱</div>
-                  <div style={{flex:1}}><Lbl>Plant Care Today</Lbl><div style={{fontSize:12,lineHeight:1.5}}>{ai.plant}</div></div>
+            <div style={{...G,padding:"16px",marginBottom:12,border:"1px solid rgba(16,185,129,.4)"}}>
+              <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                <div style={{fontSize:32}}>🌱</div>
+                <div style={{flex:1}}>
+                  <Lbl>{pickedD!==null&&DWX?DWX.day+" — Plant Care":"Plant Care Today"}</Lbl>
+                  <div style={{fontSize:12,lineHeight:1.5}}>{(()=>{
+                    const r=DWX?DWX.rain:20;const t=DWX?DWX.temp:15;const f=DWX?DWX.feels:12;const w=DWX?DWX.wind:10;
+                    if(r>=60)return"Rain is doing the watering — no need to water your plants at all!";
+                    if(r>=30)return"Light rain expected — your plants should be fine, skip watering!";
+                    if(f<=0)return"Danger of frost — bring tender plants indoors and cover outdoor ones now!";
+                    if(f<=4)return"Very cold — most plants are dormant, no watering needed today!";
+                    if(t>=28)return"Very hot — water your plants this evening after the heat. Do not water in sun!";
+                    if(t>=20&&r<10)return"Warm and dry — yes your plants need watering, do it morning or evening!";
+                    if(t>=14&&r<10)return"Mild and dry — yes give your plants a good water today, soil will be drying out!";
+                    if(w>=35)return"Windy — wind dries soil fast, yes water your plants and secure tall stems!";
+                    return"Cool and dry — yes water your plants today, no rain to help them out!";
+                  })()}</div>
                 </div>
               </div>
-            )}
-            {ai&&ai.items&&(
-              <Card><Lbl>Full Outfit</Lbl>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  {ai.items.map((item,i)=><div key={i} style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"10px",fontSize:12,fontWeight:600}}>{item}</div>)}
-                </div>
-              </Card>
-            )}
+            </div>
+            <Card>
+              <Lbl>{pickedD!==null&&DWX?DWX.day+" — Full Outfit":"Full Outfit"}</Lbl>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {(()=>{
+                  const t=DWX?DWX.temp:15;const r=DWX?DWX.rain:20;const g=gender==="male";
+                  const hot=t>=22&&(DWX?DWX.code:2)<=2;const wet=r>=40;
+                  let items=hot
+                    ?(g?["Shorts 🩳","T-shirt 👕","Sunglasses 😎","Iced drink 🧃"]:["Summer dress 👗","Sandals 👡","Sunglasses 😎","Iced drink 🧃"])
+                    :t>=15
+                    ?(g?["Light trousers 👖","Short sleeve top 👕","Light jacket 🧥","Hot drink ☕"]:["Jeans or skirt 👖","Short sleeve top 👕","Light jacket 🧥","Hot drink ☕"])
+                    :t>=8
+                    ?(g?["Warm jeans 👖","Jumper 🧥","Warm coat 🧥","Hot drink ☕"]:["Warm trousers 👖","Jumper 🧥","Warm coat 🧥","Hot drink ☕"])
+                    :(g?["Thermal layers 🧤","Thick jumper 🧥","Heavy coat 🧥","Hot drink ☕"]:["Thermal layers 🧤","Thick jumper 🧥","Heavy coat 🧥","Hot drink ☕"]);
+                  if(wet)items=[...items.slice(0,3),"Umbrella ☂️"];
+                  return items.map((item,i)=><div key={i} style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"10px",fontSize:12,fontWeight:600}}>{item}</div>);
+                })()}
+              </div>
+            </Card>
             <Card>
               <Lbl>Hourly Forecast</Lbl>
               <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
