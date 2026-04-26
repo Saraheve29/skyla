@@ -335,15 +335,22 @@ function App(){
   }
 
   function quickAsk(key,icon){
-    const f=wx?wx.feels:12,t=wx?wx.temp:15,r=wx?wx.rain:20,code=wx?wx.code:2;
+    // Use selected day's weather if a day is picked
+    const pickedDay=pickedD!==null&&wx&&wx.week?wx.week[pickedD]:null;
+    const f=pickedDay?pickedDay.feels||pickedDay.max-3:wx?wx.feels:12;
+    const t=pickedDay?pickedDay.max:wx?wx.temp:15;
+    const r=pickedDay?pickedDay.rain:wx?wx.rain:20;
+    const code=pickedDay?pickedDay.code:wx?wx.code:2;
+    const dayName=pickedDay?pickedDay.day:"today";
+    const d=dayName==="today"?"today":"on "+dayName;
     const ans={
-      beanie:f<=8?"Yes — it is cold enough for a beanie today!":f<=13?"Could be handy — pop one in your bag":"No beanie needed today — too warm!",
-      sunhat:t>=22&&code<=2?"Yes! It is hot and sunny — a sun hat is a great idea":"No need for a sun hat today",
-      coat:f<=10?"Yes — definitely wear a coat today!":f<=14?"A light jacket would be perfect":"No coat needed — warm enough!",
-      umbrella:r>=70?"Yes — high chance of rain, take your umbrella!":r>=40?"Maybe pop one in your bag just in case":"No umbrella needed — looking dry!",
-      suncream:t>=22&&code<=2?"Yes! Put suncream on today":"No suncream needed today",
-      trousers:f<=14?"Definitely wear trousers — too cold for shorts":f<=19?"Jeans or light trousers would be perfect":"Shorts weather today!",
-      jumper:f<=16?"Yes — wear a jumper today":f<=20?"A light jumper or cardigan would be comfy":"No jumper needed — warm enough!",
+      beanie:f<=8?"Yes — cold enough for a beanie "+d+"!":f<=13?"Could be handy "+d+" — pop one in your bag":"No beanie needed "+d+" — too warm!",
+      sunhat:t>=22&&code<=2?"Yes! Hot and sunny "+d+" — a sun hat is a great idea":"No need for a sun hat "+d,
+      coat:f<=10?"Yes — definitely wear a coat "+d+"!":f<=14?"A light jacket would be perfect "+d:"No coat needed "+d+" — warm enough!",
+      umbrella:r>=70?"Yes! "+r+"% chance of rain "+d+" — definitely take your umbrella!":r>=40?"Maybe pop one in your bag "+d+" — "+r+"% chance of rain":"No umbrella needed "+d+" — looking dry!",
+      suncream:t>=22&&code<=2?"Yes! Put suncream on "+d:"No suncream needed "+d,
+      trousers:f<=14?"Definitely wear trousers "+d+" — too cold for shorts":f<=19?"Jeans or light trousers would be perfect "+d:"Shorts weather "+d+"!",
+      jumper:f<=16?"Yes — wear a jumper "+d:f<=20?"A light jumper or cardigan would be comfy "+d:"No jumper needed "+d+" — warm enough!",
     };
     setQuickAns({text:ans[key]||"Check the weather first!",icon});
   }
