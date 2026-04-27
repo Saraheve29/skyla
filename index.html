@@ -83,7 +83,7 @@ function plainEnglish(w){
     :wind<35?(windCold?"A noticeable cold breeze — it will feel colder than the temperature suggests!":"A noticeable breeze — quite pleasant today.")
     :wind<50?(windCold?"Very windy and cold — the wind will cut right through you today!":"Very windy today — hold onto your hat!")
     :(windCold?"Dangerously strong cold winds — stay indoors if possible!":"Extremely strong winds today — take great care outside!");
-  const rainWord=rain<15?"Looks dry — no umbrella needed.":rain<40?"Small chance of a shower.":rain<65?"Rain likely — take an umbrella.":"Very likely to rain — definitely take your umbrella!";
+  const rainWord=rain<15?"Looks dry today — no umbrella needed.":rain<40?"Small chance of rain later today.":rain<65?"Rain likely today — take an umbrella.":"Very likely to rain today — definitely take your umbrella!";
   return{verdict,feel,windWord,rainWord,deceiving,coldGap};
 }
 
@@ -260,7 +260,7 @@ function App(){
       const shorts=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
       const week=d.daily.time.map((t,i)=>{const dt=new Date(t);return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i]};});
       const hourly=d.hourly.time.slice(0,24).map((t,i)=>{const h=new Date(t).getHours();const lbl=h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";return{h,lbl,temp:Math.round(d.hourly.temperature_2m[i]),feels:Math.round(d.hourly.apparent_temperature[i]),code:d.hourly.weathercode[i],rain:d.hourly.precipitation_probability[i]||0,wind:Math.round(d.hourly.wind_speed_10m[i]||0)};});
-      const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:d.hourly.precipitation_probability[hr]||0,week,hourly};
+      const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly};
       setWx(newWx);
       buildAlerts(newWx);
       const today=new Date().toDateString();
