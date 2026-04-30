@@ -75,7 +75,7 @@ function plainEnglish(w){
     :feels<=19?"Mild — feels like "+feels+"C. A light layer should be enough."
     :feels<=23?"Warm — feels like "+feels+"C. Light clothing is all you need today."
     :feels<=27?"Very warm — feels like "+feels+"C. Light summer clothes and stay hydrated!"
-    :"Hot! Feels like "+feels+"C. Wear as little as you are comfortable in and drink plenty of water!";
+    :"Hot! Feels like "+feels+"C. Wear light summer clothes and drink plenty of water!";
   const feel=feels<=0?"Dangerously cold ❄️":feels<=4?"Bitterly cold 🥶":feels<=8?"Cold 🧥":feels<=12?"Chilly 🧣":feels<=16?"Cool 🌥️":feels<=19?"Mild 🌤️":feels<=23?"Warm ☀️":feels<=27?"Very warm 🌞":"Hot! 🔥";
   const windCold=feels<12;
   const windWord=wind<10?"Calm — barely any wind today."
@@ -518,7 +518,7 @@ function App(){
       let reply="";
       if(avgMax>=28)reply=cn+" in "+months[tripMonth]+" is typically hot — around "+avgMax+"C! Pack light summer clothes, suncream and a sun hat. A light layer for evenings is handy.";
       else if(avgMax>=20)reply=cn+" in "+months[tripMonth]+" is warm and lovely — around "+avgMax+"C. Light clothes with a smart casual layer for evenings. "+rainDays+" rainy days expected.";
-      else if(avgMax>=12)reply=cn+" in "+months[tripMonth]+" is mild — around "+avgMax+"C. Pack layers, a waterproof jacket and comfortable shoes. "+rainDays+" rainy days expected.";
+      else if(avgMax>=12)reply=cn+" in "+months[tripMonth]+" is mild — around "+avgMax+"C. Pack layers, a waterproof jacket and good walking shoes. "+rainDays+" rainy days expected.";
       else reply=cn+" in "+months[tripMonth]+" is cold — around "+avgMax+"C. Pack a proper warm coat, jumpers and waterproof boots.";
       setHolidayResult({city:cn+", "+co,text:reply,avgMax,rainDays,month:months[tripMonth]});
     }catch{setHolidayResult({city:dest,text:"Had trouble fetching that destination — check the city name and try again!"});}
