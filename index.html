@@ -721,8 +721,24 @@ function App(){
                     rainTip="";
                   }
                 }else if(pickedDay){
-                  rainMsg="☂️ Take your umbrella on "+pickedDay.day+" — "+rainPct+"% chance of rain";
-                  rainTip="Check the hourly forecast closer to the day to see exactly when the rain is due!";
+                  if(pickedDay.hourly&&pickedDay.hourly.length>0){
+                    const fmt=h=>h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
+                    const rainyH=pickedDay.hourly.filter(h=>h.rain>=20);
+                    if(rainyH.length>0){
+                      const groups=[];let grp=[rainyH[0]];
+                      for(let i=1;i<rainyH.length;i++){if(rainyH[i].h-rainyH[i-1].h<=2)grp.push(rainyH[i]);else{groups.push(grp);grp=[rainyH[i]];}}
+                      groups.push(grp);
+                      const timeStr=groups.map(g=>{const f=g[0],l=g[g.length-1];return f.h===l.h?"around "+fmt(f.h):fmt(f.h)+" to "+fmt(l.h);}).join(" and ");
+                      rainMsg="☂️ Take your umbrella on "+pickedDay.day+" — rain expected "+timeStr+" ("+rainPct+"%)";
+                      rainTip="If you go out outside these times you should be fine without one!";
+                    }else{
+                      rainMsg="☂️ Take your umbrella on "+pickedDay.day+" — "+rainPct+"% chance of rain";
+                      rainTip="";
+                    }
+                  }else{
+                    rainMsg="☂️ Take your umbrella on "+pickedDay.day+" — "+rainPct+"% chance of rain";
+                    rainTip="";
+                  }
                 }
                 return(
                   <div style={{background:"rgba(96,165,250,.18)",border:"1px solid rgba(96,165,250,.4)",borderRadius:12,padding:"10px 12px",marginTop:6}}>
@@ -802,6 +818,42 @@ function App(){
             </Card>
             <Card>
               <Lbl>Hourly Forecast</Lbl>
+              {/* Time picker - what's the weather at this time */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:700,color:S.sub,marginBottom:6}}>What will it be like when I go out?</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {["6am","7am","8am","9am","10am","11am","12pm","1pm","2pm","3pm","4pm","5pm","6pm","7pm","8pm","9pm"].map((lbl,i)=>{
+                    const h=i<6?i+6:i===6?12:i-6+12>12?i-6+12:i-6+12;
+                    const actualH=lbl==="12pm"?12:lbl.includes("am")?parseInt(lbl):parseInt(lbl)+12;
+                    const hData=wx&&wx.hourly?wx.hourly.find(hr=>hr.h===actualH):null;
+                    const isNow=new Date().getHours()===actualH;
+                    const isPicked=pickedH!==null&&wx&&wx.hourly&&wx.hourly[pickedH]&&wx.hourly[pickedH].h===actualH;
+                    if(!hData)return null;
+                    return(
+                      <button key={lbl} onClick={()=>{const idx=wx.hourly.findIndex(hr=>hr.h===actualH);if(idx>=0){setPickedH(idx);setPickedD(null);}}} style={{background:isPicked?S.acc:isNow?"rgba(255,255,255,.3)":"rgba(255,255,255,.15)",border:"1px solid "+(isPicked?"transparent":isNow?S.acc:S.bdr),borderRadius:100,padding:"5px 10px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+                        <span style={{fontSize:9,fontWeight:800,color:isPicked?"white":isNow?S.acc:S.sub}}>{isNow?"Now":lbl}</span>
+                        <span style={{fontSize:13}}>{SC[wxType(hData.code,actualH>=6&&actualH<20?1:0)].em}</span>
+                        <span style={{fontSize:11,fontWeight:800,color:isPicked?"white":S.text}}>{hData.temp}°</span>
+                        {hData.rain>=20&&<span style={{fontSize:8,color:isPicked?"rgba(255,255,255,.8)":"#60A5FA",fontWeight:700}}>{hData.rain}%🌂</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {pickedH!==null&&wx&&wx.hourly[pickedH]&&(
+                  <div style={{marginTop:8,background:"rgba(255,255,255,.15)",borderRadius:12,padding:"10px 12px"}}>
+                    <div style={{fontSize:12,fontWeight:800,marginBottom:4}}>{wx.hourly[pickedH].lbl} forecast:</div>
+                    <div style={{fontSize:12,fontWeight:600,lineHeight:1.6}}>
+                      🌡️ {wx.hourly[pickedH].temp}°C · feels {wx.hourly[pickedH].feels}°C
+                      {wx.hourly[pickedH].rain>=20?" · 🌂 "+wx.hourly[pickedH].rain+"% rain":""}
+                      {wx.hourly[pickedH].wind>=20?" · 💨 "+wx.hourly[pickedH].wind+"km/h wind":""}
+                    </div>
+                    {wx.hourly[pickedH].rain>=60&&<div style={{fontSize:11,color:"#60A5FA",fontWeight:700,marginTop:3}}>Definitely take your umbrella at this time!</div>}
+                    {wx.hourly[pickedH].rain>=20&&wx.hourly[pickedH].rain<60&&<div style={{fontSize:11,color:"#93C5FD",fontWeight:700,marginTop:3}}>Pop an umbrella in your bag for this time!</div>}
+                    <button onClick={()=>setPickedH(null)} style={{marginTop:6,fontSize:10,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Clear</button>
+                  </div>
+                )}
+              </div>
+              <div style={{height:1,background:"rgba(255,255,255,.15)",marginBottom:10}}/>
               <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
                 {wx.hourly.filter(h=>h.h>=new Date().getHours()).slice(0,12).map((h,i)=>{
                   const hidx=wx.hourly.indexOf(h);
