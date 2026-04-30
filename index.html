@@ -220,6 +220,8 @@ function App(){
   const [briefingSaved,setBriefingSaved]=useState(false);
   const [showPaywall,setShowPaywall]=useState(false);
   const [showAllWarnings,setShowAllWarnings]=useState(false);
+  const [goOutTime,setGoOutTime]=useState("");
+  const [goOutMsg,setGoOutMsg]=useState(null);
   const clock=new Date();
   const DWX=(()=>{
     if(!wx)return null;
@@ -630,13 +632,44 @@ function App(){
         {ai&&<div style={{...G,padding:"12px 16px",marginBottom:8,borderRadius:"8px 20px 20px 20px"}}>
           <div style={{fontSize:13,fontWeight:600,lineHeight:1.6}}>{ai.msg}</div>
         </div>}
-        {wx&&wx.week&&<div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:10,paddingBottom:2}}>
-          <button onClick={()=>{setPickedD(null);setPickedH(null);}} style={{flexShrink:0,background:pickedD===null?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===null?"transparent":S.bdr),borderRadius:100,padding:"6px 14px",fontSize:12,fontWeight:800,color:pickedD===null?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Today</button>
+        {wx&&wx.week&&<div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:8,paddingBottom:2}}>
+          <button onClick={()=>{setPickedD(null);setPickedH(null);setGoOutMsg(null);setGoOutTime("");}} style={{flexShrink:0,background:pickedD===null?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===null?"transparent":S.bdr),borderRadius:100,padding:"6px 14px",fontSize:12,fontWeight:800,color:pickedD===null?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Today</button>
           {wx.week.slice(1).map((d,i)=>(
-            <button key={i} onClick={()=>{setPickedD(i+1);setPickedH(null);}} style={{flexShrink:0,background:pickedD===i+1?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===i+1?"transparent":S.bdr),borderRadius:100,padding:"6px 14px",fontSize:12,fontWeight:800,color:pickedD===i+1?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+            <button key={i} onClick={()=>{setPickedD(i+1);setPickedH(null);setGoOutMsg(null);setGoOutTime("");}} style={{flexShrink:0,background:pickedD===i+1?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+(pickedD===i+1?"transparent":S.bdr),borderRadius:100,padding:"6px 14px",fontSize:12,fontWeight:800,color:pickedD===i+1?"white":S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
               {d.short}
             </button>
           ))}
+        </div>}
+        {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🕐 What time are you going out?</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <input type="time" value={goOutTime} onChange={e=>{
+              const t=e.target.value;
+              setGoOutTime(t);
+              if(!t){setGoOutMsg(null);return;}
+              const hr=parseInt(t.split(":")[0]);
+              const dayData=pickedD!==null&&wx.week[pickedD]?wx.week[pickedD]:null;
+              const hourlyData=dayData?dayData.hourly:wx.hourly;
+              if(!hourlyData||hourlyData.length===0){setGoOutMsg(null);return;}
+              const h=hourlyData.find(h=>h.h===hr)||hourlyData.reduce((a,b)=>Math.abs(b.h-hr)<Math.abs(a.h-hr)?b:a);
+              if(!h){setGoOutMsg(null);return;}
+              const fmt=n=>n===0?"12am":n<12?n+"am":n===12?"12pm":(n-12)+"pm";
+              const dayLabel=dayData?"on "+dayData.day:"today";
+              let msg="";let color=S.acc;let icon="";
+              if(h.rain>=60){msg="Heavy rain expected "+dayLabel+" at "+fmt(hr)+" ("+h.rain+"%) — definitely take your umbrella!";icon="🌧️";color="#2563EB";}
+              else if(h.rain>=40){msg="Rain likely "+dayLabel+" at "+fmt(hr)+" ("+h.rain+"%) — take your umbrella!";icon="☂️";color="#2563EB";}
+              else if(h.rain>=20){msg="Small chance of rain "+dayLabel+" at "+fmt(hr)+" ("+h.rain+"%) — pop an umbrella in your bag just in case!";icon="🌂";color="#60A5FA";}
+              else{msg="Looks dry "+dayLabel+" at "+fmt(hr)+" — no umbrella needed!";icon="✅";color="#059669";}
+              const feels=h.feels||h.temp;
+              const wearNote=feels<=6?" Wrap up warm — feels like "+feels+"C!":feels<=12?" A coat is a must — feels like "+feels+"C.":feels<=17?" A light jacket would be perfect — "+feels+"C.":feels>=22?" Light clothes — "+feels+"C.":"";
+              setGoOutMsg({text:msg+wearNote,icon,color});
+            }} style={{flex:1,background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 14px",fontSize:15,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+            {goOutTime&&<button onClick={()=>{setGoOutTime("");setGoOutMsg(null);}} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:12,color:S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>Clear</button>}
+          </div>
+          {goOutMsg&&<div style={{marginTop:8,display:"flex",alignItems:"flex-start",gap:8,background:"rgba(255,255,255,.15)",borderRadius:12,padding:"10px 12px"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{goOutMsg.icon}</span>
+            <div style={{fontSize:12,fontWeight:700,lineHeight:1.6,color:S.text}}>{goOutMsg.text}</div>
+          </div>}
         </div>}
 
         {/* QUICK ASK */}
