@@ -257,7 +257,10 @@ function App(){
   async function load(){
     setLoading(true);setError(null);
     try{
-      const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000}));
+      const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,(err)=>{
+        // Try again with lower accuracy if high accuracy fails
+        navigator.geolocation.getCurrentPosition(res,rej,{timeout:15000,enableHighAccuracy:false,maximumAge:300000});
+      },{timeout:10000,enableHighAccuracy:true,maximumAge:0}));
       const{latitude:la,longitude:lo}=pos.coords;
       const cityRes=await fetch("https://nominatim.openstreetmap.org/reverse?lat="+la+"&lon="+lo+"&format=json").then(r=>r.json()).catch(()=>null);
       if(cityRes?.address){const a=cityRes.address;setCity(a.city||a.town||a.village||a.county||"Your location");}
@@ -292,7 +295,7 @@ function App(){
       const yesterday=new Date(Date.now()-86400000).toDateString();
       if(lastVisit!==today){const ns=lastVisit===yesterday?(sg("skyla_streak")||0)+1:1;setStreak(ns);ss("skyla_streak",ns);ss("skyla_last",today);}
       await getAI(newWx);
-    }catch(e){setError("Could not get your location. Please allow location access and try again.");}
+    }catch(e){setError("Could not get your location. Please allow location access and try again. On Chrome: click the padlock 🔒 in the address bar → Allow Location. On Firefox: click the arrow icon in address bar.");}
     setLoading(false);
   }
 
