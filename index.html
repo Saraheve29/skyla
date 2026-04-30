@@ -267,8 +267,7 @@ function App(){
       const hr=new Date().getHours();
       const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
       const shorts=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[]};});
-      // Build hourly data for ALL 7 days grouped by day
+      // Build hourly data for ALL 7 days grouped by day - MUST be before week
       const allHourly=d.hourly.time.map((t,i)=>{
         const dt=new Date(t);
         const h=dt.getHours();
@@ -278,12 +277,12 @@ function App(){
       });
       const todayStr=new Date().toDateString();
       const hourly=allHourly.filter(h=>h.dayStr===todayStr);
-      // Group hourly by day for 7-day detailed forecast
       const hourlyByDay={};
       allHourly.forEach(h=>{
         if(!hourlyByDay[h.dayStr])hourlyByDay[h.dayStr]=[];
         hourlyByDay[h.dayStr].push(h);
       });
+      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[]};});
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly};
       setWx(newWx);
       buildAlerts(newWx);
