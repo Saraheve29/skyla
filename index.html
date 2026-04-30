@@ -1176,6 +1176,65 @@ function App(){
           </div>
         )}
 
+        {/* 7-DAY FORECAST on home tab */}
+        {tab==="home"&&wx&&wx.week&&(
+          <Card>
+            <Lbl>📅 7-Day Forecast — tap to dress Skyla</Lbl>
+            {wx.week.map((d,i)=>{
+              const dtype=wxType(d.code,1);
+              const hasStorm=d.code>=95;
+              const hasHail=d.code>=96;
+              const hasSnow=d.code>=71&&d.code<=77;
+              const hasRain=d.rain>=40;
+              const heavyRain=d.rain>=70;
+              const hasFrost=d.min<=0;
+              const alerts=[];
+              if(i===0&&wx.hourly){
+                const wins=getWeatherWindows(wx.hourly);
+                if(wins.hail)alerts.push(wins.hail);
+                if(wins.storm)alerts.push(wins.storm);
+                if(wins.snow)alerts.push(wins.snow);
+                if(wins.rain)alerts.push(wins.rain);
+                if(wins.wind)alerts.push(wins.wind);
+                if(hasFrost)alerts.push("🌡️ Frost risk overnight");
+              }else if(d.hourly&&d.hourly.length>0){
+                const wins=getWeatherWindows(d.hourly,0);
+                if(wins.hail)alerts.push(wins.hail);
+                if(wins.storm)alerts.push(wins.storm);
+                if(wins.snow)alerts.push(wins.snow);
+                if(wins.rain)alerts.push(wins.rain);
+                if(wins.wind)alerts.push(wins.wind);
+                if(d.min<=0)alerts.push("🌡️ Frost risk overnight");
+              }else{
+                if(hasHail)alerts.push("🧊 Hail expected");
+                if(hasStorm)alerts.push("⛈️ Thunderstorm expected");
+                if(hasSnow)alerts.push("❄️ Snow — "+d.rain+"% chance");
+                if(heavyRain)alerts.push("🌧️ Heavy rain ("+d.rain+"%)");
+                else if(hasRain)alerts.push("🌂 Rain ("+d.rain+"%)");
+                if(hasFrost&&!hasSnow)alerts.push("🌡️ Frost risk overnight");
+              }
+              return(
+                <div key={i} onClick={()=>{setPickedD(i===pickedD?null:i);setPickedH(null);}} style={{borderRadius:14,background:pickedD===i?S.acc+"20":"transparent",border:pickedD===i?"1px solid "+S.acc+"50":"1px solid transparent",marginBottom:4,cursor:"pointer",padding:"10px 8px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:52,fontSize:12,fontWeight:i===0?800:500,flexShrink:0}}>{d.short}</div>
+                    <div style={{fontSize:22,flexShrink:0}}>{SC[dtype].em}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:600}}>{wmoDesc(d.code)}</div>
+                      {alerts.length>0&&<div style={{marginTop:3,display:"flex",flexDirection:"column",gap:2}}>
+                        {alerts.map((a,j)=><div key={j} style={{fontSize:11,fontWeight:700,color:S.text,opacity:.85}}>{a}</div>)}
+                      </div>}
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:13,fontWeight:800}}>{d.max}° <span style={{opacity:.4,fontWeight:400}}>/{d.min}°</span></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {pickedD!==null&&<button onClick={()=>setPickedD(null)} style={{marginTop:8,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Back to today</button>}
+          </Card>
+        )}
+
         <button onClick={load} style={{width:"100%",marginTop:4,...G,borderRadius:100,padding:"13px",color:S.sub,fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",border:"none"}}>
           Refresh Skyla
         </button>
