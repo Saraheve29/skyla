@@ -83,7 +83,7 @@ function plainEnglish(w){
     :wind<35?(windCold?"A noticeable cold breeze — it will feel colder than the temperature suggests!":"A noticeable breeze — quite pleasant today.")
     :wind<50?(windCold?"Very windy and cold — the wind will cut right through you today!":"Very windy today — hold onto your hat!")
     :(windCold?"Dangerously strong cold winds — stay indoors if possible!":"Extremely strong winds today — take great care outside!");
-  const rainWord=rain<15?"Looks dry today — no umbrella needed.":rain<40?"Small chance of rain later today.":rain<65?"Rain likely today — take an umbrella.":"Very likely to rain today — definitely take your umbrella!";
+  const rainWord=rain<20?"Looks dry — no umbrella needed.":rain<40?""+rain+"% chance of rain — pop an umbrella in your bag just in case.":rain<60?""+rain+"% chance of rain — take your umbrella today.":""+rain+"% chance of rain — definitely take your umbrella!";
   return{verdict,feel,windWord,rainWord,deceiving,coldGap};
 }
 
@@ -152,31 +152,40 @@ function SkylaChar({type,gender}){
   );
 }
 
-function getWeatherWindows(hourlyData){
+function getWeatherWindows(hourlyData,fromHour=null){
   if(!hourlyData)return{};
-  const now=new Date().getHours();
+  const now=fromHour!==null?fromHour:new Date().getHours();
   const fmt=h=>h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
   function win(hours){
     if(!hours||hours.length===0)return null;
-    const first=hours[0],last=hours[hours.length-1];
-    return first.h===last.h?"around "+fmt(first.h):fmt(first.h)+" – "+fmt(last.h);
+    const groups=[];
+    let group=[hours[0]];
+    for(let i=1;i<hours.length;i++){
+      if(hours[i].h-hours[i-1].h<=2)group.push(hours[i]);
+      else{groups.push(group);group=[hours[i]];}
+    }
+    groups.push(group);
+    return groups.map(g=>{
+      const first=g[0],last=g[g.length-1];
+      return first.h===last.h?"around "+fmt(first.h):fmt(first.h)+" to "+fmt(last.h);
+    }).join(" and ");
   }
   const upcoming=hourlyData.filter(h=>h.h>=now);
-  const rain=upcoming.filter(h=>h.rain>=40);
-  const heavyRain=upcoming.filter(h=>h.rain>=70);
+  const rain=upcoming.filter(h=>h.rain>=20);
+  const heavyRain=upcoming.filter(h=>h.rain>=60);
   const wind=upcoming.filter(h=>h.wind>=35);
   const strongWind=upcoming.filter(h=>h.wind>=55);
   const storm=upcoming.filter(h=>h.code>=95);
   const snow=upcoming.filter(h=>h.code>=71&&h.code<=77);
   const hail=upcoming.filter(h=>h.code>=96);
   const result={};
-  if(hail.length>0)result.hail="Hail: "+win(hail);
-  if(storm.length>0)result.storm="Storm: "+win(storm);
-  if(snow.length>0)result.snow="Snow: "+win(snow);
-  if(heavyRain.length>0)result.rain="Heavy rain: "+win(heavyRain);
-  else if(rain.length>0)result.rain="Rain: "+win(rain);
-  if(strongWind.length>0)result.wind="Strong winds: "+win(strongWind);
-  else if(wind.length>0)result.wind="Windy: "+win(wind);
+  if(hail.length>0)result.hail="🧊 Hail: "+win(hail);
+  if(storm.length>0)result.storm="⛈️ Storm: "+win(storm);
+  if(snow.length>0)result.snow="❄️ Snow: "+win(snow);
+  if(heavyRain.length>0)result.rain="🌧️ Heavy rain: "+win(heavyRain);
+  else if(rain.length>0)result.rain="🌂 Rain: "+win(rain);
+  if(strongWind.length>0)result.wind="💨 Strong winds: "+win(strongWind);
+  else if(wind.length>0)result.wind="💨 Windy: "+win(wind);
   return result;
 }
 
@@ -258,8 +267,23 @@ function App(){
       const hr=new Date().getHours();
       const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
       const shorts=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i]};});
-      const hourly=d.hourly.time.slice(0,24).map((t,i)=>{const h=new Date(t).getHours();const lbl=h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";return{h,lbl,temp:Math.round(d.hourly.temperature_2m[i]),feels:Math.round(d.hourly.apparent_temperature[i]),code:d.hourly.weathercode[i],rain:d.hourly.precipitation_probability[i]||0,wind:Math.round(d.hourly.wind_speed_10m[i]||0)};});
+      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[]};});
+      // Build hourly data for ALL 7 days grouped by day
+      const allHourly=d.hourly.time.map((t,i)=>{
+        const dt=new Date(t);
+        const h=dt.getHours();
+        const lbl=h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
+        const dayStr=dt.toDateString();
+        return{h,lbl,temp:Math.round(d.hourly.temperature_2m[i]),feels:Math.round(d.hourly.apparent_temperature[i]),code:d.hourly.weathercode[i],rain:d.hourly.precipitation_probability[i]||0,wind:Math.round(d.hourly.wind_speed_10m[i]||0),dayStr};
+      });
+      const todayStr=new Date().toDateString();
+      const hourly=allHourly.filter(h=>h.dayStr===todayStr);
+      // Group hourly by day for 7-day detailed forecast
+      const hourlyByDay={};
+      allHourly.forEach(h=>{
+        if(!hourlyByDay[h.dayStr])hourlyByDay[h.dayStr]=[];
+        hourlyByDay[h.dayStr].push(h);
+      });
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly};
       setWx(newWx);
       buildAlerts(newWx);
@@ -335,22 +359,42 @@ function App(){
   }
 
   function quickAsk(key,icon){
-    // Use selected day's weather if a day is picked
     const pickedDay=pickedD!==null&&wx&&wx.week?wx.week[pickedD]:null;
-    const f=pickedDay?pickedDay.feels||pickedDay.max-3:wx?wx.feels:12;
-    const t=pickedDay?pickedDay.max:wx?wx.temp:15;
-    const r=pickedDay?pickedDay.rain:wx?wx.rain:20;
-    const code=pickedDay?pickedDay.code:wx?wx.code:2;
+    const currentHour=new Date().getHours();
+    // For today use current temp, for future days show morning/afternoon range
+    let f,t,r,code;
+    if(pickedDay){
+      // Future day - use max temp (afternoon)
+      f=pickedDay.feels||pickedDay.max-3;
+      t=pickedDay.max;
+      r=pickedDay.rain;
+      code=pickedDay.code;
+    }else if(wx&&wx.hourly){
+      // Today - use current hour's actual data
+      const nowH=wx.hourly.find(h=>h.h===currentHour)||wx.hourly[0];
+      f=nowH?nowH.feels:wx.feels;
+      t=nowH?nowH.temp:wx.temp;
+      r=wx.rain;
+      code=nowH?nowH.code:wx.code;
+    }else{
+      f=wx?wx.feels:12;t=wx?wx.temp:15;r=wx?wx.rain:20;code=wx?wx.code:2;
+    }
+    // Also get afternoon temp for context
+    const afternoonH=wx&&wx.hourly?wx.hourly.find(h=>h.h===14):null;
+    const afternoonTemp=afternoonH?afternoonH.temp:t;
+    const afternoonFeels=afternoonH?afternoonH.feels:f;
     const dayName=pickedDay?pickedDay.day:"today";
     const d=dayName==="today"?"today":"on "+dayName;
+    const warming=pickedD===null&&afternoonTemp-t>=4?"It warms up to "+afternoonTemp+"C this afternoon though!":"";
+    const cooling=pickedD===null&&t-afternoonFeels>=5?" but feels colder due to wind":"";
     const ans={
-      beanie:f<=8?"Yes — cold enough for a beanie "+d+"!":f<=13?"Could be handy "+d+" — pop one in your bag":"No beanie needed "+d+" — too warm!",
-      sunhat:t>=22&&code<=2?"Yes! Hot and sunny "+d+" — a sun hat is a great idea":"No need for a sun hat "+d,
-      coat:f<=10?"Yes — definitely wear a coat "+d+"!":f<=14?"A light jacket would be perfect "+d:"No coat needed "+d+" — warm enough!",
-      umbrella:r>=70?"Yes! "+r+"% chance of rain "+d+" — definitely take your umbrella!":r>=40?"Maybe pop one in your bag "+d+" — "+r+"% chance of rain":"No umbrella needed "+d+" — looking dry!",
-      suncream:t>=22&&code<=2?"Yes! Put suncream on "+d:"No suncream needed "+d,
-      trousers:f<=14?"Definitely wear trousers "+d+" — too cold for shorts":f<=19?"Jeans or light trousers would be perfect "+d:"Shorts weather "+d+"!",
-      jumper:f<=16?"Yes — wear a jumper "+d:f<=20?"A light jumper or cardigan would be comfy "+d:"No jumper needed "+d+" — warm enough!",
+      beanie:f<=6?"Yes — very cold right now, definitely wear a beanie "+d+"!":f<=10?"Yes a beanie would help "+d+(warming?" — "+warming:"")+"!":f<=14?"Could be handy this morning "+d+(warming?" but "+warming:" — pop one in your bag"):("No beanie needed "+d+" — warm enough"+(warming?". "+warming:"")),
+      sunhat:afternoonTemp>=22&&code<=2?"Yes! It gets warm this afternoon — "+afternoonTemp+"C. A sun hat is a great idea "+d:t>=22&&code<=2?"Yes! Hot and sunny "+d+" — a sun hat is a great idea":"No need for a sun hat "+d,
+      coat:f<=6?"Yes definitely wear a coat "+d+"!":f<=10?"Yes wear a coat "+d+(warming?" — though it warms up to "+afternoonTemp+"C later so you can take it off!":"!"):f<=14?"A light jacket is a good idea "+d+(warming?" — "+warming:"!"):"No coat needed "+d+" — warm enough"+(afternoonTemp<14?" but take one just in case":"!"),
+      umbrella:r>=60?"Yes! "+r+"% chance of rain "+d+" — definitely take your umbrella!":r>=40?"Rain likely "+d+" — "+r+"% chance, take your umbrella!":r>=20?r+"% chance of rain "+d+" — pop one in your bag just in case!":"No umbrella needed "+d+" — looking dry!",
+      suncream:afternoonTemp>=22&&code<=2?"Yes! It warms up to "+afternoonTemp+"C this afternoon — put suncream on before heading out "+d:t>=22&&code<=2?"Yes! Hot and sunny "+d+" — put suncream on!":"No suncream needed "+d,
+      trousers:f<=8?"Definitely wear warm trousers "+d+" — too cold for shorts":f<=14?"Trousers today "+d+(warming?" — but warms up to "+afternoonTemp+"C this afternoon!":""):afternoonTemp>=22?"It warms up to "+afternoonTemp+"C so shorts could work this afternoon "+d:"Jeans or light trousers would be perfect "+d,
+      jumper:f<=8?"Yes definitely wear a thick jumper "+d+"!":f<=13?"Yes a jumper this morning "+d+(warming?" — but "+warming+" so you may not need it later!":"!"):f<=17?"A light jumper or cardigan would be comfy "+d+(warming?" — "+warming:""):"No jumper needed "+d+" — warm enough!",
     };
     setQuickAns({text:ans[key]||"Check the weather first!",icon});
   }
@@ -479,7 +523,12 @@ function App(){
     }catch{setHolidayResult({city:dest,text:"Had trouble fetching that destination — check the city name and try again!"});}
   }
 
-  useEffect(()=>{load();},[]);
+  useEffect(()=>{
+    load();
+    // Auto refresh every hour
+    const interval=setInterval(()=>{load();},60*60*1000);
+    return()=>clearInterval(interval);
+  },[]);
 
   const TABS=[{id:"home",icon:"🏠",label:"Home"},{id:"chat",icon:"🤖",label:"Ask Skyla"},{id:"search",icon:"🔍",label:"Search"},{id:"event",icon:"🗓️",label:"Event"},{id:"holiday",icon:"✈️",label:"Holiday"},{id:"travel",icon:"🚌",label:"Travel"},{id:"week",icon:"📅",label:"Week"},{id:"more",icon:"✦",label:"More"}];
 
@@ -642,7 +691,7 @@ function App(){
                     const d=wx.week[pickedD];
                     if(!d)return ai.wear;
                     const g=gender==="male";
-                    const wet=d.rain>=40;
+                    const wet=d.rain>=20;
                     if(d.max>=25&&d.code<=2)return g?"Shorts, t-shirt and light trainers"+(wet?" + umbrella ☂️":""):"Summer dress or shorts with a t-shirt"+(wet?" + umbrella ☂️":"");
                     if(d.max>=20)return(g?"Light trousers and a short sleeve top":"Light trousers or skirt, short sleeve top")+(wet?" + umbrella ☂️":"");
                     if(d.max>=15)return(g?"Jeans, long sleeve top and a light jacket":"Jeans, long sleeve top and a light jacket")+(wet?" + umbrella ☂️":"");
@@ -655,13 +704,14 @@ function App(){
               {(()=>{
                 const pickedDay=pickedD!==null?wx.week[pickedD]:null;
                 const rainPct=pickedDay?pickedDay.rain:wx.rain;
-                if(rainPct<40)return null;
+                if(rainPct<20)return null;
                 const fmt=h=>h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";
                 let rainMsg="";
                 let rainTip="";
                 if(pickedD===null&&wx.hourly){
                   const now=new Date().getHours();
-                  const rainy=wx.hourly.filter(h=>h.h>=now&&h.rain>=40);
+                  const rainy=wx.hourly.filter(h=>h.h>=now&&h.rain>=20);
+                  const heavyRainy=wx.hourly.filter(h=>h.h>=now&&h.rain>=60);
                   if(rainy.length>0){
                     const first=rainy[0],last=rainy[rainy.length-1];
                     const window=first.h===last.h?"around "+fmt(first.h):"between "+fmt(first.h)+" and "+fmt(last.h);
@@ -721,7 +771,7 @@ function App(){
                   <div style={{fontSize:12,lineHeight:1.5}}>{(()=>{
                     const r=DWX?DWX.rain:20;const t=DWX?DWX.temp:15;const f=DWX?DWX.feels:12;const w=DWX?DWX.wind:10;
                     if(r>=60)return"Rain is doing the watering — no need to water your plants at all!";
-                    if(r>=30)return"Light rain expected — your plants should be fine, skip watering!";
+                    if(r>=60)return"Rain likely today — your plants will be watered, no need to water!";if(r>=40)return"Good chance of rain — your plants should be fine today, skip watering!";if(r>=20)return"Small chance of rain — check soil moisture and water if dry, rain may help!";
                     if(f<=0)return"Danger of frost — bring tender plants indoors and cover outdoor ones now!";
                     if(f<=4)return"Very cold — most plants are dormant, no watering needed today!";
                     if(t>=28)return"Very hot — water your plants this evening after the heat. Do not water in sun!";
@@ -926,7 +976,7 @@ function App(){
               // Build plain English alerts
               const alerts=[];
               if(i===0&&wx.hourly){
-                // Today - use exact hourly times
+                // Today - exact times from hourly data
                 const wins=getWeatherWindows(wx.hourly);
                 if(wins.hail)alerts.push(wins.hail);
                 if(wins.storm)alerts.push(wins.storm);
@@ -934,11 +984,20 @@ function App(){
                 if(wins.rain)alerts.push(wins.rain);
                 if(wins.wind)alerts.push(wins.wind);
                 if(hasFrost)alerts.push("🌡️ Frost risk overnight");
+              }else if(d.hourly&&d.hourly.length>0){
+                // All future days - use exact hourly data!
+                const wins=getWeatherWindows(d.hourly,0);
+                if(wins.hail)alerts.push(wins.hail);
+                if(wins.storm)alerts.push(wins.storm);
+                if(wins.snow)alerts.push(wins.snow);
+                if(wins.rain)alerts.push(wins.rain);
+                if(wins.wind)alerts.push(wins.wind);
+                if(d.min<=0)alerts.push("🌡️ Frost risk overnight");
               }else{
-                // Future days - plain English from daily data
-                const pat=d.rain>=70?"all day":d.rain>=50?"likely afternoon":d.rain>=40?"possible morning shower":"";
+                // Fallback plain English if no hourly
+                const pat=d.rain>=70?"all day":d.rain>=50?"likely afternoon":d.rain>=20?"possible showers":"";
                 if(hasHail)alerts.push("🧊 Hail expected");
-                if(hasStorm)alerts.push("⛈️ Thunderstorm");
+                if(hasStorm)alerts.push("⛈️ Thunderstorm expected");
                 if(hasSnow)alerts.push("❄️ Snow — "+d.rain+"% chance");
                 if(heavyRain)alerts.push("🌧️ Heavy rain — "+pat+" ("+d.rain+"%)");
                 else if(hasRain)alerts.push("🌂 Rain — "+pat+" ("+d.rain+"%)");
