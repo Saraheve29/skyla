@@ -291,7 +291,7 @@ function App(){
         if(!hourlyByDay[h.dayStr])hourlyByDay[h.dayStr]=[];
         hourlyByDay[h.dayStr].push(h);
       });
-      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();const srRaw=d.daily.sunrise?d.daily.sunrise[i]:null;const ssRaw=d.daily.sunset?d.daily.sunset[i]:null;const fmtSun=s=>{if(!s)return null;const sd=new Date(s);const h=sd.getHours();const m=sd.getMinutes();const ampm=h>=12?"pm":"am";return(h>12?h-12:h||12)+":"+(m<10?"0"+m:m)+ampm;};return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[],sunrise:fmtSun(srRaw),sunset:fmtSun(ssRaw)};});
+      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();const fmtT=s=>{if(!s)return"";const sd=new Date(s);const h=sd.getHours();const m=sd.getMinutes();return(h>12?h-12:h===0?12:h)+":"+(m<10?"0"+m:m)+(h>=12?"pm":"am");};return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[],sunrise:fmtT(d.daily.sunrise?d.daily.sunrise[i]:null),sunset:fmtT(d.daily.sunset?d.daily.sunset[i]:null)};});
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly};
       setWx(newWx);
       buildAlerts(newWx);
@@ -551,7 +551,6 @@ function App(){
   useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
-    try{if("Notification" in window&&Notification.permission==="default")Notification.requestPermission().catch(()=>{});}catch(e){}
     return()=>clearInterval(interval);
   },[]);
 
@@ -848,19 +847,20 @@ function App(){
                 <div style={{fontSize:11,opacity:.6,marginTop:6}}>High / Low</div>
               </div>
             </div>
-            {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10}}>
-              <Lbl>{pickedD!==null&&DWX?DWX.day+" — Daylight":"Today's Daylight"}</Lbl>
-              <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",marginTop:8}}>
+            
+                        {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10}}>
+              <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🌅 Daylight</div>
+              <div style={{display:"flex",justifyContent:"space-around",alignItems:"center"}}>
                 <div style={{textAlign:"center"}}>
-                  <div style={{fontSize:26}}>🌅</div>
-                  <div style={{fontSize:10,opacity:.6,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunrise</div>
-                  <div style={{fontSize:20,fontWeight:900,marginTop:2}}>{DWX.sunrise}</div>
+                  <div style={{fontSize:24}}>🌅</div>
+                  <div style={{fontSize:10,opacity:.6,fontWeight:700,marginTop:2}}>SUNRISE</div>
+                  <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX.sunrise}</div>
                 </div>
-                <div style={{flex:1,height:2,background:"linear-gradient(90deg,#FF8C00,#FFD700,#FF8C00)",margin:"0 10px",borderRadius:2,marginTop:8}}/>
+                <div style={{width:2,height:40,background:"linear-gradient(180deg,#FF8C00,#FFD700)",borderRadius:2}}/>
                 <div style={{textAlign:"center"}}>
-                  <div style={{fontSize:26}}>🌇</div>
-                  <div style={{fontSize:10,opacity:.6,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunset</div>
-                  <div style={{fontSize:20,fontWeight:900,marginTop:2}}>{DWX.sunset}</div>
+                  <div style={{fontSize:24}}>🌇</div>
+                  <div style={{fontSize:10,opacity:.6,fontWeight:700,marginTop:2}}>SUNSET</div>
+                  <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX.sunset}</div>
                 </div>
               </div>
             </div>}
