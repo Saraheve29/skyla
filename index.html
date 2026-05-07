@@ -834,7 +834,21 @@ function App(){
             })()}</div>
             </Card>
             
-                        {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+              <div style={{...G,padding:"16px 14px"}}>
+                <Lbl>{pickedD!==null&&DWX?DWX.day+" — Rain Chance":"Rain Chance"}</Lbl>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:900}}>{DWX?DWX.rain:wx.rain}%</div>
+                <div style={{background:"rgba(0,0,0,.1)",borderRadius:100,height:4,marginTop:8,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:(DWX?DWX.rain:wx.rain)+"%",background:S.acc,borderRadius:100}}/>
+                </div>
+              </div>
+              <div style={{...G,padding:"16px 14px"}}>
+                <Lbl>{pickedD!==null&&DWX?DWX.day+" Range":"Range Today"}</Lbl>
+                <div style={{fontSize:22,fontWeight:900}}>{pickedD!==null&&DWX?DWX.max:wx.maxT}° <span style={{opacity:.4,fontSize:15,fontWeight:400}}>/ {pickedD!==null&&DWX?DWX.min:wx.minT}°</span></div>
+                <div style={{fontSize:11,opacity:.6,marginTop:6}}>High / Low</div>
+              </div>
+            </div>
+            {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10}}>
               <Lbl>{pickedD!==null&&DWX?DWX.day+" — Daylight":"Today's Daylight"}</Lbl>
               <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",marginTop:8}}>
                 <div style={{textAlign:"center"}}>
@@ -850,20 +864,6 @@ function App(){
                 </div>
               </div>
             </div>}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-              <div style={{...G,padding:"16px 14px"}}>
-                <Lbl>{pickedD!==null&&DWX?DWX.day+" — Rain Chance":"Rain Chance"}</Lbl>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:900}}>{DWX?DWX.rain:wx.rain}%</div>
-                <div style={{background:"rgba(0,0,0,.1)",borderRadius:100,height:4,marginTop:8,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:(DWX?DWX.rain:wx.rain)+"%",background:S.acc,borderRadius:100}}/>
-                </div>
-              </div>
-              <div style={{...G,padding:"16px 14px"}}>
-                <Lbl>{pickedD!==null&&DWX?DWX.day+" Range":"Range Today"}</Lbl>
-                <div style={{fontSize:22,fontWeight:900}}>{pickedD!==null&&DWX?DWX.max:wx.maxT}° <span style={{opacity:.4,fontSize:15,fontWeight:400}}>/ {pickedD!==null&&DWX?DWX.min:wx.minT}°</span></div>
-                <div style={{fontSize:11,opacity:.6,marginTop:6}}>High / Low</div>
-              </div>
-            </div>
             <div style={{...G,padding:"16px",marginBottom:12,border:"1px solid rgba(16,185,129,.4)"}}>
               <div style={{display:"flex",gap:12,alignItems:"center"}}>
                 <div style={{fontSize:32}}>🌱</div>
