@@ -523,7 +523,7 @@ function App(){
       const tripMonth=from.getMonth();
       let avgMax=20,rainDays=4;
       if(daysAway<=14){
-        const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=temperature_2m_max,precipitation_probability_max&timezone=auto&forecast_days=7";
+        const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=7";
         const d=await fetch(url).then(r=>r.json());
         avgMax=Math.round(d.daily.temperature_2m_max.reduce((a,b)=>a+b,0)/7);
         rainDays=d.daily.precipitation_probability_max.filter(r=>r>50).length;
@@ -551,32 +551,11 @@ function App(){
   useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
-    // Request notification permission safely
-    try{
-      if("Notification" in window && Notification.permission==="default"){
-        Notification.requestPermission().catch(()=>{});
-      }
-    }catch(e){}
+    try{if("Notification" in window&&Notification.permission==="default")Notification.requestPermission().catch(()=>{});}catch(e){}
     return()=>clearInterval(interval);
   },[]);
 
-  // Send push notification for weather warnings
-  useEffect(()=>{
-    if(!wx||!wx.week)return;
-    if(!("Notification" in window)||Notification.permission!=="granted")return;
-    const today=wx.week[0];
-    if(!today)return;
-    const wins=getWeatherWindows(wx.hourly||[]);
-    if(wins.storm){
-      new Notification("⛈️ Storm Warning — "+(city||"your area"),{body:wins.storm,icon:"/icon-192.png"});
-    } else if(wins.rain&&wx.rain>=60){
-      new Notification("🌧️ Heavy Rain Alert — "+(city||"your area"),{body:wins.rain,icon:"/icon-192.png"});
-    } else if(wins.snow){
-      new Notification("❄️ Snow Warning — "+(city||"your area"),{body:wins.snow,icon:"/icon-192.png"});
-    } else if(today.min<=0){
-      new Notification("🌡️ Frost Warning — "+(city||"your area"),{body:"Frost expected tonight — protect your plants and car!",icon:"/icon-192.png"});
-    }
-  },[wx]);
+
 
   const TABS=[{id:"home",icon:"🏠",label:"Home"},{id:"chat",icon:"🤖",label:"Ask Skyla"},{id:"search",icon:"🔍",label:"Search"},{id:"event",icon:"🗓️",label:"Event"},{id:"holiday",icon:"✈️",label:"Holiday"},{id:"travel",icon:"🚌",label:"Travel"},{id:"week",icon:"📅",label:"Week"},{id:"more",icon:"✦",label:"More"}];
 
@@ -854,7 +833,8 @@ function App(){
               return"Cold one today — warm drinks and warm layers will make it much better!";
             })()}</div>
             </Card>
-            {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10}}>
+            
+                        {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10}}>
               <Lbl>{pickedD!==null&&DWX?DWX.day+" — Daylight":"Today's Daylight"}</Lbl>
               <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",marginTop:8}}>
                 <div style={{textAlign:"center"}}>
@@ -862,7 +842,7 @@ function App(){
                   <div style={{fontSize:10,opacity:.6,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunrise</div>
                   <div style={{fontSize:20,fontWeight:900,marginTop:2}}>{DWX.sunrise}</div>
                 </div>
-                <div style={{flex:1,height:2,background:"linear-gradient(90deg,#FF8C00,#FFD700,#FF8C00)",margin:"0 10px",borderRadius:2,marginTop:10}}/>
+                <div style={{flex:1,height:2,background:"linear-gradient(90deg,#FF8C00,#FFD700,#FF8C00)",margin:"0 10px",borderRadius:2,marginTop:8}}/>
                 <div style={{textAlign:"center"}}>
                   <div style={{fontSize:26}}>🌇</div>
                   <div style={{fontSize:10,opacity:.6,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunset</div>
