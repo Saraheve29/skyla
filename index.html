@@ -850,11 +850,24 @@ function App(){
             </div>
             
                         
+            {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10,display:"flex",justifyContent:"space-around",alignItems:"center"}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:24}}>🌅</div>
+                <div style={{fontSize:10,fontWeight:800,opacity:.6,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunrise</div>
+                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX.sunrise}</div>
+              </div>
+              <div style={{width:1,height:40,background:"rgba(255,255,255,.2)"}}/>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:24}}>🌇</div>
+                <div style={{fontSize:10,fontWeight:800,opacity:.6,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunset</div>
+                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX.sunset}</div>
+              </div>
+            </div>}
             <div style={{...G,padding:"16px",marginBottom:12,border:"1px solid rgba(16,185,129,.4)"}}>
               <div style={{display:"flex",gap:12,alignItems:"center"}}>
                 <div style={{fontSize:32}}>🌱</div>
                 <div style={{flex:1}}>
-                  <Lbl>{pickedD!==null&&DWX?DWX.day+" — Plant Care":"Plant Care Today"}</Lbl>{DWX&&DWX.sunrise&&<div style={{fontSize:11,opacity:.7,marginBottom:4}}>🌅 {DWX.sunrise} &nbsp;|&nbsp; 🌇 {DWX.sunset}</div>}
+                  <Lbl>{pickedD!==null&&DWX?DWX.day+" — Plant Care":"Plant Care Today"}</Lbl>
                   <div style={{fontSize:12,lineHeight:1.5}}>{(()=>{
                     const r=DWX?DWX.rain:20;const t=DWX?DWX.temp:15;const f=DWX?DWX.feels:12;const w=DWX?DWX.wind:10;
                     if(r>=60)return"Rain is doing the watering — no need to water your plants at all!";
