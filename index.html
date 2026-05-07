@@ -191,6 +191,7 @@ function getWeatherWindows(hourlyData,fromHour=null){
 
 function App(){
   const [wx,setWx]=useState(null);
+  const premium=true;
   const [city,setCity]=useState("Your location");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
