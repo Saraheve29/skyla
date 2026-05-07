@@ -551,28 +551,30 @@ function App(){
   useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
-    // Request notification permission
-    if("Notification" in window && Notification.permission==="default"){
-      Notification.requestPermission();
-    }
+    // Request notification permission safely
+    try{
+      if("Notification" in window && Notification.permission==="default"){
+        Notification.requestPermission().catch(()=>{});
+      }
+    }catch(e){}
     return()=>clearInterval(interval);
   },[]);
 
   // Send push notification for weather warnings
   useEffect(()=>{
     if(!wx||!wx.week)return;
-    if(Notification.permission!=="granted")return;
+    if(!("Notification" in window)||Notification.permission!=="granted")return;
     const today=wx.week[0];
     if(!today)return;
     const wins=getWeatherWindows(wx.hourly||[]);
     if(wins.storm){
-      new Notification("⛈️ Storm Warning — "+city,{body:wins.storm,icon:"/icon-192.png"});
+      new Notification("⛈️ Storm Warning — "+(city||"your area"),{body:wins.storm,icon:"/icon-192.png"});
     } else if(wins.rain&&wx.rain>=60){
-      new Notification("🌧️ Heavy Rain Alert — "+city,{body:wins.rain,icon:"/icon-192.png"});
+      new Notification("🌧️ Heavy Rain Alert — "+(city||"your area"),{body:wins.rain,icon:"/icon-192.png"});
     } else if(wins.snow){
-      new Notification("❄️ Snow Warning — "+city,{body:wins.snow,icon:"/icon-192.png"});
+      new Notification("❄️ Snow Warning — "+(city||"your area"),{body:wins.snow,icon:"/icon-192.png"});
     } else if(today.min<=0){
-      new Notification("🌡️ Frost Warning — "+city,{body:"Frost expected tonight — protect your plants and car!",icon:"/icon-192.png"});
+      new Notification("🌡️ Frost Warning — "+(city||"your area"),{body:"Frost expected tonight — protect your plants and car!",icon:"/icon-192.png"});
     }
   },[wx]);
 
@@ -867,6 +869,7 @@ function App(){
                   <div style={{fontSize:20,fontWeight:900,marginTop:2}}>{DWX.sunset}</div>
                 </div>
               </div>
+            </div>
             </div>}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
               <div style={{...G,padding:"16px 14px"}}>
