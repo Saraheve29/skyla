@@ -293,7 +293,7 @@ function App(){
         hourlyByDay[h.dayStr].push(h);
       });
       const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[],sunrise:(()=>{if(!d.daily.sunrise||!d.daily.sunrise[i])return"";const s=new Date(d.daily.sunrise[i]);const h=s.getHours();const m=s.getMinutes();return(h%12||12)+":"+(m<10?"0"+m:m)+(h<12?"am":"pm");})(),sunset:(()=>{if(!d.daily.sunset||!d.daily.sunset[i])return"";const s=new Date(d.daily.sunset[i]);const h=s.getHours();const m=s.getMinutes();return(h%12||12)+":"+(m<10?"0"+m:m)+(h<12?"am":"pm");})()}; });
-      const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly};
+      const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly,sunrise:week[0]?week[0].sunrise:"",sunset:week[0]?week[0].sunset:""};
       setWx(newWx);
       buildAlerts(newWx);
       const today=new Date().toDateString();
@@ -710,7 +710,7 @@ function App(){
 
         {/* QUICK ASK */}
         <div style={{marginBottom:10}}>
-          <Lbl>Quick Ask Skyla — all free</Lbl>
+          <Lbl>Quick Ask Skyla</Lbl>
           <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
             {[{icon:"🧣",label:"Warm beanie?",key:"beanie"},{icon:"👒",label:"Sun hat?",key:"sunhat"},{icon:"🧥",label:"Need a coat?",key:"coat"},{icon:"☂️",label:"Umbrella?",key:"umbrella"},{icon:"😎",label:"Suncream?",key:"suncream"},{icon:"👖",label:"Shorts or trousers?",key:"trousers"},{icon:"🧸",label:"Need a jumper?",key:"jumper"}].map((b,i)=>(
               <button key={i} onClick={()=>quickAsk(b.key,b.icon)} style={{flexShrink:0,background:quickAns&&quickAns.icon===b.icon?S.acc:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:100,padding:"7px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,fontFamily:"'DM Sans',sans-serif"}}>
@@ -850,17 +850,17 @@ function App(){
             </div>
             
                         
-            {wx&&wx.week&&wx.week[0]&&wx.week[0].sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10,display:"flex",justifyContent:"space-around",alignItems:"center"}}>
+            {wx&&wx.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10,display:"flex",justifyContent:"space-around",alignItems:"center"}}>
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:24}}>🌅</div>
                 <div style={{fontSize:10,fontWeight:800,opacity:.6,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunrise</div>
-                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{pickedD!==null&&DWX?DWX.sunrise:wx.week[0].sunrise}</div>
+                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{pickedD!==null&&wx.week[pickedD]?wx.week[pickedD].sunrise:wx.sunrise}</div>
               </div>
               <div style={{width:1,height:40,background:"rgba(255,255,255,.2)"}}/>
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:24}}>🌇</div>
                 <div style={{fontSize:10,fontWeight:800,opacity:.6,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunset</div>
-                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{pickedD!==null&&DWX?DWX.sunset:wx.week[0].sunset}</div>
+                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{pickedD!==null&&wx.week[pickedD]?wx.week[pickedD].sunset:wx.sunset}</div>
               </div>
             </div>}
             <div style={{...G,padding:"16px",marginBottom:12,border:"1px solid rgba(16,185,129,.4)"}}>
