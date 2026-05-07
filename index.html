@@ -220,6 +220,13 @@ function App(){
   const [briefingSaved,setBriefingSaved]=useState(false);
   const [showPaywall,setShowPaywall]=useState(false);
   const [showAllWarnings,setShowAllWarnings]=useState(false);
+  const [aiMsgCount,setAiMsgCount]=useState(()=>{
+    const today=new Date().toDateString();
+    const saved=localStorage.getItem('skyla_ai_date');
+    if(saved!==today){localStorage.setItem('skyla_ai_date',today);localStorage.setItem('skyla_ai_count','0');return 0;}
+    return parseInt(localStorage.getItem('skyla_ai_count')||'0');
+  });
+  const FREE_AI_LIMIT=3;
   const [goOutTime,setGoOutTime]=useState("");
   const [goOutMsg,setGoOutMsg]=useState(null);
   const clock=new Date();
@@ -263,7 +270,7 @@ function App(){
       const{latitude:la,longitude:lo}=pos.coords;
       const cityRes=await fetch("https://nominatim.openstreetmap.org/reverse?lat="+la+"&lon="+lo+"&format=json").then(r=>r.json()).catch(()=>null);
       if(cityRes?.address){const a=cityRes.address;setCity(a.city||a.town||a.village||a.county||"Your location");}
-      const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weathercode,is_day&hourly=temperature_2m,apparent_temperature,weathercode,precipitation_probability,wind_speed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max&timezone=auto&forecast_days=7";
+      const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weathercode,is_day&hourly=temperature_2m,apparent_temperature,weathercode,precipitation_probability,wind_speed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=7";
       const d=await fetch(url).then(r=>r.json());
       const cu=d.current;
       const hr=new Date().getHours();
@@ -284,7 +291,7 @@ function App(){
         if(!hourlyByDay[h.dayStr])hourlyByDay[h.dayStr]=[];
         hourlyByDay[h.dayStr].push(h);
       });
-      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[]};});
+      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();const srRaw=d.daily.sunrise?d.daily.sunrise[i]:null;const ssRaw=d.daily.sunset?d.daily.sunset[i]:null;const fmtSun=s=>{if(!s)return null;const sd=new Date(s);const h=sd.getHours();const m=sd.getMinutes();const ampm=h>=12?"pm":"am";return(h>12?h-12:h||12)+":"+(m<10?"0"+m:m)+ampm;};return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[],sunrise:fmtSun(srRaw),sunset:fmtSun(ssRaw)};});
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly};
       setWx(newWx);
       buildAlerts(newWx);
@@ -313,6 +320,11 @@ function App(){
 
   async function speak(){
     if(!wx)return;
+    // Premium only
+    if(!premium){
+      alert("🎙️ Voice briefings are a Skyla Premium feature!\n\nUpgrade for just £3.99/month with a 7-day free trial:\n✅ Unlimited voice briefings\n✅ Unlimited AI chat\n✅ No ads\n\nTry free for 7 days! 🩷");
+      return;
+    }
     if(talking){window.speechSynthesis&&window.speechSynthesis.cancel();if(window._skylaSource){try{window._skylaSource.stop();}catch{}window._skylaSource=null;}if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}setTalking(false);return;}
     const gr=clock.getHours()<12?"morning":clock.getHours()<17?"afternoon":"evening";
     const PE2=plainEnglish(wx);
@@ -402,10 +414,22 @@ function App(){
 
   function sendChat(){
     if(!chatInput.trim())return;
+    // Check free daily limit
+    if(!premium&&aiMsgCount>=FREE_AI_LIMIT){
+      setChatMsgs(m=>[...m,{role:"skyla",text:"💎 You have used your 3 free daily questions! Upgrade to Skyla Premium for unlimited questions, voice briefings and more — just £3.99/month with a 7-day free trial! 🩷"}]);
+      setChatInput("");
+      return;
+    }
     const userMsg=chatInput.trim();
     const q=userMsg.toLowerCase();
     setChatInput("");
     setChatMsgs(m=>[...m,{role:"user",text:userMsg}]);
+    // Increment counter for free users
+    if(!premium){
+      const newCount=aiMsgCount+1;
+      setAiMsgCount(newCount);
+      localStorage.setItem('skyla_ai_count',String(newCount));
+    }
     const t=wx?wx.temp:15,f=wx?wx.feels:12,r=wx?wx.rain:20,code=wx?wx.code:2;
     const week=wx?wx.week:[];
     let reply="";
@@ -526,10 +550,31 @@ function App(){
 
   useEffect(()=>{
     load();
-    // Auto refresh every hour
     const interval=setInterval(()=>{load();},60*60*1000);
+    // Request notification permission
+    if("Notification" in window && Notification.permission==="default"){
+      Notification.requestPermission();
+    }
     return()=>clearInterval(interval);
   },[]);
+
+  // Send push notification for weather warnings
+  useEffect(()=>{
+    if(!wx||!wx.week)return;
+    if(Notification.permission!=="granted")return;
+    const today=wx.week[0];
+    if(!today)return;
+    const wins=getWeatherWindows(wx.hourly||[]);
+    if(wins.storm){
+      new Notification("⛈️ Storm Warning — "+city,{body:wins.storm,icon:"/icon-192.png"});
+    } else if(wins.rain&&wx.rain>=60){
+      new Notification("🌧️ Heavy Rain Alert — "+city,{body:wins.rain,icon:"/icon-192.png"});
+    } else if(wins.snow){
+      new Notification("❄️ Snow Warning — "+city,{body:wins.snow,icon:"/icon-192.png"});
+    } else if(today.min<=0){
+      new Notification("🌡️ Frost Warning — "+city,{body:"Frost expected tonight — protect your plants and car!",icon:"/icon-192.png"});
+    }
+  },[wx]);
 
   const TABS=[{id:"home",icon:"🏠",label:"Home"},{id:"chat",icon:"🤖",label:"Ask Skyla"},{id:"search",icon:"🔍",label:"Search"},{id:"event",icon:"🗓️",label:"Event"},{id:"holiday",icon:"✈️",label:"Holiday"},{id:"travel",icon:"🚌",label:"Travel"},{id:"week",icon:"📅",label:"Week"},{id:"more",icon:"✦",label:"More"}];
 
@@ -623,7 +668,7 @@ function App(){
             </div>
             <button onClick={speak} style={{marginTop:8,display:"flex",alignItems:"center",gap:6,background:S.acc+"22",border:"1px solid "+S.acc+"45",borderRadius:100,padding:"6px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:11,fontWeight:700,color:S.acc}}>
               {talking?<span style={{display:"flex",gap:2}}>{[0,1,2,3].map(i=><span key={i} style={{display:"inline-block",width:3,height:14,background:S.acc,borderRadius:2,animation:"wave .7s ease-in-out infinite",animationDelay:i*.15+"s"}}/>)}</span>:"🎙️"}
-              <span>{talking?"Speaking...":"Hear Skyla"}</span>
+              <span>{talking?"Speaking...":"Hear Skyla"}</span>{!premium&&<span style={{fontSize:9,fontWeight:900,background:"linear-gradient(135deg,#E91E8C,#C2185B)",color:"white",borderRadius:100,padding:"2px 6px",marginLeft:2}}>PRO</span>}
             </button>
           </div>
         </div>
@@ -807,6 +852,22 @@ function App(){
               return"Cold one today — warm drinks and warm layers will make it much better!";
             })()}</div>
             </Card>
+            {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10}}>
+              <Lbl>{pickedD!==null&&DWX?DWX.day+" — Daylight":"Today's Daylight"}</Lbl>
+              <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",marginTop:8}}>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontSize:26}}>🌅</div>
+                  <div style={{fontSize:10,opacity:.6,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunrise</div>
+                  <div style={{fontSize:20,fontWeight:900,marginTop:2}}>{DWX.sunrise}</div>
+                </div>
+                <div style={{flex:1,height:2,background:"linear-gradient(90deg,#FF8C00,#FFD700,#FF8C00)",margin:"0 10px",borderRadius:2,marginTop:10}}/>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontSize:26}}>🌇</div>
+                  <div style={{fontSize:10,opacity:.6,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunset</div>
+                  <div style={{fontSize:20,fontWeight:900,marginTop:2}}>{DWX.sunset}</div>
+                </div>
+              </div>
+            </div>}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
               <div style={{...G,padding:"16px 14px"}}>
                 <Lbl>{pickedD!==null&&DWX?DWX.day+" — Rain Chance":"Rain Chance"}</Lbl>
@@ -917,6 +978,10 @@ function App(){
         {/* CHAT TAB */}
         {tab==="chat"&&(
           <div>
+            {!premium&&<div style={{...G,padding:"10px 14px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <span style={{fontSize:11,fontWeight:700,color:S.sub}}>💬 Free questions today</span>
+              <span style={{fontSize:13,fontWeight:900,color:aiMsgCount>=FREE_AI_LIMIT?"#EF4444":S.acc}}>{Math.max(0,FREE_AI_LIMIT-aiMsgCount)+" / "+FREE_AI_LIMIT+" left"}</span>
+            </div>}
             <div style={{...G,padding:"14px",marginBottom:10,minHeight:280,maxHeight:380,overflowY:"auto",display:"flex",flexDirection:"column",gap:8}}>
               {chatMsgs.map((m,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
