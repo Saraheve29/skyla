@@ -850,17 +850,17 @@ function App(){
             </div>
             
                         
-            {DWX&&DWX.sunrise&&<div style={{...G,padding:"14px 16px",marginBottom:10,display:"flex",justifyContent:"space-around",alignItems:"center"}}>
+            {wx&&wx.week&&(DWX||wx.week[0])&&(DWX?DWX.sunrise:wx.week[0].sunrise)&&<div style={{...G,padding:"14px 16px",marginBottom:10,display:"flex",justifyContent:"space-around",alignItems:"center"}}>
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:24}}>🌅</div>
                 <div style={{fontSize:10,fontWeight:800,opacity:.6,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunrise</div>
-                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX.sunrise}</div>
+                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX?DWX.sunrise:wx.week[0].sunrise}</div>
               </div>
               <div style={{width:1,height:40,background:"rgba(255,255,255,.2)"}}/>
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:24}}>🌇</div>
                 <div style={{fontSize:10,fontWeight:800,opacity:.6,letterSpacing:1,textTransform:"uppercase",marginTop:2}}>Sunset</div>
-                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX.sunset}</div>
+                <div style={{fontSize:18,fontWeight:900,marginTop:2}}>{DWX?DWX.sunset:wx.week[0].sunset}</div>
               </div>
             </div>}
             <div style={{...G,padding:"16px",marginBottom:12,border:"1px solid rgba(16,185,129,.4)"}}>
