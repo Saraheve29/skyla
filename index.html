@@ -602,7 +602,7 @@ function App(){
             <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
               <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
-            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}><span style={{background:"linear-gradient(90deg,#ff0080,#ff8c00,#ffe000,#40e0d0,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontSize:11,fontWeight:900,letterSpacing:.5}}>⭐ Rate</span></button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{textAlign:"right"}}>
@@ -625,7 +625,7 @@ function App(){
         {/* CITY SEARCH */}
         <div style={{display:"flex",gap:8,marginBottom:10}}>
           <input id="quicksearch" placeholder="🔍  Search another location..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,outline:"none"}}/>
-          <button onClick={()=>{var v=document.getElementById("quicksearch").value.trim();if(!v)return;window._scity=v;setTab("search");}} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",whiteSpace:"nowrap"}}>Go</button>
+          <button onClick={()=>{var v=document.getElementById("quicksearch").value.trim();if(!v)return;window._scity=v;setTab("search");}} onTouchEnd={(e)=>{e.preventDefault();var v=document.getElementById("quicksearch").value.trim();if(!v)return;window._scity=v;setTab("search");}} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",whiteSpace:"nowrap"}}>Go</button>
         </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
