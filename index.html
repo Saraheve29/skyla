@@ -600,7 +600,7 @@ function App(){
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
+
           </div>
         </div>
 
@@ -676,6 +676,10 @@ function App(){
               {d.short}
             </button>
           ))}
+        </div>}
+        {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10,display:"flex",gap:8,alignItems:"center"}}>
+          <input id="scity2" type="text" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="🔍 Search another city..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.15)",border:"1px solid "+S.bdr,borderRadius:100,padding:"10px 16px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+          <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,padding:"10px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",flexShrink:0}}>Go</button>
         </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🕐 What time are you going out?</div>
@@ -1179,7 +1183,13 @@ function App(){
         {/* MORE TAB */}
         {tab==="more"&&(
           <div>
-
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{width:"100%",background:"linear-gradient(90deg,#E91E8C,#FF6B35,#FFB300,#43A047,#1E88E5,#8E24AA)",border:"none",borderRadius:16,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+              <span style={{fontSize:24}}>⭐</span>
+              <div style={{textAlign:"left"}}>
+                <div style={{fontSize:13,fontWeight:800,color:"white"}}>Rate Skyla on Play Store</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.85)",marginTop:2}}>Your review helps others find Skyla!</div>
+              </div>
+            </button>
             <div style={{...G,padding:"18px",marginBottom:12,border:"1px solid "+S.acc+"35"}}>
               <Lbl>Morning Briefing</Lbl>
               <div style={{fontSize:12,opacity:.6,marginBottom:10}}>Get a daily weather briefing at your chosen time.</div>
