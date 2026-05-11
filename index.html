@@ -202,6 +202,8 @@ function App(){
   const [ai,setAi]=useState(null);
   const [alerts,setAlerts]=useState([]);
   const [streak,setStreak]=useState(()=>sg("skyla_streak")||0);
+  const [streakMsg,setStreakMsg]=useState("");
+  const [showStreakPopup,setShowStreakPopup]=useState(false);
   const [quickAns,setQuickAns]=useState(null);
   const [pickedH,setPickedH]=useState(null);
   const [pickedD,setPickedD]=useState(null);
