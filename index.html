@@ -552,6 +552,15 @@ function App(){
   }
 
   useEffect(()=>{
+    const btn=document.getElementById('searchBtn');
+    if(btn){
+      const go=()=>setTab('search');
+      btn.addEventListener('click',go);
+      btn.addEventListener('touchend',function(e){e.preventDefault();go();});
+      return()=>{btn.removeEventListener('click',go);}
+    }
+  },[]);
+  useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
     return()=>clearInterval(interval);
@@ -601,7 +610,7 @@ function App(){
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            <button onClick={(e)=>{e.stopPropagation();setTab("search");}} onTouchEnd={(e)=>{e.preventDefault();e.stopPropagation();setTab("search");}} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:44,height:44,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,position:"relative",zIndex:999,touchAction:"manipulation",WebkitTapHighlightColor:"rgba(0,0,0,0)"}}>🔍</button>
+            <button id="searchBtn" style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:44,height:44,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,position:"relative",zIndex:999,touchAction:"manipulation"}}>🔍</button>
           </div>
         </div>
 
