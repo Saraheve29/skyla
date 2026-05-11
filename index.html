@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v2.3 -->
+<!DOCTYPE html><!-- Skyla v2.1 Update2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -90,7 +90,7 @@ function plainEnglish(w){
 function BG({type}){
   const s=SC[type]||SC.partly;
   return(
-    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden",pointerEvents:"none"}}>
+    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden"}}>
       {type==="sunny"&&<>
         <div style={{position:"absolute",top:"-20px",right:"-20px",width:"220px",height:"220px",borderRadius:"50%",background:"radial-gradient(circle,#FFD700,#FF8C00)",opacity:.6,filter:"blur(2px)"}}/>
         <div style={{position:"absolute",top:"20px",right:"20px",width:"140px",height:"140px",borderRadius:"50%",background:"radial-gradient(circle,#FFFF88,#FFD700)",opacity:.9}}/>
@@ -585,41 +585,34 @@ function App(){
   return(
     <div style={{minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:S.text,paddingBottom:80}}>
       <BG type={type}/>
-      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1,isolation:"isolate"}}>
+      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1}}>
 
         {/* TOP BAR */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",position:"relative",zIndex:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px"}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
             <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
-              <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
+              <span style={{fontSize:14}}>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
-            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            
+            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
           </div>
         </div>
 
         {showStreakPopup&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setShowStreakPopup(false)}>
-          <div style={{background:"linear-gradient(135deg,#1a0a3d,#2d1b69)",border:"3px solid "+S.acc,borderRadius:28,padding:32,boxShadow:"0 0 60px "+S.acc+"55",textAlign:"center",maxWidth:300}}>
-            <div style={{fontSize:60,marginBottom:8,animation:"float 2s ease-in-out infinite"}}>{streak>=100?"👑":streak>=50?"🌈":streak>=30?"🏆":streak>=14?"💜":"🎉"}</div>
+          <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid "+S.acc,borderRadius:24,padding:28,textAlign:"center",maxWidth:300}}>
+            <div style={{fontSize:48,marginBottom:12}}>🔥</div>
             <div style={{fontSize:16,fontWeight:800,color:"white",marginBottom:8,lineHeight:1.4}}>{streakMsg}</div>
             <div style={{fontSize:12,opacity:.6,color:"white",marginBottom:20}}>Tap anywhere to continue</div>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:56,fontWeight:900,color:S.acc}}>{streak}</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:48,fontWeight:900,color:S.acc}}>{streak}</div>
             <div style={{fontSize:12,opacity:.6,color:"white",marginTop:4}}>days in a row!</div>
           </div>
         </div>}
-        {/* CITY SEARCH HINT */}
-        <div onPointerUp={()=>setTab("search")} style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,cursor:"pointer",background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"8px 16px",touchAction:"manipulation"}}>
-          <span style={{fontSize:13}}>🔍</span>
-          <span style={{fontSize:12,fontWeight:600,opacity:.8}}>Search another location</span>
-          <span style={{fontSize:11,opacity:.5,marginLeft:"auto"}}>tap →</span>
-        </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
           <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
@@ -717,7 +710,7 @@ function App(){
               const feels=h.feels||h.temp;
               const wearNote=feels<=6?" Wrap up warm — feels like "+feels+"C!":feels<=12?" A coat is a must — feels like "+feels+"C.":feels<=17?" A light jacket would be perfect — "+feels+"C.":feels>=22?" Light clothes — "+feels+"C.":"";
               setGoOutMsg({text:msg+wearNote,icon,color});
-            }} placeholder="e.g. 2pm or 14:00" autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 14px",fontSize:15,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+            }} placeholder="e.g. 2pm or 14:00" autoComplete="off" autoCorrect="off" inputMode="text" style={{flex:1,background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 14px",fontSize:15,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",WebkitAppearance:"none"}}/>
             {goOutTime&&<button onClick={()=>{setGoOutTime("");setGoOutMsg(null);}} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:12,color:S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>Clear</button>}
           </div>
           {goOutMsg&&<div style={{marginTop:8,display:"flex",alignItems:"flex-start",gap:8,background:"rgba(255,255,255,.15)",borderRadius:12,padding:"10px 12px"}}>
@@ -1005,10 +998,10 @@ function App(){
 
         {/* SEARCH TAB */}
         {tab==="search"&&(
-          <div style={{position:"relative",zIndex:50,pointerEvents:"all"}}>
+          <div>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100,position:"relative",zIndex:5,pointerEvents:"all"}}/>
-              <button onClick={searchCity} onTouchEnd={(e)=>{e.preventDefault();searchCity();}} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:20,cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>🔍</button>
+              <input id="scity" type="text" onInput={e=>{window._scity=e.target.value;}} onChange={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" autoCorrect="off" autoCapitalize="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+              <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer",flexShrink:0}}>🔍</button>
             </div>
             {searching&&<div style={{...G,padding:"16px",textAlign:"center",opacity:.6,fontSize:13}}>Searching...</div>}
             {searchWx&&(()=>{
