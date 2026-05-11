@@ -90,7 +90,7 @@ function plainEnglish(w){
 function BG({type}){
   const s=SC[type]||SC.partly;
   return(
-    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden",pointerEvents:"none"}}>
+    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden"}}>
       {type==="sunny"&&<>
         <div style={{position:"absolute",top:"-20px",right:"-20px",width:"220px",height:"220px",borderRadius:"50%",background:"radial-gradient(circle,#FFD700,#FF8C00)",opacity:.6,filter:"blur(2px)"}}/>
         <div style={{position:"absolute",top:"20px",right:"20px",width:"140px",height:"140px",borderRadius:"50%",background:"radial-gradient(circle,#FFFF88,#FFD700)",opacity:.9}}/>
@@ -552,6 +552,14 @@ function App(){
   }
 
   useEffect(()=>{
+    if(tab==="search"&&window._scity){
+      const el=document.getElementById("scity");
+      if(el){el.value=window._scity;}
+      setTimeout(()=>searchCity(),50);
+    }
+  },[tab]);
+
+  useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
     return()=>clearInterval(interval);
@@ -594,14 +602,14 @@ function App(){
             <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
               <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
-            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}><span style={{background:"linear-gradient(90deg,#ff0080,#ff8c00,#ffe000,#40e0d0,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontSize:11,fontWeight:900}}>⭐ Rate</span></button>
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            
+            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
           </div>
         </div>
 
@@ -616,8 +624,8 @@ function App(){
         </div>}
         {/* CITY SEARCH */}
         <div style={{display:"flex",gap:8,marginBottom:10}}>
-          <input id="quicksearch" placeholder="🔍  Search another location..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-          <button onClick={()=>{const v=document.getElementById("quicksearch").value.trim();if(!v)return;window._scity=v;const el=document.getElementById("scity");if(el){el.value=v;}setTab("search");setTimeout(()=>searchCity(),100);}} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",touchAction:"manipulation"}}>Go</button>
+          <input id="quicksearch" placeholder="🔍  Search another location..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,outline:"none"}}/>
+          <button onClick={()=>{var v=document.getElementById("quicksearch").value.trim();if(!v)return;window._scity=v;setTab("search");}} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",whiteSpace:"nowrap"}}>Go</button>
         </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
@@ -1275,4 +1283,39 @@ function App(){
                 if(hasSnow)alerts.push("❄️ Snow — "+d.rain+"% chance");
                 if(heavyRain)alerts.push("🌧️ Heavy rain ("+d.rain+"%)");
                 else if(hasRain)alerts.push("🌂 Rain ("+d.rain+"%)");
-                if(hasFrost&&!hasSnow)alerts.push("🌡️ 
+                if(hasFrost&&!hasSnow)alerts.push("🌡️ Frost risk overnight");
+              }
+              return(
+                <div key={i} onClick={()=>{setPickedD(i===pickedD?null:i);setPickedH(null);}} style={{borderRadius:14,background:pickedD===i?S.acc+"20":"transparent",border:pickedD===i?"1px solid "+S.acc+"50":"1px solid transparent",marginBottom:4,cursor:"pointer",padding:"10px 8px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:52,fontSize:12,fontWeight:i===0?800:500,flexShrink:0}}>{d.short}</div>
+                    <div style={{fontSize:22,flexShrink:0}}>{SC[dtype].em}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:600}}>{wmoDesc(d.code)}</div>
+                      {alerts.length>0&&<div style={{marginTop:3,display:"flex",flexDirection:"column",gap:2}}>
+                        {alerts.map((a,j)=><div key={j} style={{fontSize:11,fontWeight:700,color:S.text,opacity:.85}}>{a}</div>)}
+                      </div>}
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:13,fontWeight:800}}>{d.max}° <span style={{opacity:.4,fontWeight:400}}>/{d.min}°</span></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {pickedD!==null&&<button onClick={()=>setPickedD(null)} style={{marginTop:8,fontSize:11,color:S.sub,background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Back to today</button>}
+          </Card>
+        )}
+
+        <button onClick={load} style={{width:"100%",marginTop:4,...G,borderRadius:100,padding:"13px",color:S.sub,fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",border:"none"}}>
+          Refresh Skyla
+        </button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
