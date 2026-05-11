@@ -292,7 +292,7 @@ function App(){
         if(!hourlyByDay[h.dayStr])hourlyByDay[h.dayStr]=[];
         hourlyByDay[h.dayStr].push(h);
       });
-      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[],sunrise:(()=>{if(!d.daily.sunrise||!d.daily.sunrise[i])return"";const s=new Date(d.daily.sunrise[i]);const h=s.getHours();const m=s.getMinutes();return(h%12||12)+":"+(m<10?"0"+m:m)+(h<12?"am":"pm");})(),sunset:(()=>{if(!d.daily.sunset||!d.daily.sunset[i])return"";const s=new Date(d.daily.sunset[i]);const h=s.getHours();const m=s.getMinutes();return(h%12||12)+":"+(m<10?"0"+m:m)+(h<12?"am":"pm");})()}; });
+      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[],sunrise:(()=>{try{if(!d.daily.sunrise||!d.daily.sunrise[i])return"";const raw=d.daily.sunrise[i];const s=new Date(raw);if(isNaN(s.getTime()))return raw;const h=s.getHours();const m=s.getMinutes();return(h===0?12:h>12?h-12:h)+":"+(m<10?"0"+m:m)+(h<12?"am":"pm");}catch(e){return"";}})() ,sunset:(()=>{try{if(!d.daily.sunset||!d.daily.sunset[i])return"";const raw=d.daily.sunset[i];const s=new Date(raw);if(isNaN(s.getTime()))return raw;const h=s.getHours();const m=s.getMinutes();return(h===0?12:h>12?h-12:h)+":"+(m<10?"0"+m:m)+(h<12?"am":"pm");}catch(e){return"";}})() }; });
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly,sunrise:week[0]?week[0].sunrise:"",sunset:week[0]?week[0].sunset:""};
       setWx(newWx);
       buildAlerts(newWx);
@@ -597,7 +597,7 @@ function App(){
             <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
             <div style={{display:"flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
-              <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,width:20,height:20,fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>🔍</button>
+              <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:32,height:32,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
             </div>
           </div>
         </div>
@@ -1168,6 +1168,13 @@ function App(){
         {/* MORE TAB */}
         {tab==="more"&&(
           <div>
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+              <span style={{fontSize:24}}>⭐</span>
+              <div style={{textAlign:"left"}}>
+                <div style={{fontSize:13,fontWeight:800,color:"white"}}>Rate Skyla on Play Store</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2}}>Your review helps others find Skyla!</div>
+              </div>
+            </button>
             <div style={{...G,padding:"18px",marginBottom:12,border:"1px solid "+S.acc+"35"}}>
               <Lbl>Morning Briefing</Lbl>
               <div style={{fontSize:12,opacity:.6,marginBottom:10}}>Get a daily weather briefing at your chosen time.</div>
