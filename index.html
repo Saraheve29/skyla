@@ -552,6 +552,15 @@ function App(){
   }
 
   useEffect(()=>{
+    if(tab==="search"&&window._doSearch&&window._scity){
+      window._doSearch=false;
+      var el=document.getElementById("scity");
+      if(el){el.value=window._scity;}
+      searchCity();
+    }
+  },[tab]);
+
+  useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
     return()=>clearInterval(interval);
@@ -594,14 +603,14 @@ function App(){
             <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
               <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
-            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}><span style={{background:"linear-gradient(90deg,#ff0080,#ff8c00,#ffe000,#40e0d0,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontSize:11,fontWeight:900,letterSpacing:.5}}>⭐ Rate</span></button>
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
+            
           </div>
         </div>
 
@@ -615,22 +624,9 @@ function App(){
           </div>
         </div>}
         {/* CITY SEARCH */}
-        
-        {/* CITY SEARCH */}
         <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
-          <input id="qs" placeholder="🔍 Search another location..." autoComplete="off"
-            style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,outline:"none"}}
-          />
-          <button
-            onPointerUp={(e)=>{
-              e.preventDefault();
-              var v=document.getElementById("qs").value.trim();
-              if(!v)return;
-              window._scity=v;
-              setTab("search");
-            }}
-            style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 18px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",whiteSpace:"nowrap",touchAction:"manipulation"}}
-          >Go</button>
+          <input id="qs" placeholder="🔍 Search another location..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,outline:"none"}}/>
+          <button onPointerUp={()=>{var v=document.getElementById("qs").value.trim();if(!v)return;window._scity=v;window._doSearch=true;setTab("search");}} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 18px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",touchAction:"manipulation"}}>Go</button>
         </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
@@ -1019,8 +1015,8 @@ function App(){
         {tab==="search"&&(
           <div>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              <input id="scity" defaultValue={window._scity||""} onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
-              <button onClick={searchCity} onTouchEnd={(e)=>{e.preventDefault();searchCity();}} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>🔍</button>
+              <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+              <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer",flexShrink:0}}>🔍</button>
             </div>
             {searching&&<div style={{...G,padding:"16px",textAlign:"center",opacity:.6,fontSize:13}}>Searching...</div>}
             {searchWx&&(()=>{
