@@ -585,7 +585,7 @@ function App(){
   return(
     <div style={{minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:S.text,paddingBottom:80}}>
       <BG type={type}/>
-      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1}}>
+      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1,isolation:"isolate"}}>
 
         {/* TOP BAR */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",position:"relative",zIndex:10}}>
@@ -1005,7 +1005,7 @@ function App(){
 
         {/* SEARCH TAB */}
         {tab==="search"&&(
-          <div>
+          <div style={{position:"relative",zIndex:50,pointerEvents:"all"}}>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
               <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100,position:"relative",zIndex:5,pointerEvents:"all"}}/>
               <button onClick={searchCity} onTouchEnd={(e)=>{e.preventDefault();searchCity();}} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:20,cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>🔍</button>
