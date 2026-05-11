@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!-- Skyla v2.1 Update2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -597,7 +597,7 @@ function App(){
             <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
             <div style={{display:"flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
-              <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:32,height:32,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
+              <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:36,height:36,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,touchAction:"manipulation"}}>🔍</button>
             </div>
           </div>
         </div>
