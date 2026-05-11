@@ -552,15 +552,6 @@ function App(){
   }
 
   useEffect(()=>{
-    const btn=document.getElementById('searchBtn');
-    if(btn){
-      const go=()=>setTab('search');
-      btn.addEventListener('click',go);
-      btn.addEventListener('touchend',function(e){e.preventDefault();go();});
-      return()=>{btn.removeEventListener('click',go);}
-    }
-  },[]);
-  useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
     return()=>clearInterval(interval);
@@ -610,7 +601,7 @@ function App(){
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            <button id="searchBtn" style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:44,height:44,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,position:"relative",zIndex:999,touchAction:"manipulation"}}>🔍</button>
+            
           </div>
         </div>
 
@@ -623,6 +614,11 @@ function App(){
             <div style={{fontSize:12,opacity:.6,color:"white",marginTop:4}}>days in a row!</div>
           </div>
         </div>}
+        {/* CITY SEARCH */}
+        <div style={{display:"flex",gap:8,marginBottom:10}}>
+          <input id="quicksearch" placeholder="🔍  Search another location..." onKeyDown={e=>{if(e.key==="Enter"){const v=document.getElementById("quicksearch").value.trim();if(v){window._scity=v;setTab("search");}}} } autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+          <button onTouchEnd={(e)=>{e.preventDefault();const v=document.getElementById("quicksearch").value.trim();if(v){window._scity=v;}setTab("search");}} onClick={()=>{const v=document.getElementById("quicksearch").value.trim();if(v){window._scity=v;}setTab("search");}} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",touchAction:"manipulation"}}>Go</button>
+        </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
           <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
