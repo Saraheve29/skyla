@@ -1007,7 +1007,7 @@ function App(){
         {tab==="search"&&(
           <div>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+              <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100,position:"relative",zIndex:5,pointerEvents:"all"}}/>
               <button onClick={searchCity} onTouchEnd={(e)=>{e.preventDefault();searchCity();}} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:20,cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>🔍</button>
             </div>
             {searching&&<div style={{...G,padding:"16px",textAlign:"center",opacity:.6,fontSize:13}}>Searching...</div>}
