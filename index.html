@@ -615,9 +615,22 @@ function App(){
           </div>
         </div>}
         {/* CITY SEARCH */}
-        <div style={{display:"flex",gap:8,marginBottom:10}}>
-          <input id="quicksearch" placeholder="🔍  Search another location..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,outline:"none"}} onKeyDown={(e)=>{if(e.key==="Enter"){var v=e.target.value.trim();if(!v)return;window._scity=v;searchCity();}}}/>
-          <button style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",whiteSpace:"nowrap",touchAction:"manipulation"}} onPointerUp={()=>{var v=document.getElementById("quicksearch").value.trim();if(!v)return;window._scity=v;searchCity();}}>Go</button>
+        
+        {/* CITY SEARCH */}
+        <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
+          <input id="qs" placeholder="🔍 Search another location..." autoComplete="off"
+            style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,outline:"none"}}
+          />
+          <button
+            onPointerUp={(e)=>{
+              e.preventDefault();
+              var v=document.getElementById("qs").value.trim();
+              if(!v)return;
+              window._scity=v;
+              setTab("search");
+            }}
+            style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 18px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",whiteSpace:"nowrap",touchAction:"manipulation"}}
+          >Go</button>
         </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
@@ -1006,8 +1019,8 @@ function App(){
         {tab==="search"&&(
           <div>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
-              <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer",flexShrink:0}}>🔍</button>
+              <input id="scity" defaultValue={window._scity||""} onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
+              <button onClick={searchCity} onTouchEnd={(e)=>{e.preventDefault();searchCity();}} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>🔍</button>
             </div>
             {searching&&<div style={{...G,padding:"16px",textAlign:"center",opacity:.6,fontSize:13}}>Searching...</div>}
             {searchWx&&(()=>{
