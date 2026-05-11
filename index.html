@@ -90,7 +90,7 @@ function plainEnglish(w){
 function BG({type}){
   const s=SC[type]||SC.partly;
   return(
-    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden",pointerEvents:"none"}}>
       {type==="sunny"&&<>
         <div style={{position:"absolute",top:"-20px",right:"-20px",width:"220px",height:"220px",borderRadius:"50%",background:"radial-gradient(circle,#FFD700,#FF8C00)",opacity:.6,filter:"blur(2px)"}}/>
         <div style={{position:"absolute",top:"20px",right:"20px",width:"140px",height:"140px",borderRadius:"50%",background:"radial-gradient(circle,#FFFF88,#FFD700)",opacity:.9}}/>
@@ -594,14 +594,14 @@ function App(){
             <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
               <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
-            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}><span style={{background:"linear-gradient(90deg,#ff0080,#ff8c00,#ffe000,#40e0d0,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontSize:11,fontWeight:900}}>⭐ Rate</span></button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
+            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,position:"relative",zIndex:20}}>🔍</button>
           </div>
         </div>
 
