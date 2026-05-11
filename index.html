@@ -552,15 +552,6 @@ function App(){
   }
 
   useEffect(()=>{
-    if(tab==="search"&&window._doSearch&&window._scity){
-      window._doSearch=false;
-      var el=document.getElementById("scity");
-      if(el){el.value=window._scity;}
-      searchCity();
-    }
-  },[tab]);
-
-  useEffect(()=>{
     load();
     const interval=setInterval(()=>{load();},60*60*1000);
     return()=>clearInterval(interval);
@@ -626,7 +617,17 @@ function App(){
         {/* CITY SEARCH */}
         <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
           <input id="qs" placeholder="🔍 Search another location..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.18)",border:"1px solid "+S.bdr,borderRadius:100,padding:"8px 16px",fontSize:12,fontWeight:600,color:S.text,outline:"none"}}/>
-          <button onPointerUp={()=>{var v=document.getElementById("qs").value.trim();if(!v)return;window._scity=v;window._doSearch=true;setTab("search");}} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 18px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",touchAction:"manipulation"}}>Go</button>
+          <button onPointerUp={()=>{
+                var v=document.getElementById("qs").value.trim();
+                if(!v)return;
+                window._scity=v;
+                setTab("search");
+                setTimeout(()=>{
+                  var el=document.getElementById("scity");
+                  if(el){el.value=v;}
+                  searchCity();
+                },350);
+              }} style={{background:S.acc,border:"none",borderRadius:100,padding:"8px 18px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",touchAction:"manipulation"}}>Go</button>
         </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
