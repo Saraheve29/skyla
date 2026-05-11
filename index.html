@@ -299,7 +299,7 @@ function App(){
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
       const yesterday=new Date(Date.now()-86400000).toDateString();
-      if(lastVisit!==today){const ns=lastVisit===yesterday?(sg("skyla_streak")||0)+1:1;setStreak(ns);ss("skyla_streak",ns);ss("skyla_last",today);}
+      if(lastVisit!==today){const ns=lastVisit===yesterday?(parseInt(sg("skyla_streak"))||0)+1:1;setStreak(ns);ss("skyla_streak",ns);ss("skyla_last",today);const rewards={7:"🎉 7 day streak! You've unlocked the Gold theme! ✨",14:"🎉 14 days! You've unlocked the Purple theme! 💜",30:"🏆 30 days! You are a Skyla Legend! 🌟",50:"🎉 50 days! You've unlocked the Rainbow theme! 🌈",100:"👑 100 days! You are a Skyla Champion! 👑"};if(rewards[ns]){setStreakMsg(rewards[ns]);setShowStreakPopup(true);}}
       await getAI(newWx);
     }catch(e){setError("Could not get your location. Please allow location access and try again. On Chrome: click the padlock 🔒 in the address bar → Allow Location. On Firefox: click the arrow icon in address bar.");}
     setLoading(false);
@@ -590,18 +590,27 @@ function App(){
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
             <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
-              <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
+              <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span></div><button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.2)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,padding:"3px 8px",fontSize:10,fontWeight:800,color:S.text,cursor:"pointer",display:"flex",alignItems:"center",gap:3}}><span>⭐</span><span>Rate</span></button><div style={{display:"none"}}
             </div>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
-            <div style={{display:"flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
-              <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:36,height:36,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,touchAction:"manipulation"}}>🔍</button>
             </div>
+            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>🔍</button>
           </div>
         </div>
 
+        {showStreakPopup&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setShowStreakPopup(false)}>
+          <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid "+S.acc,borderRadius:24,padding:28,textAlign:"center",maxWidth:300}}>
+            <div style={{fontSize:48,marginBottom:12}}>🔥</div>
+            <div style={{fontSize:16,fontWeight:800,color:"white",marginBottom:8,lineHeight:1.4}}>{streakMsg}</div>
+            <div style={{fontSize:12,opacity:.6,color:"white",marginBottom:20}}>Tap anywhere to continue</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:48,fontWeight:900,color:S.acc}}>{streak}</div>
+            <div style={{fontSize:12,opacity:.6,color:"white",marginTop:4}}>days in a row!</div>
+          </div>
+        </div>}
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
           <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
@@ -1168,13 +1177,7 @@ function App(){
         {/* MORE TAB */}
         {tab==="more"&&(
           <div>
-            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:16,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
-              <span style={{fontSize:24}}>⭐</span>
-              <div style={{textAlign:"left"}}>
-                <div style={{fontSize:13,fontWeight:800,color:"white"}}>Rate Skyla on Play Store</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2}}>Your review helps others find Skyla!</div>
-              </div>
-            </button>
+
             <div style={{...G,padding:"18px",marginBottom:12,border:"1px solid "+S.acc+"35"}}>
               <Lbl>Morning Briefing</Lbl>
               <div style={{fontSize:12,opacity:.6,marginBottom:10}}>Get a daily weather briefing at your chosen time.</div>
@@ -1299,4 +1302,4 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 </script>
 </body>
-</html> 
+</html>
