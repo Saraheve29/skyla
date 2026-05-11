@@ -601,7 +601,7 @@ function App(){
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-            <button onClick={()=>setTab("search")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:40,height:40,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,position:"relative",zIndex:20}}>🔍</button>
+            <button onClick={(e)=>{e.stopPropagation();setTab("search");}} onTouchEnd={(e)=>{e.preventDefault();e.stopPropagation();setTab("search");}} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,width:44,height:44,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,position:"relative",zIndex:999,touchAction:"manipulation",WebkitTapHighlightColor:"rgba(0,0,0,0)"}}>🔍</button>
           </div>
         </div>
 
