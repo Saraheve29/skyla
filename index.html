@@ -196,7 +196,7 @@ function App(){
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
   const [tab,setTab]=useState("home");
-  const [onboarded,setOnboarded]=useState(()=>!!sg("skyla_onboarded"));
+  const [onboarded,setOnboarded]=useState(()=>!!sg("skyla_onboarded_v25"));
   const [onboardStep,setOnboardStep]=useState(0);
   const [gender,setGender]=useState(()=>sg("skyla_gender")||"female");
   const [isPremium]=useState(true);
@@ -602,7 +602,7 @@ function App(){
         const isLast=onboardStep===steps.length-1;
         return(
           <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:"linear-gradient(160deg,#1a0a3d 0%,#0d1b4b 50%,#1a2a1a 100%)"}}>
-            <button onClick={()=>{ss("skyla_onboarded",true);setOnboarded(true);}} style={{position:"absolute",top:20,right:20,background:"rgba(255,255,255,.15)",border:"none",borderRadius:100,padding:"6px 14px",color:"rgba(255,255,255,.7)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Skip</button>
+            <button onClick={()=>{ss("skyla_onboarded_v25",true);setOnboarded(true);}} style={{position:"absolute",top:20,right:20,background:"rgba(255,255,255,.15)",border:"none",borderRadius:100,padding:"6px 14px",color:"rgba(255,255,255,.7)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Skip</button>
             <div style={{textAlign:"center",maxWidth:320}}>
               <div style={{fontSize:72,marginBottom:16,animation:"float 2s ease-in-out infinite"}}>{step.emoji}</div>
               <div style={{fontFamily:"'Fraunces',serif",fontSize:32,fontWeight:900,color:"white",marginBottom:12,lineHeight:1.2}}>{step.title}</div>
@@ -610,7 +610,7 @@ function App(){
               <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:32}}>
                 {steps.map((_,i)=><div key={i} style={{width:i===onboardStep?24:8,height:8,borderRadius:100,background:i===onboardStep?"#a78bfa":"rgba(255,255,255,.3)",transition:"all .3s"}}/>)}
               </div>
-              <button onClick={()=>{if(isLast){ss("skyla_onboarded",true);setOnboarded(true);}else{setOnboardStep(s=>s+1);}}} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"14px 40px",fontSize:16,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 8px 32px rgba(124,58,237,.4)",touchAction:"manipulation"}}>{isLast?"Let's go! 🌤️":"Next →"}</button>
+              <button onClick={()=>{if(isLast){ss("skyla_onboarded_v25",true);setOnboarded(true);}else{setOnboardStep(s=>s+1);}}} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"14px 40px",fontSize:16,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 8px 32px rgba(124,58,237,.4)",touchAction:"manipulation"}}>{isLast?"Let's go! 🌤️":"Next →"}</button>
             </div>
           </div>
         );
