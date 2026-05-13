@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v2.4 -->
+<!DOCTYPE html><!-- Skyla v2.5 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -591,9 +591,12 @@ function App(){
       {!onboarded&&(()=>{
         const steps=[
           {emoji:"🌤️",title:"Welcome to Skyla!",desc:"Your personal AI weather companion. Skyla tells you exactly what to wear, what to pack, and what to expect — every single day."},
-          {emoji:"👗",title:"Outfit advice made easy",desc:"Tell Skyla what time you're going out and she'll pick the perfect outfit for the weather. No more getting caught in the rain!"},
-          {emoji:"🔥",title:"Build your streak",desc:"Check in daily to grow your streak. Hit milestones to unlock special rewards from Skyla!"},
-          {emoji:"🎙️",title:"Hear Skyla speak",desc:"Tap 'Hear Skyla' to get your personalised weather forecast read aloud. Like having a friend tell you the forecast!"},
+          {emoji:"👗",title:"Your perfect outfit, sorted",desc:"Tell Skyla what time you're going out and Girl Skyla or Boy Skyla will pick the perfect outfit for the weather. No more getting caught in the rain! Find this on the Home screen."},
+          {emoji:"🕐",title:"Weather by the hour",desc:"Get specific weather advice based on the exact time you're heading out — including when rain is due. Tap 'What time are you going out?' on the Home screen."},
+          {emoji:"📅",title:"Plan around the weather",desc:"Planning a party, wedding or day out? Use the Plan tab to check future weather for any event so you're never caught off guard."},
+          {emoji:"✈️",title:"Holiday packing made easy",desc:"Heading abroad? The Search tab tells you the average temperature anywhere in the world so you know exactly what to pack."},
+          {emoji:"🚆",title:"Travel & family weather",desc:"Check weather travel updates and see forecasts for family and friends based on their location — all in the Search tab."},
+          {emoji:"🔥",title:"Build your streak",desc:"Check in daily to grow your streak and unlock special rewards from Skyla. Your streak counter is top left on the Home screen!"},
         ];
         const step=steps[onboardStep];
         const isLast=onboardStep===steps.length-1;
