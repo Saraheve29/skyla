@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v2.6 -->
+<!DOCTYPE html><!-- Skyla v2.7 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -690,12 +690,6 @@ function App(){
             <div style={{fontSize:12,opacity:.6,color:"white",marginTop:4}}>days in a row!</div>
           </div>
         </div>}
-        {/* CITY SEARCH HINT */}
-        <div onPointerUp={()=>setTab("search")} style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,cursor:"pointer",background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"8px 16px",touchAction:"manipulation"}}>
-          <span style={{fontSize:13}}>🔍</span>
-          <span style={{fontSize:12,fontWeight:600,opacity:.8}}>Search another location</span>
-          <span style={{fontSize:11,opacity:.5,marginLeft:"auto"}}>tap →</span>
-        </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
           <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
@@ -762,6 +756,11 @@ function App(){
         </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🕐 What time are you going out?</div>
+          <div onPointerUp={()=>setTab("search")} style={{display:"flex",alignItems:"center",gap:6,margin:"10px 0",cursor:"pointer",background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"8px 16px",touchAction:"manipulation"}}>
+            <span style={{fontSize:13}}>🔍</span>
+            <span style={{fontSize:12,fontWeight:600,opacity:.8}}>Search another location</span>
+            <span style={{fontSize:11,opacity:.5,marginLeft:"auto"}}>tap →</span>
+          </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <input type="text" value={goOutTime} onChange={e=>{
               const t=e.target.value;
