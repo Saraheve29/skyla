@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v3.0 Update3 -->
+<!DOCTYPE html><!-- Skyla v2.4 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -90,7 +90,7 @@ function plainEnglish(w){
 function BG({type}){
   const s=SC[type]||SC.partly;
   return(
-    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,background:s.bg,zIndex:-1,overflow:"hidden",pointerEvents:"none"}}>
       {type==="sunny"&&<>
         <div style={{position:"absolute",top:"-20px",right:"-20px",width:"220px",height:"220px",borderRadius:"50%",background:"radial-gradient(circle,#FFD700,#FF8C00)",opacity:.6,filter:"blur(2px)"}}/>
         <div style={{position:"absolute",top:"20px",right:"20px",width:"140px",height:"140px",borderRadius:"50%",background:"radial-gradient(circle,#FFFF88,#FFD700)",opacity:.9}}/>
@@ -196,6 +196,8 @@ function App(){
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
   const [tab,setTab]=useState("home");
+  const [onboarded,setOnboarded]=useState(()=>!!sg("skyla_onboarded"));
+  const [onboardStep,setOnboardStep]=useState(0);
   const [gender,setGender]=useState(()=>sg("skyla_gender")||"female");
   const [isPremium]=useState(true);
   const [talking,setTalking]=useState(false);
@@ -585,34 +587,66 @@ function App(){
   return(
     <div style={{minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:S.text,paddingBottom:80}}>
       <BG type={type}/>
-      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1}}>
+
+      {!onboarded&&(()=>{
+        const steps=[
+          {emoji:"🌤️",title:"Welcome to Skyla!",desc:"Your personal AI weather companion. Skyla tells you exactly what to wear, what to pack, and what to expect — every single day."},
+          {emoji:"👗",title:"Outfit advice made easy",desc:"Tell Skyla what time you're going out and she'll pick the perfect outfit for the weather. No more getting caught in the rain!"},
+          {emoji:"🔥",title:"Build your streak",desc:"Check in daily to grow your streak. Hit milestones to unlock special rewards from Skyla!"},
+          {emoji:"🎙️",title:"Hear Skyla speak",desc:"Tap 'Hear Skyla' to get your personalised weather forecast read aloud. Like having a friend tell you the forecast!"},
+        ];
+        const step=steps[onboardStep];
+        const isLast=onboardStep===steps.length-1;
+        return(
+          <div style={{position:"fixed",inset:0,zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,background:"linear-gradient(160deg,#1a0a3d 0%,#0d1b4b 50%,#1a2a1a 100%)"}}>
+            <button onClick={()=>{ss("skyla_onboarded",true);setOnboarded(true);}} style={{position:"absolute",top:20,right:20,background:"rgba(255,255,255,.15)",border:"none",borderRadius:100,padding:"6px 14px",color:"rgba(255,255,255,.7)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Skip</button>
+            <div style={{textAlign:"center",maxWidth:320}}>
+              <div style={{fontSize:72,marginBottom:16,animation:"float 2s ease-in-out infinite"}}>{step.emoji}</div>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:32,fontWeight:900,color:"white",marginBottom:12,lineHeight:1.2}}>{step.title}</div>
+              <div style={{fontSize:15,color:"rgba(255,255,255,.75)",lineHeight:1.6,marginBottom:40}}>{step.desc}</div>
+              <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:32}}>
+                {steps.map((_,i)=><div key={i} style={{width:i===onboardStep?24:8,height:8,borderRadius:100,background:i===onboardStep?"#a78bfa":"rgba(255,255,255,.3)",transition:"all .3s"}}/>)}
+              </div>
+              <button onClick={()=>{if(isLast){ss("skyla_onboarded",true);setOnboarded(true);}else{setOnboardStep(s=>s+1);}}} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"14px 40px",fontSize:16,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 8px 32px rgba(124,58,237,.4)",touchAction:"manipulation"}}>{isLast?"Let's go! 🌤️":"Next →"}</button>
+            </div>
+          </div>
+        );
+      })()}
+      <div style={{maxWidth:430,margin:"0 auto",padding:"0 16px",position:"relative",zIndex:1,isolation:"isolate"}}>
 
         {/* TOP BAR */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",position:"relative",zIndex:10}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
             <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
-              <span style={{fontSize:14}}>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
+              <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:16,fontWeight:700}}>{clock.getHours()}:{String(clock.getMinutes()).padStart(2,"0")}</div>
               <div style={{fontSize:10,opacity:.55}}>{city}</div>
             </div>
-
+            
           </div>
         </div>
 
         {showStreakPopup&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setShowStreakPopup(false)}>
-          <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid "+S.acc,borderRadius:24,padding:28,textAlign:"center",maxWidth:300}}>
-            <div style={{fontSize:48,marginBottom:12}}>🔥</div>
+          <div style={{background:"linear-gradient(135deg,#1a0a3d,#2d1b69)",border:"3px solid "+S.acc,borderRadius:28,padding:32,boxShadow:"0 0 60px "+S.acc+"55",textAlign:"center",maxWidth:300}}>
+            <div style={{fontSize:60,marginBottom:8,animation:"float 2s ease-in-out infinite"}}>{streak>=100?"👑":streak>=50?"🌈":streak>=30?"🏆":streak>=14?"💜":"🎉"}</div>
             <div style={{fontSize:16,fontWeight:800,color:"white",marginBottom:8,lineHeight:1.4}}>{streakMsg}</div>
             <div style={{fontSize:12,opacity:.6,color:"white",marginBottom:20}}>Tap anywhere to continue</div>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:48,fontWeight:900,color:S.acc}}>{streak}</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:56,fontWeight:900,color:S.acc}}>{streak}</div>
             <div style={{fontSize:12,opacity:.6,color:"white",marginTop:4}}>days in a row!</div>
           </div>
         </div>}
+        {/* CITY SEARCH HINT */}
+        <div onPointerUp={()=>setTab("search")} style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,cursor:"pointer",background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"8px 16px",touchAction:"manipulation"}}>
+          <span style={{fontSize:13}}>🔍</span>
+          <span style={{fontSize:12,fontWeight:600,opacity:.8}}>Search another location</span>
+          <span style={{fontSize:11,opacity:.5,marginLeft:"auto"}}>tap →</span>
+        </div>
         {/* WEATHER WARNINGS */}
         {alerts.length===0?(
           <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
@@ -677,10 +711,6 @@ function App(){
             </button>
           ))}
         </div>}
-        {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10,display:"flex",gap:8,alignItems:"center"}}>
-          <input id="scity2" type="text" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="🔍 Search another city..." autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.15)",border:"1px solid "+S.bdr,borderRadius:100,padding:"10px 16px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-          <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,padding:"10px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",flexShrink:0}}>Go</button>
-        </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🕐 What time are you going out?</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -714,7 +744,7 @@ function App(){
               const feels=h.feels||h.temp;
               const wearNote=feels<=6?" Wrap up warm — feels like "+feels+"C!":feels<=12?" A coat is a must — feels like "+feels+"C.":feels<=17?" A light jacket would be perfect — "+feels+"C.":feels>=22?" Light clothes — "+feels+"C.":"";
               setGoOutMsg({text:msg+wearNote,icon,color});
-            }} placeholder="e.g. 2pm or 14:00" autoComplete="off" autoCorrect="off" inputMode="text" style={{flex:1,background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 14px",fontSize:15,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",WebkitAppearance:"none"}}/>
+            }} placeholder="e.g. 2pm or 14:00" autoComplete="off" style={{flex:1,background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 14px",fontSize:15,fontWeight:700,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
             {goOutTime&&<button onClick={()=>{setGoOutTime("");setGoOutMsg(null);}} style={{background:"rgba(255,255,255,.2)",border:"1px solid "+S.bdr,borderRadius:12,padding:"10px 12px",fontSize:12,color:S.sub,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>Clear</button>}
           </div>
           {goOutMsg&&<div style={{marginTop:8,display:"flex",alignItems:"flex-start",gap:8,background:"rgba(255,255,255,.15)",borderRadius:12,padding:"10px 12px"}}>
@@ -1002,10 +1032,10 @@ function App(){
 
         {/* SEARCH TAB */}
         {tab==="search"&&(
-          <div>
+          <div style={{position:"relative",zIndex:50,pointerEvents:"all"}}>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              <input id="scity" type="text" onInput={e=>{window._scity=e.target.value;}} onChange={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" autoCorrect="off" autoCapitalize="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
-              <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:18,cursor:"pointer",flexShrink:0}}>🔍</button>
+              <input id="scity" onInput={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100,position:"relative",zIndex:5,pointerEvents:"all"}}/>
+              <button onClick={searchCity} onTouchEnd={(e)=>{e.preventDefault();searchCity();}} style={{background:S.acc,border:"none",borderRadius:100,width:46,height:46,fontSize:20,cursor:"pointer",flexShrink:0,touchAction:"manipulation"}}>🔍</button>
             </div>
             {searching&&<div style={{...G,padding:"16px",textAlign:"center",opacity:.6,fontSize:13}}>Searching...</div>}
             {searchWx&&(()=>{
@@ -1183,13 +1213,7 @@ function App(){
         {/* MORE TAB */}
         {tab==="more"&&(
           <div>
-            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{width:"100%",background:"linear-gradient(90deg,#E91E8C,#FF6B35,#FFB300,#43A047,#1E88E5,#8E24AA)",border:"none",borderRadius:16,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
-              <span style={{fontSize:24}}>⭐</span>
-              <div style={{textAlign:"left"}}>
-                <div style={{fontSize:13,fontWeight:800,color:"white"}}>Rate Skyla on Play Store</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.85)",marginTop:2}}>Your review helps others find Skyla!</div>
-              </div>
-            </button>
+
             <div style={{...G,padding:"18px",marginBottom:12,border:"1px solid "+S.acc+"35"}}>
               <Lbl>Morning Briefing</Lbl>
               <div style={{fontSize:12,opacity:.6,marginBottom:10}}>Get a daily weather briefing at your chosen time.</div>
