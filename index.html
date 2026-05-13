@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v2.5 -->
+<!DOCTYPE html><!-- Skyla v2.6 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -206,6 +206,8 @@ function App(){
   const [streak,setStreak]=useState(()=>sg("skyla_streak")||0);
   const [streakMsg,setStreakMsg]=useState("");
   const [showStreakPopup,setShowStreakPopup]=useState(false);
+  const [showStreakPanel,setShowStreakPanel]=useState(false);
+  const [claimedRewards,setClaimedRewards]=useState(()=>sg("skyla_claimed")||[]);
   const [quickAns,setQuickAns]=useState(null);
   const [pickedH,setPickedH]=useState(null);
   const [pickedD,setPickedD]=useState(null);
@@ -621,8 +623,8 @@ function App(){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",position:"relative",zIndex:10}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
-            <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
-              <span>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
+            <div onPointerUp={()=>setShowStreakPanel(true)} style={{...G,padding:"3px 10px",display:"flex",alignItems:"center",gap:4,borderRadius:100,cursor:"pointer",touchAction:"manipulation"}}>
+              <span style={{animation:"float 2s ease-in-out infinite",display:"inline-block"}}>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
             <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
           </div>
@@ -635,6 +637,50 @@ function App(){
           </div>
         </div>
 
+        {showStreakPanel&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:9998,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 0 0"}} onClick={()=>setShowStreakPanel(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#1a0a3d,#2d1b69)",borderRadius:"28px 28px 0 0",padding:"24px 20px 36px",width:"100%",maxWidth:430,boxShadow:"0 -8px 60px rgba(124,58,237,.5)"}}>
+            <div style={{width:40,height:4,background:"rgba(255,255,255,.3)",borderRadius:100,margin:"0 auto 20px"}}/>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{fontSize:56,animation:"float 2s ease-in-out infinite"}}>🔥</div>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:48,fontWeight:900,color:"#a78bfa",lineHeight:1}}>{streak}</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,.6)",marginTop:2}}>day streak</div>
+            </div>
+            {(()=>{
+              const REWARDS=[
+                {days:7,emoji:"🌟",label:"Gold Star Badge"},
+                {days:14,emoji:"💜",label:"Purple Theme"},
+                {days:30,emoji:"🏆",label:"Trophy Badge"},
+                {days:50,emoji:"🌈",label:"Rainbow Theme"},
+                {days:100,emoji:"👑",label:"Skyla Superfan Crown"},
+              ];
+              const next=REWARDS.find(r=>streak<r.days);
+              return(<>
+                {next&&<div style={{background:"rgba(255,255,255,.1)",borderRadius:16,padding:"10px 14px",marginBottom:16,textAlign:"center"}}>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:4}}>Next reward in</div>
+                  <div style={{fontSize:18,fontWeight:800,color:"#a78bfa"}}>{next.days-streak} days {next.emoji} {next.label}</div>
+                </div>}
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {REWARDS.map(r=>{
+                    const unlocked=streak>=r.days;
+                    const claimed=claimedRewards.includes(r.days);
+                    return(
+                      <div key={r.days} style={{display:"flex",alignItems:"center",gap:12,background:unlocked?"rgba(167,139,250,.2)":"rgba(255,255,255,.06)",borderRadius:14,padding:"12px 14px",border:unlocked?"1px solid rgba(167,139,250,.5)":"1px solid rgba(255,255,255,.1)"}}>
+                        <div style={{fontSize:28,opacity:unlocked?1:.4}}>{r.emoji}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:13,fontWeight:800,color:unlocked?"white":"rgba(255,255,255,.4)"}}>{r.label}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,.4)"}}>{r.days} day streak</div>
+                        </div>
+                        {unlocked&&!claimed&&<button onPointerUp={()=>{const c=[...claimedRewards,r.days];setClaimedRewards(c);ss("skyla_claimed",c);}} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"6px 14px",fontSize:11,fontWeight:800,color:"white",cursor:"pointer",touchAction:"manipulation"}}>Claim!</button>}
+                        {claimed&&<div style={{fontSize:18}}>✅</div>}
+                        {!unlocked&&<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>🔒</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>);
+            })()}
+          </div>
+        </div>}
         {showStreakPopup&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setShowStreakPopup(false)}>
           <div style={{background:"linear-gradient(135deg,#1a0a3d,#2d1b69)",border:"3px solid "+S.acc,borderRadius:28,padding:32,boxShadow:"0 0 60px "+S.acc+"55",textAlign:"center",maxWidth:300}}>
             <div style={{fontSize:60,marginBottom:8,animation:"float 2s ease-in-out infinite"}}>{streak>=100?"👑":streak>=50?"🌈":streak>=30?"🏆":streak>=14?"💜":"🎉"}</div>
