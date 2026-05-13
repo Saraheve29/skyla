@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v2.8 -->
+<!DOCTYPE html><!-- Skyla v2.9 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -756,10 +756,17 @@ function App(){
         </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🕐 What time are you going out?</div>
-          <div onPointerUp={()=>setTab("search")} style={{display:"flex",alignItems:"center",gap:6,margin:"10px 0",cursor:"pointer",background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"8px 16px",touchAction:"manipulation"}}>
-            <span style={{fontSize:13}}>🔍</span>
-            <span style={{fontSize:12,fontWeight:600,opacity:.8}}>Search another location</span>
-            <span style={{fontSize:11,opacity:.5,marginLeft:"auto"}}>tap →</span>
+          <div style={{margin:"10px 0",borderRadius:16,overflow:"hidden",border:"1px solid rgba(255,255,255,.25)",display:"flex",background:"rgba(255,255,255,.12)"}}>
+            <input
+              placeholder="🔍  Search another location..."
+              autoComplete="off"
+              style={{flex:1,background:"transparent",border:"none",padding:"11px 14px",fontSize:13,fontWeight:600,color:"white",fontFamily:"'DM Sans',sans-serif",outline:"none",minWidth:0}}
+              onKeyDown={(e)=>{if(e.key==="Enter"&&e.target.value.trim()){window._scity=e.target.value.trim();setTab("search");}}}
+            />
+            <button
+              style={{background:"#7c3aed",border:"none",padding:"11px 18px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",touchAction:"manipulation",flexShrink:0}}
+              onPointerUp={(e)=>{e.stopPropagation();var inp=e.currentTarget.previousSibling;var v=inp?inp.value.trim():"";if(!v)return;window._scity=v;setTab("search");}}
+            >Go</button>
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <input type="text" value={goOutTime} onChange={e=>{
