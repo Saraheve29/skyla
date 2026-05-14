@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v3.1 -->
+<!DOCTYPE html><!-- Skyla v3.2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -207,6 +207,7 @@ function App(){
   const [streakMsg,setStreakMsg]=useState("");
   const [showStreakPopup,setShowStreakPopup]=useState(false);
   const [showStreakPanel,setShowStreakPanel]=useState(false);
+  const [showShare,setShowShare]=useState(false);
   const [claimedRewards,setClaimedRewards]=useState(()=>sg("skyla_claimed")||[]);
   const [quickAns,setQuickAns]=useState(null);
   const [pickedH,setPickedH]=useState(null);
@@ -623,10 +624,11 @@ function App(){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",position:"relative",zIndex:10}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
-            <div onPointerUp={()=>setShowStreakPanel(true)} style={{...G,padding:"3px 10px",display:"flex",alignItems:"center",gap:4,borderRadius:100,cursor:"pointer",touchAction:"manipulation"}}>
+            <div onClick={()=>setShowStreakPanel(true)} onPointerUp={()=>setShowStreakPanel(true)} style={{...G,padding:"3px 10px",display:"flex",alignItems:"center",gap:4,borderRadius:100,cursor:"pointer",touchAction:"manipulation",position:"relative",zIndex:20}}>
               <span style={{animation:"float 2s ease-in-out infinite",display:"inline-block"}}>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
             <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review","_blank")} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif"}}>&#x2605;<span style={{fontSize:9,fontWeight:800,color:S.text}}>Rate</span></button>
+            <button onClick={()=>setShowShare(true)} style={{background:"rgba(255,255,255,.25)",border:"1px solid rgba(255,255,255,.4)",borderRadius:100,padding:"3px 9px",cursor:"pointer",display:"flex",alignItems:"center",gap:2,flexShrink:0,fontFamily:"'DM Sans',sans-serif",position:"relative",zIndex:20,touchAction:"manipulation"}}><span style={{fontSize:11,fontWeight:900}}>📤 Share</span></button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{textAlign:"right"}}>
@@ -637,6 +639,25 @@ function App(){
           </div>
         </div>
 
+        {showShare&&<div onClick={()=>setShowShare(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:9997,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#1a0a3d,#2d1b69)",borderRadius:"28px 28px 0 0",padding:"24px 20px 40px",width:"100%",maxWidth:430,boxShadow:"0 -8px 60px rgba(124,58,237,.5)"}}>
+            <div style={{width:40,height:4,background:"rgba(255,255,255,.3)",borderRadius:100,margin:"0 auto 20px"}}/>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{fontSize:40,marginBottom:8}}>📤</div>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"white",marginBottom:6}}>Share today's weather</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,.6)",marginBottom:20}}>Let friends and family know what to expect today in {city}!</div>
+              <div style={{background:"rgba(255,255,255,.1)",borderRadius:16,padding:16,marginBottom:20,textAlign:"left"}}>
+                <div style={{fontSize:13,fontWeight:700,color:"white",marginBottom:4"}}>📍 {city}</div>
+                <div style={{fontSize:28,fontWeight:900,color:"white"}}>{wx?Math.round(wx.temp):"--"}°C</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>{wx?"Feels like "+Math.round(wx.feels)+"°C":""} · Check Skyla for the full forecast!</div>
+              </div>
+              <button onClick={()=>{
+                const txt="Today in "+city+": "+( wx?Math.round(wx.temp):"--")+"°C, feels like "+(wx?Math.round(wx.feels):"--")+"°C. Get the full forecast on Skyla! 🌤️ https://skyla-lake.vercel.app";
+                if(navigator.share){navigator.share({title:"Skyla Weather",text:txt});}else{navigator.clipboard.writeText(txt).then(()=>alert("Copied to clipboard!"));}
+              }} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"14px 40px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",width:"100%",touchAction:"manipulation",fontFamily:"'DM Sans',sans-serif",boxShadow:"0 8px 32px rgba(124,58,237,.4)"}}>Share now 📤</button>
+            </div>
+          </div>
+        </div>}
         {showStreakPanel&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:9998,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 0 0"}} onClick={()=>setShowStreakPanel(false)}>
           <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#1a0a3d,#2d1b69)",borderRadius:"28px 28px 0 0",padding:"24px 20px 36px",width:"100%",maxWidth:430,boxShadow:"0 -8px 60px rgba(124,58,237,.5)"}}>
             <div style={{width:40,height:4,background:"rgba(255,255,255,.3)",borderRadius:100,margin:"0 auto 20px"}}/>
