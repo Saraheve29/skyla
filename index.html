@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Skyla v3.2 -->
+<!DOCTYPE html><!-- Skyla v3.4 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -209,6 +209,7 @@ function App(){
   const [showStreakPanel,setShowStreakPanel]=useState(false);
   const [showShare,setShowShare]=useState(false);
   const [claimedRewards,setClaimedRewards]=useState(()=>sg("skyla_claimed")||[]);
+  const [activeReward,setActiveReward]=useState(()=>sg("skyla_active_reward")||null);
   const [quickAns,setQuickAns]=useState(null);
   const [pickedH,setPickedH]=useState(null);
   const [pickedD,setPickedD]=useState(null);
@@ -245,7 +246,14 @@ function App(){
     return wx;
   })();
   const type=DWX?wxType(DWX.code,DWX.isDay):"partly";
-  const S=SC[type];
+  const S=(()=>{
+    const base={...SC[type]};
+    if(activeReward==="purple"){base.acc="#a78bfa";base.bdr="rgba(167,139,250,.5)";}
+    if(activeReward==="rainbow"){base.acc="url(#rainbow)";base.bdr="rgba(255,100,200,.5)";}
+    if(activeReward==="gold"){base.acc="#FFD700";base.bdr="rgba(255,215,0,.5)";}
+    if(activeReward==="crown"){base.acc="#FFD700";base.bdr="rgba(255,215,0,.6)";}
+    return base;
+  })();
   const G={background:"rgba(255,255,255,.17)",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",border:"1px solid "+S.bdr,borderRadius:24};
   const PE=DWX?plainEnglish(DWX):{verdict:"",feel:"",windWord:"",rainWord:"",deceiving:false,coldGap:0};
 
@@ -590,6 +598,9 @@ function App(){
   return(
     <div style={{minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:S.text,paddingBottom:80}}>
       <BG type={type}/>
+      {activeReward==="rainbow"&&<div style={{position:"fixed",inset:0,background:"linear-gradient(135deg,rgba(255,0,128,.15),rgba(255,140,0,.1),rgba(255,224,0,.1),rgba(64,224,208,.1),rgba(168,85,247,.15))",zIndex:0,pointerEvents:"none",animation:"float 4s ease-in-out infinite"}}/>}
+      {activeReward==="purple"&&<div style={{position:"fixed",inset:0,background:"rgba(124,58,237,.12)",zIndex:0,pointerEvents:"none"}}/>}
+      {activeReward==="crown"&&<div style={{position:"fixed",inset:0,background:"rgba(255,215,0,.08)",zIndex:0,pointerEvents:"none"}}/>}
 
       {!onboarded&&(()=>{
         const steps=[
@@ -623,7 +634,7 @@ function App(){
         {/* TOP BAR */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",position:"relative",zIndex:10}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
+            <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}} className={activeReward==="rainbow"?"rainbow-text":activeReward==="gold"?"gold-glow":activeReward==="crown"?"crown-glow":activeReward==="purple"?"purple-glow":""}>Skyla</span>
             <div onClick={()=>setShowStreakPanel(true)} onPointerUp={()=>setShowStreakPanel(true)} style={{...G,padding:"3px 10px",display:"flex",alignItems:"center",gap:4,borderRadius:100,cursor:"pointer",touchAction:"manipulation",position:"relative",zIndex:20}}>
               <span style={{animation:"float 2s ease-in-out infinite",display:"inline-block"}}>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
             </div>
@@ -642,6 +653,7 @@ function App(){
         {showShare&&<div onClick={()=>setShowShare(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:9997,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#1a0a3d,#2d1b69)",borderRadius:"28px 28px 0 0",padding:"24px 20px 40px",width:"100%",maxWidth:430,boxShadow:"0 -8px 60px rgba(124,58,237,.5)"}}>
             <div style={{width:40,height:4,background:"rgba(255,255,255,.3)",borderRadius:100,margin:"0 auto 20px"}}/>
+            {activeReward&&<button onPointerUp={()=>{setActiveReward(null);ss("skyla_active_reward",null);}} style={{position:"absolute",top:20,right:20,background:"rgba(255,255,255,.15)",border:"none",borderRadius:100,padding:"5px 12px",fontSize:11,fontWeight:700,color:"rgba(255,255,255,.7)",cursor:"pointer",touchAction:"manipulation",fontFamily:"'DM Sans',sans-serif"}}>↩ Default</button>}
             <div style={{textAlign:"center",marginBottom:20}}>
               <div style={{fontSize:40,marginBottom:8}}>📤</div>
               <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"white",marginBottom:6}}>Share today's weather</div>
@@ -675,6 +687,7 @@ function App(){
                 {days:100,emoji:"👑",label:"Skyla Superfan Crown"},
               ];
               const next=REWARDS.find(r=>streak<r.days);
+              const rewardKeyMap={7:"gold",14:"purple",30:"trophy",50:"rainbow",100:"crown"};
               return(<>
                 {next&&<div style={{background:"rgba(255,255,255,.1)",borderRadius:16,padding:"10px 14px",marginBottom:16,textAlign:"center"}}>
                   <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:4}}>Next reward in</div>
@@ -691,8 +704,22 @@ function App(){
                           <div style={{fontSize:13,fontWeight:800,color:unlocked?"white":"rgba(255,255,255,.4)"}}>{r.label}</div>
                           <div style={{fontSize:11,color:"rgba(255,255,255,.4)"}}>{r.days} day streak</div>
                         </div>
-                        {unlocked&&!claimed&&<button onPointerUp={()=>{const c=[...claimedRewards,r.days];setClaimedRewards(c);ss("skyla_claimed",c);}} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"6px 14px",fontSize:11,fontWeight:800,color:"white",cursor:"pointer",touchAction:"manipulation"}}>Claim!</button>}
-                        {claimed&&<div style={{fontSize:18}}>✅</div>}
+                        {unlocked&&!claimed&&<button onPointerUp={()=>{
+                          const c=[...claimedRewards,r.days];
+                          setClaimedRewards(c);
+                          ss("skyla_claimed",c);
+                          const rewardKey=r.days===7?"gold":r.days===14?"purple":r.days===30?"trophy":r.days===50?"rainbow":"crown";
+                          setActiveReward(rewardKey);
+                          ss("skyla_active_reward",rewardKey);
+                          setShowStreakPanel(false);
+                        }} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"6px 14px",fontSize:11,fontWeight:800,color:"white",cursor:"pointer",touchAction:"manipulation"}}>Claim!</button>}
+                        {claimed&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                        <div style={{fontSize:16}}>✅</div>
+                        {activeReward===rewardKeyMap[r.days]
+                          ?<div style={{fontSize:9,fontWeight:800,color:"#a78bfa",background:"rgba(167,139,250,.2)",borderRadius:100,padding:"2px 8px"}}>ACTIVE</div>
+                          :<button onPointerUp={()=>{setActiveReward(rewardKeyMap[r.days]);ss("skyla_active_reward",rewardKeyMap[r.days]);}} style={{fontSize:9,fontWeight:800,color:"white",background:"rgba(255,255,255,.2)",border:"none",borderRadius:100,padding:"3px 8px",cursor:"pointer",touchAction:"manipulation"}}>Use</button>
+                        }
+                      </div>}
                         {!unlocked&&<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>🔒</div>}
                       </div>
                     );
@@ -741,7 +768,14 @@ function App(){
         {/* CHARACTER + TEMP */}
         <div style={{display:"flex",alignItems:"flex-end",gap:4,marginBottom:8}}>
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-            <SkylaChar type={type} gender={gender}/>
+            <div style={{position:"relative",display:"inline-block"}}>
+              {activeReward==="crown"&&<div style={{position:"absolute",top:-28,left:"50%",transform:"translateX(-50%)",fontSize:28,animation:"float 2s ease-in-out infinite"}} className="crown-glow">👑</div>}
+              {activeReward==="gold"&&<div style={{position:"absolute",top:-24,left:"50%",transform:"translateX(-50%)",fontSize:22,animation:"float 2s ease-in-out infinite"}} className="gold-glow">🌟</div>}
+              {activeReward==="trophy"&&<div style={{position:"absolute",top:-24,left:"50%",transform:"translateX(-50%)",fontSize:22,animation:"float 2s ease-in-out infinite"}}>🏆</div>}
+              {activeReward==="rainbow"&&<div style={{position:"absolute",top:-24,left:"50%",transform:"translateX(-50%)",fontSize:22,animation:"float 2s ease-in-out infinite"}}>🌈</div>}
+              {activeReward==="purple"&&<div style={{position:"absolute",top:-24,left:"50%",transform:"translateX(-50%)",fontSize:22,animation:"float 2s ease-in-out infinite"}}>💜</div>}
+              <SkylaChar type={type} gender={gender}/>
+            </div>
             <div style={{display:"flex",gap:4,background:"rgba(255,255,255,.18)",border:"1px solid rgba(255,255,255,.3)",borderRadius:100,padding:"3px"}}>
               {[{id:"female",label:"Girl"},{id:"male",label:"Boy"}].map(o=>(
                 <button key={o.id} onClick={()=>{setGender(o.id);ss("skyla_gender",o.id);}} style={{background:gender===o.id?S.acc:"transparent",border:"none",borderRadius:100,padding:"5px 12px",cursor:"pointer",fontSize:10,fontWeight:800,color:gender===o.id?"white":S.sub,fontFamily:"'DM Sans',sans-serif"}}>
