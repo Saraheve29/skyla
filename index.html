@@ -299,11 +299,9 @@ function App(){
       setWx(newWx);
       buildAlerts(newWx);
       const today=new Date().toDateString();
-      
-      const vs=window.speechSynthesis.getVoices();
-      if(vs.length>0){doSpeak();}
-      else{window.speechSynthesis.onvoiceschanged=()=>doSpeak();}
-    }
+      await getAI(newWx);
+    }catch(e){setError("Could not get your location. Please allow location access and try again. On Chrome: click the padlock 🔒 in the address bar → Allow Location. On Firefox: click the arrow icon in address bar.");}
+    setLoading(false);
   }
 
   function quickAsk(key,icon){
@@ -1267,7 +1265,6 @@ function App(){
           Refresh Skyla
         </button>
       </div>
-    
       {showShare&&<div onClick={()=>setShowShare(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:9997,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#1a0a3d,#2d1b69)",borderRadius:"28px 28px 0 0",padding:"24px 20px 40px",width:"100%",maxWidth:430}}>
             <div style={{width:40,height:4,background:"rgba(255,255,255,.3)",borderRadius:100,margin:"0 auto 20px"}}/>
@@ -1283,7 +1280,8 @@ function App(){
               <button onClick={()=>{const txt="Today in "+city+": "+(wx?Math.round(wx.temp):"--")+"°C, feels like "+(wx?Math.round(wx.feels):"--")+"°C. Get the full forecast on Skyla! 🌤️ https://skyla-lake.vercel.app";if(navigator.share){navigator.share({title:"Skyla Weather",text:txt});}else{navigator.clipboard.writeText(txt).then(()=>alert("Copied to clipboard!"));}}} style={{background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:100,padding:"14px 40px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",width:"100%",touchAction:"manipulation",fontFamily:"'DM Sans',sans-serif"}}>Share now 📤</button>
             </div>
           </div>
-        </div>}</div>
+        </div>}
+    </div>
   );
 }
 
