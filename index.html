@@ -450,6 +450,32 @@ function App(){
     setTimeout(()=>setChatMsgs(m=>[...m,{role:"skyla",text:reply}]),300);
   }
 
+  async function loadNewCity(){
+    const val=window._scity||"";
+    if(!val.trim())return;
+    try{
+      const g=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(val.trim())+"&count=1").then(r=>r.json());
+      if(!g.results||!g.results[0])return;
+      const{latitude:la,longitude:lo,name:cn,country:co}=g.results[0];
+      setCity(cn+", "+co);
+      const url="https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weathercode,is_day&hourly=temperature_2m,apparent_temperature,weathercode,precipitation_probability,wind_speed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=7";
+      const d=await fetch(url).then(r=>r.json());
+      const cu=d.current;const hr=new Date().getHours();
+      const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const shorts=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const allHourly=d.hourly.time.map((t,i)=>{const dt=new Date(t);const h=dt.getHours();const lbl=h===0?"12am":h<12?h+"am":h===12?"12pm":(h-12)+"pm";const dayStr=dt.toDateString();return{h,lbl,temp:Math.round(d.hourly.temperature_2m[i]),feels:Math.round(d.hourly.apparent_temperature[i]),code:d.hourly.weathercode[i],rain:d.hourly.precipitation_probability[i]||0,wind:Math.round(d.hourly.wind_speed_10m[i]||0),dayStr};});
+      const todayStr=new Date().toDateString();
+      const hourly=allHourly.filter(h=>h.dayStr===todayStr);
+      const hourlyByDay={};allHourly.forEach(h=>{if(!hourlyByDay[h.dayStr])hourlyByDay[h.dayStr]=[];hourlyByDay[h.dayStr].push(h);});
+      const week=d.daily.time.map((t,i)=>{const dt=new Date(t);const dStr=dt.toDateString();const fmtT=s=>{if(!s)return"";const sd=new Date(s);const h=sd.getHours();const m=sd.getMinutes();return(h===0?12:h>12?h-12:h)+":"+(m<10?"0"+m:m)+(h<12?"am":"pm");};return{day:days[dt.getDay()],short:shorts[dt.getDay()],date:t,code:d.daily.weathercode[i],max:Math.round(d.daily.temperature_2m_max[i]),min:Math.round(d.daily.temperature_2m_min[i]),feels:Math.round(d.daily.apparent_temperature_max[i]),rain:d.daily.precipitation_probability_max[i],hourly:hourlyByDay[dStr]||[],sunrise:fmtT(d.daily.sunrise?d.daily.sunrise[i]:null),sunset:fmtT(d.daily.sunset?d.daily.sunset[i]:null)};});
+      const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly,sunrise:week[0]?week[0].sunrise:"",sunset:week[0]?week[0].sunset:""};
+      setWx(newWx);setPickedD(null);setPickedH(null);
+      // Clear search box
+      window._scity="";
+      const inp=document.getElementById("scity2");
+      if(inp)inp.value="";
+    }catch(e){console.log("City search error:",e);}
+  }
   async function searchCity(){
     const val=window._scity||"";
     if(!val.trim())return;
@@ -678,8 +704,8 @@ function App(){
           ))}
         </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10,display:"flex",gap:8,alignItems:"center"}}>
-          <input id="scity2" type="text" onInput={e=>{window._scity=e.target.value;}} onChange={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="🔍 Search another city..." autoComplete="off" autoCorrect="off" style={{flex:1,background:"rgba(255,255,255,.15)",border:"1px solid "+S.bdr,borderRadius:100,padding:"10px 16px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-          <button onClick={searchCity} style={{background:S.acc,border:"none",borderRadius:100,padding:"10px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",flexShrink:0}}>Go</button>
+          <input id="scity2" type="text" onInput={e=>{window._scity=e.target.value;}} onChange={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&loadNewCity()} placeholder="🔍 Search another city..." autoComplete="off" autoCorrect="off" style={{flex:1,background:"rgba(255,255,255,.15)",border:"1px solid "+S.bdr,borderRadius:100,padding:"10px 16px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+          <button onClick={loadNewCity} style={{background:S.acc,border:"none",borderRadius:100,padding:"10px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",flexShrink:0}}>Go</button>
         </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🕐 What time are you going out?</div>
