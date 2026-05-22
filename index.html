@@ -192,10 +192,7 @@ function getWeatherWindows(hourlyData,fromHour=null){
 function App(){
   const [wx,setWx]=useState(null);
   const [showPaywall,setShowPaywall]=useState(false);
-  const [premium,setPremium]=React.useState(()=>{
-    // Check if user has premium - will be validated via Play Store billing
-    return localStorage.getItem('skyla_premium')==='true';
-  });
+  const [premium,setPremium]=useState(()=>localStorage.getItem('skyla_premium')==='true');
   const [city,setCity]=useState("Your location");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
