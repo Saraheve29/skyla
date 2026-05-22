@@ -222,7 +222,6 @@ function App(){
   const [famMembers,setFamMembers]=useState(()=>sg("skyla_fam")||[]);
   const [briefingTime,setBriefingTime]=useState(()=>sg("skyla_briefing")||"07:00");
   const [briefingSaved,setBriefingSaved]=useState(false);
-  const [showPaywall,setShowPaywall]=useState(false);
   const [showAllWarnings,setShowAllWarnings]=useState(false);
   const [aiMsgCount,setAiMsgCount]=useState(()=>{
     const today=new Date().toDateString();
