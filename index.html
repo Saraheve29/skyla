@@ -204,6 +204,8 @@ function App(){
   const [loginMode,setLoginMode]=useState('login');
   const [loginMsg,setLoginMsg]=useState('');
   const [loginLoading,setLoginLoading]=useState(false);
+  const [showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('skyla_onboarded'));
+  const [onboardStep,setOnboardStep]=useState(0);
   const [city,setCity]=useState("Your location");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
@@ -671,6 +673,18 @@ function App(){
           </div>
         </div>
 
+        {showOnboarding&&<div style={{position:"fixed",inset:0,background:"linear-gradient(135deg,#0C1A3D,#1a1a2e)",zIndex:1002,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{maxWidth:320,width:"100%",textAlign:"center"}}>
+            <div style={{fontSize:72,marginBottom:16,animation:"float 2s ease-in-out infinite"}}>{["🌤️","🧥","🤖","🗓️","⭐"][onboardStep]}</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,color:"white",marginBottom:12}}>{["Welcome to Skyla!","What to Wear","Ask Skyla Anything","Plan Your Events","Go Premium"][onboardStep]}</div>
+            <div style={{fontSize:14,color:"rgba(255,255,255,.7)",lineHeight:1.6,marginBottom:32}}>{["Your personal AI weather assistant. Never be caught out by the weather again!","Skyla tells you exactly what to wear for today and every day this week!","Type any weather question — coat? umbrella? best day this week? Skyla answers instantly!","Check the weather for weddings, BBQs, school sports days and holidays!","Unlock unlimited AI chat, voice, event planner and much more for just £3.99/month!"][onboardStep]}</div>
+            <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:24}}>
+              {[0,1,2,3,4].map(i=><div key={i} style={{width:i===onboardStep?20:6,height:6,borderRadius:100,background:i===onboardStep?"#E91E8C":"rgba(255,255,255,.3)",transition:"all .3s"}}/>)}
+            </div>
+            <button onClick={()=>{if(onboardStep<4)setOnboardStep(onboardStep+1);else{setShowOnboarding(false);localStorage.setItem('skyla_onboarded','true');}}} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"16px 20px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",marginBottom:10}}>{onboardStep<4?"Next →":"Get Started! 🚀"}</button>
+            <button onClick={()=>{setShowOnboarding(false);localStorage.setItem('skyla_onboarded','true');}} style={{background:"transparent",border:"none",fontSize:12,color:"rgba(255,255,255,.4)",cursor:"pointer"}}>Skip</button>
+          </div>
+        </div>}
         {showLogin&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
           <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid #E91E8C",borderRadius:24,padding:28,textAlign:"center",maxWidth:320,width:"100%"}}>
             <div style={{fontSize:36,marginBottom:8}}>🔐</div>
