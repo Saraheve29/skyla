@@ -191,7 +191,11 @@ function getWeatherWindows(hourlyData,fromHour=null){
 
 function App(){
   const [wx,setWx]=useState(null);
-  const premium=true;
+  const [showPaywall,setShowPaywall]=useState(false);
+  const [premium,setPremium]=React.useState(()=>{
+    // Check if user has premium - will be validated via Play Store billing
+    return localStorage.getItem('skyla_premium')==='true';
+  });
   const [city,setCity]=useState("Your location");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
@@ -418,7 +422,7 @@ function App(){
   function sendChat(){
     if(!chatInput.trim())return;
     // Check free daily limit
-    if(!premium&&aiMsgCount>=FREE_AI_LIMIT){
+    if(!premium&&aiMsgCount>=FREE_AI_LIMIT){setShowPaywall(true);
       setChatMsgs(m=>[...m,{role:"skyla",text:"💎 You have used your 3 free daily questions! Upgrade to Skyla Premium for unlimited questions, voice briefings and more — just £3.99/month with a 7-day free trial! 🩷"}]);
       setChatInput("");
       return;
@@ -630,6 +634,19 @@ function App(){
           </div>
         </div>
 
+        {showPaywall&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid #E91E8C",borderRadius:24,padding:28,textAlign:"center",maxWidth:320,width:"100%"}}>
+            <div style={{fontSize:48,marginBottom:8}}>⭐</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:900,color:"white",marginBottom:8}}>Skyla Premium</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.7)",marginBottom:16,lineHeight:1.5}}>Unlock unlimited AI weather chat, voice, event planner, holiday packing and much more!</div>
+            <div style={{background:"rgba(255,255,255,.1)",borderRadius:12,padding:"12px 16px",marginBottom:16}}>
+              <div style={{fontSize:22,fontWeight:900,color:"white"}}>£3.99<span style={{fontSize:13,fontWeight:400}}>/month</span></div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:4}}>7-day free trial • Cancel anytime</div>
+            </div>
+            <button onClick={()=>window.open("https://play.google.com/store/apps/details?id=com.skyla.weather","_blank")} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:10}}>Start Free Trial 🚀</button>
+            <button onClick={()=>setShowPaywall(false)} style={{width:"100%",background:"transparent",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"10px 20px",fontSize:12,color:"rgba(255,255,255,.6)",cursor:"pointer"}}>Maybe later</button>
+          </div>
+        </div>}
         {showStreakPopup&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setShowStreakPopup(false)}>
           <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid "+S.acc,borderRadius:24,padding:28,textAlign:"center",maxWidth:300}}>
             <div style={{fontSize:48,marginBottom:12}}>🔥</div>
@@ -704,8 +721,18 @@ function App(){
           ))}
         </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10,display:"flex",gap:8,alignItems:"center"}}>
-          <input id="scity2" type="text" onInput={e=>{window._scity=e.target.value;}} onChange={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&loadNewCity()} placeholder="🔍 Search another city..." autoComplete="off" autoCorrect="off" style={{flex:1,background:"rgba(255,255,255,.15)",border:"1px solid "+S.bdr,borderRadius:100,padding:"10px 16px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-          <button onClick={loadNewCity} style={{background:S.acc,border:"none",borderRadius:100,padding:"10px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",flexShrink:0}}>Go</button>
+          <input id="scity2" type="text" 
+            onInput={e=>{window._scity=e.target.value;}} 
+            onChange={e=>{window._scity=e.target.value;}}
+            onKeyUp={e=>{window._scity=e.target.value;if(e.key==="Enter")loadNewCity();}}
+            placeholder="🔍 Search another city..." 
+            autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
+            style={{flex:1,background:"rgba(255,255,255,.15)",border:"1px solid "+S.bdr,borderRadius:100,padding:"10px 16px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+          <button onClick={()=>{
+            const inp=document.getElementById("scity2");
+            if(inp)window._scity=inp.value;
+            loadNewCity();
+          }} style={{background:S.acc,border:"none",borderRadius:100,padding:"10px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",flexShrink:0}}>Go</button>
         </div>}
         {wx&&<div style={{...G,padding:"12px 14px",marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:800,color:S.acc,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>🕐 What time are you going out?</div>
