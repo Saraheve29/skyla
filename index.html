@@ -196,7 +196,7 @@ function getWeatherWindows(hourlyData,fromHour=null){
 function App(){
   const [wx,setWx]=useState(null);
   const [showPaywall,setShowPaywall]=useState(false);
-  const [premium,setPremium]=useState(()=>localStorage.getItem('skyla_premium')==='true');
+  const [premium,setPremium]=useState(false);
   const [user,setUser]=useState(null);
   const [showLogin,setShowLogin]=useState(false);
   const [loginEmail,setLoginEmail]=useState('');
@@ -300,6 +300,8 @@ function App(){
         if(res.error)throw res.error;
         const u=res.data.user;
         setUser(u);
+        // Creator always gets premium
+        if(u.email===CREATOR_EMAIL){setPremium(true);return;}
         // Check premium status
         const {data}=await sb.from('premium_users').select('active').eq('email',u.email).single();
         if(data&&data.active){setPremium(true);localStorage.setItem('skyla_premium','true');}
@@ -315,6 +317,8 @@ function App(){
     setUser(null);setPremium(false);
     localStorage.removeItem('skyla_premium');
   }
+
+  const CREATOR_EMAIL='sarahwhyte33@gmail.com';
 
   async function load(){
     setLoading(true);setError(null);
@@ -677,9 +681,7 @@ function App(){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px"}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,letterSpacing:-1}}>Skyla</span>
-            <div style={{...G,padding:"3px 8px",display:"flex",alignItems:"center",gap:4,borderRadius:100}}>
-              <span style={{fontSize:14}}>🔥</span><span style={{fontSize:11,fontWeight:800,color:S.acc}}>{streak}d</span>
-            </div>
+            
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <button onClick={()=>user?handleSignOut():setShowPaywall(true)} style={{background:user?"rgba(16,185,129,.3)":"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"4px 12px",fontSize:10,fontWeight:800,color:"white",cursor:"pointer"}}>{user?"✅ Pro":"⚡ Go Pro"}</button>
