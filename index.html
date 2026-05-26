@@ -633,6 +633,18 @@ function App(){
 
   useEffect(()=>{
     load();
+    const {data:{subscription}}=sb.auth.onAuthStateChange(async(event,session)=>{
+      if(session&&session.user){
+        const u=session.user;
+        setUser(u);
+        if(u.email===CREATOR_EMAIL){setPremium(true);return;}
+        const {data}=await sb.from('premium_users').select('active').eq('email',u.email).single();
+        if(data&&data.active){setPremium(true);localStorage.setItem('skyla_premium','true');}
+      } else {
+        setUser(null);
+      }
+    });
+    return()=>subscription.unsubscribe();
     // Show promo popup once per session for free users after 30 seconds
     if(!localStorage.getItem('skyla_premium')){
       const t=setTimeout(()=>{
