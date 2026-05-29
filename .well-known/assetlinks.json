@@ -1,11 +1,16 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.skyla.weather",
-    "sha256_cert_fingerprints": [
-      "58:3C:B3:01:29:59:10:84:32:FF:D0:DD:E0:32:F3:A2:62:25:FB:16:10:9C:0A:1E:B9:0D:0D:24:6C:DE:FB:21",
-      "B0:E8:74:8F:79:47:7A:8E:23:83:1D:E5:A6:26:55:85:94:FD:D2:EA:B6:05:3E:36:50:1F:C8:62:4B:A1:A4:F7"
-    ]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.skyla.weather",
+      "sha256_cert_fingerprints": [
+        "58:3C:B3:01:29:59:10:84:32:FF:D0:DD:E0:32:F3:A2:62:25:FB:16:10:9C:0A:1E:B9:0D:0D:24:6C:DE:FB:21",
+        "B0:E8:74:8F:79:47:7A:8E:23:83:1D:E5:A6:26:55:85:94:FD:D2:EA:B6:05:3E:36:50:1F:C8:62:4B:A1:A4:F7"
+      ]
+    }
   }
-}]
+]
