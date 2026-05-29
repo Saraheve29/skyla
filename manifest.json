@@ -2,7 +2,7 @@
   "background_color": "#FFB7C5",
   "description": "Skyla - Your AI Weather Decision Assistant tells you exactly what to wear every day. Plain English forecasts, AI chat, event planner and holiday packing advice.",
   "dir": "ltr",
-  "display": "standalone",
+  "display": "fullscreen",
   "name": "Skyla Weather",
   "orientation": "portrait",
   "scope": "/",
