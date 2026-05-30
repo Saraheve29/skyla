@@ -39,11 +39,7 @@ function sg(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}
   const SKYLA_PRODUCT_ID='skyla_premium_monthly';
 
   async function buyPremium(){
-    // Open Play Store to subscribe
     window.open('https://play.google.com/store/apps/details?id=com.skyla.weather','_blank');
-    // Show instruction to sign in after subscribing
-    setTimeout(()=>setShowPaywall(false),500);
-    setShowLogin(true);
   }
 function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
@@ -796,7 +792,7 @@ function App(){
               <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>7-day free trial • Cancel anytime</div>
             </div>
             <button onClick={()=>buyPremium()} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>Subscribe on Play Store 🚀</button>
-            <button onClick={()=>{setShowPaywall(false);setShowLogin(true);}} style={{width:"100%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"10px 20px",fontSize:12,color:"white",cursor:"pointer",marginBottom:8}}>🔐 Already subscribed? Sign in</button>
+            <button onClick={()=>{setShowPaywall(false);setShowLogin(true);}} style={{width:"100%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"10px 20px",fontSize:12,color:"white",cursor:"pointer",marginBottom:8}}>✅ Already subscribed? Sign in here</button>
             <button onClick={()=>setShowPaywall(false)} style={{width:"100%",background:"transparent",border:"none",fontSize:11,color:"rgba(255,255,255,.3)",cursor:"pointer"}}>Maybe later</button>
           </div>
         </div>}
