@@ -39,39 +39,8 @@ function sg(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}
   const SKYLA_PRODUCT_ID='skyla_premium_monthly';
 
   async function buyPremium(){
-    try{
-      // Check if Digital Goods API is available (Play Store TWA)
-      if('getDigitalGoodsService' in window){
-        const service=await window.getDigitalGoodsService('https://play.google.com/billing');
-        const details=await service.getDetails([SKYLA_PRODUCT_ID]);
-        if(!details||details.length===0){
-          // Fallback to Play Store page
-          window.open('https://play.google.com/store/apps/details?id=com.skyla.weather','_blank');
-          return;
-        }
-        const item=details[0];
-        const paymentMethods=[{supportedMethods:'https://play.google.com/billing',data:{sku:item.itemId}}];
-        const request=new PaymentRequest(paymentMethods,{total:{label:item.title,amount:{currency:'GBP',value:'3.99'}}});
-        const response=await request.show();
-        await response.complete('success');
-        // Verify purchase with service
-        const token=response.details.purchaseToken;
-        // Mark as premium
-        setPremium(true);
-        localStorage.setItem('skyla_premium','true');
-        localStorage.setItem('skyla_purchase_token',token);
-        setShowPaywall(false);
-        alert('Welcome to Skyla Premium! 🎉');
-      } else {
-        // Not in TWA - open Play Store
-        window.open('https://play.google.com/store/apps/details?id=com.skyla.weather','_blank');
-      }
-    }catch(e){
-      if(e.name!=='AbortError'){
-        console.error('Payment error:',e);
-        window.open('https://play.google.com/store/apps/details?id=com.skyla.weather','_blank');
-      }
-    }
+    // Open Play Store subscription page directly
+    window.open('https://play.google.com/store/apps/subscriptions/buy?sku=skyla_premium_monthly&package=com.skyla.weather','_blank');
   }
 function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
@@ -338,10 +307,18 @@ function App(){
         const u=res.data.user;
         setUser(u);
         // Creator always gets premium
-        if(u.email===CREATOR_EMAIL){setPremium(true);return;}
-        // Check premium status
-        const {data}=await sb.from('premium_users').select('active').eq('email',u.email).single();
-        if(data&&data.active){setPremium(true);localStorage.setItem('skyla_premium','true');}
+        if(u.email===CREATOR_EMAIL){setPremium(true);setShowLogin(false);return;}
+        // Check premium_users table
+        const {data:premData}=await sb.from('premium_users').select('active').eq('email',u.email).single();
+        if(premData&&premData.active){setPremium(true);localStorage.setItem('skyla_premium','true');setShowLogin(false);return;}
+        // Check purchase_tokens table - if they have active token, add to premium
+        const {data:tokenData}=await sb.from('purchase_tokens').select('active').eq('email',u.email).eq('active',true).single();
+        if(tokenData&&tokenData.active){
+          await sb.from('premium_users').upsert({email:u.email,active:true});
+          setPremium(true);
+          localStorage.setItem('skyla_premium','true');
+          setShowLogin(false);
+        }
         setShowLogin(false);
         setLoginMsg('');
       }
