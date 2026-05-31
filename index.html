@@ -38,34 +38,7 @@ function sg(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}
   const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   const SKYLA_PRODUCT_ID='skyla_premium_monthly';
 
-  async function buyPremium(){
-    try{
-      if('getDigitalGoodsService' in window){
-        alert('Step 1: API available');
-        const service=await window.getDigitalGoodsService('https://play.google.com/billing');
-        alert('Step 2: Service connected');
-        const details=await service.getDetails([SKYLA_PRODUCT_ID]);
-        alert('Step 3: Details: '+JSON.stringify(details));
-        const paymentMethods=[{
-          supportedMethods:'https://play.google.com/billing',
-          data:{sku:SKYLA_PRODUCT_ID}
-        }];
-        const request=new PaymentRequest(paymentMethods,{total:{label:'Skyla Premium',amount:{currency:'GBP',value:'4.99'}}});
-        const response=await request.show();
-        await response.complete('success');
-        setPremium(true);
-        localStorage.setItem('skyla_premium','true');
-        setShowPaywall(false);
-        return;
-      } else {
-        alert('Digital Goods API NOT available in window');
-      }
-    }catch(e){
-      if(e.name==='AbortError')return;
-      alert('Error: '+e.name+' - '+e.message);
-    }
-    location.href='https://play.google.com/store/apps/details?id=com.skyla.weather';
-  }
+
 function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
 function wmoDesc(c){
@@ -354,6 +327,32 @@ function App(){
     await sb.auth.signOut();
     setUser(null);setPremium(false);
     localStorage.removeItem('skyla_premium');
+  }
+
+  async function buyPremium(){
+    try{
+      if('getDigitalGoodsService' in window){
+        alert('Step 1: API available in TWA');
+        const service=await window.getDigitalGoodsService('https://play.google.com/billing');
+        alert('Step 2: Service connected');
+        const details=await service.getDetails([SKYLA_PRODUCT_ID]);
+        alert('Step 3: Details: '+JSON.stringify(details));
+        const paymentMethods=[{supportedMethods:'https://play.google.com/billing',data:{sku:SKYLA_PRODUCT_ID}}];
+        const request=new PaymentRequest(paymentMethods,{total:{label:'Skyla Premium',amount:{currency:'GBP',value:'4.99'}}});
+        const response=await request.show();
+        await response.complete('success');
+        setPremium(true);
+        localStorage.setItem('skyla_premium','true');
+        setShowPaywall(false);
+        return;
+      } else {
+        alert('Digital Goods API NOT in window - going to Play Store');
+      }
+    }catch(e){
+      if(e.name==='AbortError')return;
+      alert('Error: '+e.name+' - '+e.message);
+    }
+    location.href='https://play.google.com/store/apps/details?id=com.skyla.weather';
   }
 
   const CREATOR_EMAIL='sarahwhyte33@gmail.com';
