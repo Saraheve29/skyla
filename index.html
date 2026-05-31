@@ -1539,7 +1539,10 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  // Unregister any old service workers
+  navigator.serviceWorker.getRegistrations().then(registrations=>{
+    registrations.forEach(r=>r.unregister());
+  });
 }
 </script>
 </body>
