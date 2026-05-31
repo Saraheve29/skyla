@@ -330,29 +330,8 @@ function App(){
   }
 
   async function buyPremium(){
-    try{
-      if('getDigitalGoodsService' in window){
-        alert('Step 1: API available in TWA');
-        const service=await window.getDigitalGoodsService('https://play.google.com/billing');
-        alert('Step 2: Service connected');
-        const details=await service.getDetails([SKYLA_PRODUCT_ID]);
-        alert('Step 3: Details: '+JSON.stringify(details));
-        const paymentMethods=[{supportedMethods:'https://play.google.com/billing',data:{sku:SKYLA_PRODUCT_ID}}];
-        const request=new PaymentRequest(paymentMethods,{total:{label:'Skyla Premium',amount:{currency:'GBP',value:'4.99'}}});
-        const response=await request.show();
-        await response.complete('success');
-        setPremium(true);
-        localStorage.setItem('skyla_premium','true');
-        setShowPaywall(false);
-        return;
-      } else {
-        alert('Digital Goods API NOT in window - going to Play Store');
-      }
-    }catch(e){
-      if(e.name==='AbortError')return;
-      alert('Error: '+e.name+' - '+e.message);
-    }
-    location.href='https://play.google.com/store/apps/details?id=com.skyla.weather';
+    // Open Stripe payment link
+    window.open('https://buy.stripe.com/6oUdR95w18yvaAd7qPb7y00','_blank');
   }
 
   const CREATOR_EMAIL='sarahwhyte33@gmail.com';
@@ -1539,10 +1518,7 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 if('serviceWorker' in navigator){
-  // Unregister any old service workers
-  navigator.serviceWorker.getRegistrations().then(registrations=>{
-    registrations.forEach(r=>r.unregister());
-  });
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
 }
 </script>
 </body>
