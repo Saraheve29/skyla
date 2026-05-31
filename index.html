@@ -330,7 +330,8 @@ function App(){
   }
 
   async function buyPremium(){
-    window.open('https://skylaweather.com/subscribe','_blank');
+    // Subscribe page is on our own domain - opens inside TWA
+    window.location.assign('https://skylaweather.com/subscribe');
   }
 
   const CREATOR_EMAIL='sarahwhyte33@gmail.com';
