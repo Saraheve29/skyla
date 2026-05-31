@@ -330,7 +330,25 @@ function App(){
   }
 
   async function buyPremium(){
-    // Subscribe page is on our own domain - opens inside TWA
+    try{
+      if('getDigitalGoodsService' in window){
+        const service=await window.getDigitalGoodsService('https://play.google.com/billing');
+        const details=await service.getDetails([SKYLA_PRODUCT_ID]);
+        if(details&&details.length>0){
+          const paymentMethods=[{supportedMethods:'https://play.google.com/billing',data:{sku:SKYLA_PRODUCT_ID}}];
+          const request=new PaymentRequest(paymentMethods,{total:{label:'Skyla Premium',amount:{currency:'GBP',value:'4.99'}}});
+          const response=await request.show();
+          await response.complete('success');
+          setPremium(true);
+          localStorage.setItem('skyla_premium','true');
+          setShowPaywall(false);
+          return;
+        }
+      }
+    }catch(e){
+      if(e.name==='AbortError')return;
+      console.error('Billing error:',e.message);
+    }
     window.location.assign('https://skylaweather.com/subscribe');
   }
 
@@ -395,7 +413,7 @@ function App(){
     if(!wx)return;
     // Premium only
     if(!premium){
-      alert("🎙️ Voice briefings are a Skyla Premium feature!\n\nUpgrade for just £4.99/month with a :\n✅ Unlimited voice briefings\n✅ Unlimited AI chat\n✅ No ads\n\nTry free for 7 days! 🩷");
+      setShowPaywall(true); return;
       return;
     }
     if(talking){window.speechSynthesis&&window.speechSynthesis.cancel();if(window._skylaSource){try{window._skylaSource.stop();}catch{}window._skylaSource=null;}if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}setTalking(false);return;}
