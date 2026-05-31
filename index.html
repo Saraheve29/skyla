@@ -39,13 +39,27 @@ function sg(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}
   const SKYLA_PRODUCT_ID='skyla_premium_monthly';
 
   async function buyPremium(){
-    const a=document.createElement('a');
-    a.href='https://play.google.com/store/apps/details?id=com.skyla.weather';
-    a.target='_blank';
-    a.rel='noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try{
+      if('getDigitalGoodsService' in window){
+        const service=await window.getDigitalGoodsService('https://play.google.com/billing');
+        const details=await service.getDetails([SKYLA_PRODUCT_ID]);
+        const paymentMethods=[{
+          supportedMethods:'https://play.google.com/billing',
+          data:{sku:SKYLA_PRODUCT_ID}
+        }];
+        const request=new PaymentRequest(paymentMethods,{total:{label:'Skyla Premium',amount:{currency:'GBP',value:'4.99'}}});
+        const response=await request.show();
+        await response.complete('success');
+        setPremium(true);
+        localStorage.setItem('skyla_premium','true');
+        setShowPaywall(false);
+        return;
+      }
+    }catch(e){
+      if(e.name==='AbortError')return;
+      console.error('Billing error:',e.message,e.name);
+    }
+    location.href='https://play.google.com/store/apps/details?id=com.skyla.weather';
   }
 function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
@@ -398,7 +412,7 @@ function App(){
     if(!wx)return;
     // Premium only
     if(!premium){
-      alert("🎙️ Voice briefings are a Skyla Premium feature!\n\nUpgrade for just £3.99/month with a 7-day free trial:\n✅ Unlimited voice briefings\n✅ Unlimited AI chat\n✅ No ads\n\nTry free for 7 days! 🩷");
+      alert("🎙️ Voice briefings are a Skyla Premium feature!\n\nUpgrade for just £4.99/month with a :\n✅ Unlimited voice briefings\n✅ Unlimited AI chat\n✅ No ads\n\nTry free for 7 days! 🩷");
       return;
     }
     if(talking){window.speechSynthesis&&window.speechSynthesis.cancel();if(window._skylaSource){try{window._skylaSource.stop();}catch{}window._skylaSource=null;}if(window._skylaAudio){window._skylaAudio.pause();window._skylaAudio=null;}setTalking(false);return;}
@@ -492,7 +506,7 @@ function App(){
     if(!chatInput.trim())return;
     // Check free daily limit
     if(!premium&&aiMsgCount>=FREE_AI_LIMIT){setShowPaywall(true);
-      setChatMsgs(m=>[...m,{role:"skyla",text:"💎 You have used your 3 free daily questions! Upgrade to Skyla Premium for unlimited questions, voice briefings and more — just £3.99/month with a 7-day free trial! 🩷"}]);
+      setChatMsgs(m=>[...m,{role:"skyla",text:"💎 You have used your 3 free daily questions! Upgrade to Skyla Premium for unlimited questions, voice briefings and more — just £4.99/month with a ! 🩷"}]);
       setChatInput("");
       return;
     }
@@ -734,7 +748,7 @@ function App(){
             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
               {["🤖 Unlimited AI","🎙️ Hear Skyla","🗓️ Event Planner","✈️ Holiday Packing","🌅 Sunrise/Sunset","👨‍👩‍👧 Family Weather"].map((f,i)=><div key={i} style={{background:"rgba(233,30,140,.2)",border:"1px solid rgba(233,30,140,.3)",borderRadius:100,padding:"4px 10px",fontSize:11,color:"white"}}>⚡ {f}</div>)}
             </div>
-            <button onClick={()=>{setShowPromo(false);setShowPaywall(true);}} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>Try Pro Free for 7 Days 🚀</button>
+            <button onClick={()=>{setShowPromo(false);setShowPaywall(true);}} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>Go Pro Now 🚀</button>
             <button onClick={()=>setShowPromo(false)} style={{width:"100%",background:"transparent",border:"none",fontSize:11,color:"rgba(255,255,255,.3)",cursor:"pointer"}}>No thanks, continue free</button>
           </div>
         </div>}
@@ -742,7 +756,7 @@ function App(){
           <div style={{maxWidth:320,width:"100%",textAlign:"center"}}>
             <div style={{fontSize:72,marginBottom:16,animation:"float 2s ease-in-out infinite"}}>{["🌤️","🧥","🤖","🗓️","⭐"][onboardStep]}</div>
             <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:900,color:"white",marginBottom:12}}>{["Welcome to Skyla!","What to Wear","Ask Skyla Anything","Plan Your Events","Go Premium"][onboardStep]}</div>
-            <div style={{fontSize:14,color:"rgba(255,255,255,.7)",lineHeight:1.6,marginBottom:32}}>{["Your personal AI weather assistant. Never be caught out by the weather again!","Skyla tells you exactly what to wear for today and every day this week!","Type any weather question — coat? umbrella? best day this week? Skyla answers instantly!","Check the weather for weddings, BBQs, school sports days and holidays!","Unlock unlimited AI chat, voice, event planner and much more for just £3.99/month!"][onboardStep]}</div>
+            <div style={{fontSize:14,color:"rgba(255,255,255,.7)",lineHeight:1.6,marginBottom:32}}>{["Your personal AI weather assistant. Never be caught out by the weather again!","Skyla tells you exactly what to wear for today and every day this week!","Type any weather question — coat? umbrella? best day this week? Skyla answers instantly!","Check the weather for weddings, BBQs, school sports days and holidays!","Unlock unlimited AI chat, voice, event planner and much more for just £4.99/month!"][onboardStep]}</div>
             <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:24}}>
               {[0,1,2,3,4].map(i=><div key={i} style={{width:i===onboardStep?20:6,height:6,borderRadius:100,background:i===onboardStep?"#E91E8C":"rgba(255,255,255,.3)",transition:"all .3s"}}/>)}
             </div>
@@ -754,7 +768,7 @@ function App(){
           <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid #E91E8C",borderRadius:24,padding:28,textAlign:"center",maxWidth:320,width:"100%"}}>
             <div style={{fontSize:36,marginBottom:8}}>⭐</div>
             <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"white",marginBottom:4}}>{loginMode==='signup'?'Create Premium Account':'Premium Sign In'}</div>
-            <div style={{fontSize:11,color:"rgba(233,30,140,.8)",marginBottom:16,fontWeight:700}}>FOR SUBSCRIBERS ONLY • £3.99/MONTH</div>
+            <div style={{fontSize:11,color:"rgba(233,30,140,.8)",marginBottom:16,fontWeight:700}}>FOR SUBSCRIBERS ONLY • £4.99/MONTH</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginBottom:16}}>{loginMode==='signup'?'Already subscribed on Play Store? Create your account here to unlock premium features.':'Sign in to access your premium features.'}</div>
             <input type="email" placeholder="Email address" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.3)",borderRadius:12,padding:"12px 14px",fontSize:13,color:"white",fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:10,boxSizing:"border-box"}}/>
             <input type="password" placeholder="Password" value={loginPass} onChange={e=>setLoginPass(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.3)",borderRadius:12,padding:"12px 14px",fontSize:13,color:"white",fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:10,boxSizing:"border-box"}}/>
@@ -794,10 +808,10 @@ function App(){
               </div>
             </div>
             <div style={{background:"rgba(233,30,140,.2)",borderRadius:16,padding:14,textAlign:"center",marginBottom:12}}>
-              <div style={{fontSize:24,fontWeight:900,color:"white"}}>£3.99<span style={{fontSize:13,fontWeight:400,color:"rgba(255,255,255,.6)"}}>/month</span></div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>7-day free trial • Cancel anytime</div>
+              <div style={{fontSize:24,fontWeight:900,color:"white"}}>£4.99<span style={{fontSize:13,fontWeight:400,color:"rgba(255,255,255,.6)"}}>/month</span></div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>Cancel anytime</div>
             </div>
-            <button onClick={()=>buyPremium()} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>Subscribe on Play Store 🚀</button>
+            <button onClick={()=>buyPremium()} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>Subscribe Now 🚀</button>
             <button onClick={()=>{setShowPaywall(false);setShowLogin(true);}} style={{width:"100%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"10px 20px",fontSize:12,color:"white",cursor:"pointer",marginBottom:8}}>✅ Already subscribed? Sign in here</button>
             <button onClick={()=>setShowPaywall(false)} style={{width:"100%",background:"transparent",border:"none",fontSize:11,color:"rgba(255,255,255,.3)",cursor:"pointer"}}>Maybe later</button>
           </div>
