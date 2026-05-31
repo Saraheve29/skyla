@@ -41,8 +41,11 @@ function sg(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}
   async function buyPremium(){
     try{
       if('getDigitalGoodsService' in window){
+        alert('Step 1: API available');
         const service=await window.getDigitalGoodsService('https://play.google.com/billing');
+        alert('Step 2: Service connected');
         const details=await service.getDetails([SKYLA_PRODUCT_ID]);
+        alert('Step 3: Details: '+JSON.stringify(details));
         const paymentMethods=[{
           supportedMethods:'https://play.google.com/billing',
           data:{sku:SKYLA_PRODUCT_ID}
@@ -54,10 +57,12 @@ function sg(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}
         localStorage.setItem('skyla_premium','true');
         setShowPaywall(false);
         return;
+      } else {
+        alert('Digital Goods API NOT available in window');
       }
     }catch(e){
       if(e.name==='AbortError')return;
-      console.error('Billing error:',e.message,e.name);
+      alert('Error: '+e.name+' - '+e.message);
     }
     location.href='https://play.google.com/store/apps/details?id=com.skyla.weather';
   }
@@ -811,7 +816,7 @@ function App(){
               <div style={{fontSize:24,fontWeight:900,color:"white"}}>£4.99<span style={{fontSize:13,fontWeight:400,color:"rgba(255,255,255,.6)"}}>/month</span></div>
               <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>Cancel anytime</div>
             </div>
-            <button onClick={()=>buyPremium()} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>Subscribe Now 🚀</button>
+            <button onClick={()=>buyPremium()} style={{width:"100%",background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>Unlock All Features ⚡</button>
             <button onClick={()=>{setShowPaywall(false);setShowLogin(true);}} style={{width:"100%",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:100,padding:"10px 20px",fontSize:12,color:"white",cursor:"pointer",marginBottom:8}}>✅ Already subscribed? Sign in here</button>
             <button onClick={()=>setShowPaywall(false)} style={{width:"100%",background:"transparent",border:"none",fontSize:11,color:"rgba(255,255,255,.3)",cursor:"pointer"}}>Maybe later</button>
           </div>
