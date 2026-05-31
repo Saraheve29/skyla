@@ -403,7 +403,7 @@ function App(){
     const PE2=plainEnglish(w);
     const pr="You are Skyla, a warm friendly AI weather companion. Weather: "+city+" "+w.temp+"C feels "+w.feels+"C "+wmoDesc(w.code)+" rain "+w.rain+"% wind "+w.wind+"kmh. Return ONLY valid JSON no backticks: {\"msg\":\"greeting 10 words emoji\",\"wear\":\"specific outfit for todays weather — actual clothing items like jeans jumper coat dress shorts — 8 words max — NO vague words like comfortable or appropriate\",\"tip\":\"14 plain words\",\"items\":[\"clothing item with emoji\",\"clothing or footwear with emoji\",\"accessory for this weather with emoji\",\"hot or iced drink depending on temperature with emoji — NO phone NO bags only weather appropriate clothing drinks and accessories\"],\"plant\":\"specific plant care for todays weather — mention if rain frost heat wind or dry — 15 words max\",\"plantAction\":\"3 word action\"}";
     try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:250,messages:[{role:"user",content:pr}]})});
+      const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:250,messages:[{role:"user",content:pr}]})});
       const data=await r.json();
       const txt=data.content&&data.content[0]?data.content[0].text:"{}";
       setAi(JSON.parse(txt.replace(/```json|```/g,"").trim()));
