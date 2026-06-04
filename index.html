@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#FFB7C5">
+<meta name="google-adsense-account" content="ca-pub-1496727398390856">
 <link rel="manifest" href="/manifest.json">
 <title>Skyla AI Weather</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -26,6 +27,7 @@ body{font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
 @keyframes wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
 ::-webkit-scrollbar{width:0}
 </style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1496727398390856" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -209,6 +211,7 @@ function App(){
   const [loginLoading,setLoginLoading]=useState(false);
   const [showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('skyla_onboarded'));
   const [showPromo,setShowPromo]=useState(false);
+  const [showAd,setShowAd]=useState(false);
   const [onboardStep,setOnboardStep]=useState(0);
   const [city,setCity]=useState("Your location");
   const [loading,setLoading]=useState(true);
@@ -1529,6 +1532,15 @@ function App(){
         <button onClick={load} style={{width:"100%",marginTop:4,...G,borderRadius:100,padding:"13px",color:S.sub,fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",border:"none"}}>
           Refresh Skyla
         </button>
+        {!premium&&<div style={{marginTop:8,textAlign:"center"}}>
+          <ins className="adsbygoogle"
+            style={{display:"block"}}
+            data-ad-client="ca-pub-1496727398390856"
+            data-ad-slot="auto"
+            data-ad-format="auto"
+            data-full-width-responsive="true"/>
+          <script dangerouslySetInnerHTML={{__html:"(adsbygoogle = window.adsbygoogle || []).push({});"}}/>
+        </div>}
       </div>
     </div>
   );
