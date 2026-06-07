@@ -398,7 +398,15 @@ function App(){
       const yesterday=new Date(Date.now()-86400000).toDateString();
       if(lastVisit!==today){const ns=lastVisit===yesterday?(parseInt(sg("skyla_streak"))||0)+1:1;setStreak(ns);ss("skyla_streak",ns);ss("skyla_last",today);const rewards={7:"🎉 7 day streak! You've unlocked the Gold theme! ✨",14:"🎉 14 days! You've unlocked the Purple theme! 💜",30:"🏆 30 days! You are a Skyla Legend! 🌟",50:"🎉 50 days! You've unlocked the Rainbow theme! 🌈",100:"👑 100 days! You are a Skyla Champion! 👑"};if(rewards[ns]){setStreakMsg(rewards[ns]);setShowStreakPopup(true);}}
       await getAI(newWx);
-    }catch(e){setError("Could not get your location. Please allow location access and try again. On Chrome: click the padlock 🔒 in the address bar → Allow Location. On Firefox: click the arrow icon in address bar.");}
+    }catch(e){
+      if(e.code===1){
+        setError("Please allow location access so Skyla can show your local weather 🩷");
+      } else {
+        // Not a location error - try again silently
+        setError(null);
+        setTimeout(()=>load(),3000);
+      }
+    }
     setLoading(false);
   }
 
