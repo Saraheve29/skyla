@@ -682,14 +682,11 @@ function App(){
       }
     });
     return()=>subscription.unsubscribe();
-    // Show promo popup immediately on first open each session for free users
+    // Show promo popup every time for free users after 3 seconds
     if(!localStorage.getItem('skyla_premium')){
-      if(!sessionStorage.getItem('skyla_promo_shown')){
-        setTimeout(()=>{
-          setShowPromo(true);
-          sessionStorage.setItem('skyla_promo_shown','true');
-        },3000);
-      }
+      setTimeout(()=>{
+        setShowPromo(true);
+      },3000);
     }
     const interval=setInterval(()=>{load();},60*60*1000);
     return()=>clearInterval(interval);
