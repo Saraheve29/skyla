@@ -389,10 +389,10 @@ function App(){
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly,sunrise:week[0]?week[0].sunrise:"",sunset:week[0]?week[0].sunset:""};
       setWx(newWx);
       buildAlerts(newWx);
-      // Popup disabled for testing
-      // if(!localStorage.getItem('skyla_premium')){
-      //   setTimeout(()=>setShowPromo(true),60000);
-      // }
+      // Show promo popup 60 seconds after weather loads for free users
+      if(!localStorage.getItem('skyla_premium')){
+        setTimeout(()=>setShowPromo(true),60000);
+      }
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
       const yesterday=new Date(Date.now()-86400000).toDateString();
@@ -878,7 +878,7 @@ function App(){
             </div>
           </div>
           <div style={{flex:1,paddingBottom:20}}>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:60,fontWeight:900,lineHeight:1,letterSpacing:-3}}>{DWX?DWX.temp:wx?wx.temp:0}°</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:60,fontWeight:900,lineHeight:1,letterSpacing:-3}}>{DWX&&pickedD!==null&&wx.week[pickedD]?wx.week[pickedD].max:DWX?DWX.temp:wx?wx.temp:0}°</div>
             <div style={{fontSize:13,opacity:.7,marginTop:2}}>{S.em} {wmoDesc(wx?wx.code:0)}</div>
             <div style={{marginTop:8,...G,padding:"10px 12px",borderRadius:14,border:PE.deceiving?"1px solid rgba(245,158,11,.6)":G.border,background:PE.deceiving?"rgba(245,158,11,.15)":G.background}}>
               <div style={{fontSize:13,fontWeight:600,lineHeight:1.5}}>{PE.verdict||"Loading your weather..."}</div>
