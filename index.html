@@ -389,6 +389,10 @@ function App(){
       const newWx={temp:Math.round(cu.temperature_2m),feels:Math.round(cu.apparent_temperature),humid:cu.relative_humidity_2m,wind:Math.round(cu.wind_speed_10m),code:cu.weathercode,isDay:cu.is_day,maxT:Math.round(d.daily.temperature_2m_max[0]),minT:Math.round(d.daily.temperature_2m_min[0]),rain:Math.max(...d.hourly.precipitation_probability.slice(hr,24).map(r=>r||0)),week,hourly,sunrise:week[0]?week[0].sunrise:"",sunset:week[0]?week[0].sunset:""};
       setWx(newWx);
       buildAlerts(newWx);
+      // Show promo after weather loads for free users
+      if(!localStorage.getItem('skyla_premium')){
+        setTimeout(()=>setShowPromo(true),2000);
+      }
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
       const yesterday=new Date(Date.now()-86400000).toDateString();
@@ -682,12 +686,7 @@ function App(){
       }
     });
     return()=>subscription.unsubscribe();
-    // Show promo popup every time for free users after 3 seconds
-    if(!localStorage.getItem('skyla_premium')){
-      setTimeout(()=>{
-        setShowPromo(true);
-      },3000);
-    }
+    // Promo popup shown after weather loads (see load function)
     const interval=setInterval(()=>{load();},60*60*1000);
     return()=>clearInterval(interval);
   },[]);
