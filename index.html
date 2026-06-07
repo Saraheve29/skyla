@@ -710,10 +710,23 @@ function App(){
 
   if(error)return(
     <div style={{minHeight:"100vh",background:SC.partly.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:"20px",textAlign:"center"}}>
-      <div style={{fontSize:48}}>📍</div>
-      <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#0C1A3D"}}>Location needed</div>
-      <div style={{fontSize:14,color:"rgba(12,26,61,.7)",lineHeight:1.6}}>{error}</div>
-      <button onClick={load} style={{background:"#2563EB",border:"none",borderRadius:100,padding:"14px 28px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer"}}>Try Again</button>
+      <div style={{fontSize:60}}>📍</div>
+      <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"#0C1A3D"}}>Skyla needs your location</div>
+      <div style={{fontSize:14,color:"rgba(12,26,61,.8)",lineHeight:1.8,maxWidth:300}}>
+        To show your local weather, please allow location access:
+      </div>
+      <div style={{background:"rgba(255,255,255,.7)",borderRadius:16,padding:"16px 20px",maxWidth:300,textAlign:"left"}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:8,color:"#0C1A3D"}}>📱 On your phone:</div>
+        <div style={{fontSize:13,color:"#0C1A3D",lineHeight:1.8}}>
+          1️⃣ Go to <b>Settings</b><br/>
+          2️⃣ Tap <b>Apps</b> → <b>Skyla</b><br/>
+          3️⃣ Tap <b>Permissions</b><br/>
+          4️⃣ Tap <b>Location</b> → <b>Allow</b><br/>
+          5️⃣ Come back and tap Try Again
+        </div>
+      </div>
+      <button onClick={()=>navigator.geolocation.getCurrentPosition(()=>load(),()=>load(),{timeout:10000})} style={{background:"#E91E8C",border:"none",borderRadius:100,padding:"16px 32px",fontSize:15,fontWeight:800,color:"white",cursor:"pointer",marginTop:8}}>📍 Try Again</button>
+      <div style={{fontSize:12,color:"rgba(12,26,61,.5)"}}>Skyla only uses your location to show local weather 🩷</div>
     </div>
   );
 
