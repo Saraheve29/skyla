@@ -391,7 +391,7 @@ function App(){
       buildAlerts(newWx);
       // Show promo popup 60 seconds after weather loads for free users
       if(!localStorage.getItem('skyla_premium')){
-        setTimeout(()=>setShowPromo(true),60000);
+        setTimeout(()=>setShowPromo(true),30000);
       }
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
