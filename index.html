@@ -211,6 +211,7 @@ function App(){
   const [loginLoading,setLoginLoading]=useState(false);
   const [showOnboarding,setShowOnboarding]=useState(()=>!localStorage.getItem('skyla_onboarded'));
   const [showPromo,setShowPromo]=useState(false);
+  const [showReview,setShowReview]=useState(false);
   const [showAd,setShowAd]=useState(false);
   const [onboardStep,setOnboardStep]=useState(0);
   const [city,setCity]=useState("Your location");
@@ -396,7 +397,11 @@ function App(){
       const today=new Date().toDateString();
       const lastVisit=sg("skyla_last");
       const yesterday=new Date(Date.now()-86400000).toDateString();
-      if(lastVisit!==today){const ns=lastVisit===yesterday?(parseInt(sg("skyla_streak"))||0)+1:1;setStreak(ns);ss("skyla_streak",ns);ss("skyla_last",today);const rewards={7:"🎉 7 day streak! You've unlocked the Gold theme! ✨",14:"🎉 14 days! You've unlocked the Purple theme! 💜",30:"🏆 30 days! You are a Skyla Legend! 🌟",50:"🎉 50 days! You've unlocked the Rainbow theme! 🌈",100:"👑 100 days! You are a Skyla Champion! 👑"};if(rewards[ns]){setStreakMsg(rewards[ns]);setShowStreakPopup(true);}}
+      if(lastVisit!==today){const ns=lastVisit===yesterday?(parseInt(sg("skyla_streak"))||0)+1:1;setStreak(ns);ss("skyla_streak",ns);ss("skyla_last",today);
+        // Show review prompt after 3 days of use, once only
+        if(ns>=3&&!localStorage.getItem('skyla_reviewed')){
+          setTimeout(()=>setShowReview(true),5000);
+        }const rewards={7:"🎉 7 day streak! You've unlocked the Gold theme! ✨",14:"🎉 14 days! You've unlocked the Purple theme! 💜",30:"🏆 30 days! You are a Skyla Legend! 🌟",50:"🎉 50 days! You've unlocked the Rainbow theme! 🌈",100:"👑 100 days! You are a Skyla Champion! 👑"};if(rewards[ns]){setStreakMsg(rewards[ns]);setShowStreakPopup(true);}}
       await getAI(newWx);
     }catch(e){
       if(e.code===1){
@@ -745,6 +750,15 @@ function App(){
           </div>
         </div>
 
+        {showReview&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:1003,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"2px solid #FFD700",borderRadius:24,padding:28,maxWidth:320,width:"100%",textAlign:"center"}}>
+            <div style={{fontSize:48,marginBottom:8}}>⭐</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:900,color:"white",marginBottom:8}}>Enjoying Skyla?</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.7)",marginBottom:20,lineHeight:1.6}}>You've been using Skyla for 3 days! If you're loving it, a review means the world and helps others find us 🩷</div>
+            <button onClick={()=>{localStorage.setItem('skyla_reviewed','true');setShowReview(false);window.open('https://play.google.com/store/apps/details?id=com.skyla.weather&action=write_review','_blank');}} style={{width:"100%",background:"linear-gradient(135deg,#FFD700,#FF8C00)",border:"none",borderRadius:100,padding:"14px 20px",fontSize:14,fontWeight:800,color:"white",cursor:"pointer",marginBottom:8}}>⭐ Rate Skyla Now</button>
+            <button onClick={()=>{localStorage.setItem('skyla_reviewed','true');setShowReview(false);}} style={{width:"100%",background:"transparent",border:"none",fontSize:11,color:"rgba(255,255,255,.3)",cursor:"pointer"}}>Maybe later</button>
+          </div>
+        </div>}
         {showPromo&&!premium&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:16}} onClick={()=>setShowPromo(false)}>
           <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(135deg,#0C1A3D,#1a1a2e)",border:"2px solid #E91E8C",borderRadius:24,padding:24,maxWidth:340,width:"100%",marginBottom:8}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
