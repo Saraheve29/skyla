@@ -1571,7 +1571,23 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  navigator.serviceWorker.register('/sw.js').then(async reg=>{
+    // Ask for notification permission after 5 seconds
+    setTimeout(async()=>{
+      if(Notification.permission==='default'){
+        const perm=await Notification.requestPermission();
+        if(perm==='granted'){
+          try{
+            const sub=await reg.pushManager.subscribe({
+              userVisibleOnly:true,
+              applicationServerKey:'BKbTnonKJG5ijnP67eY5WGU-B9ERv6McLzp4r16dj3uvQI7jT2vEK1S4qVWQDoHYADFt3G6L37iGESjwD3EVBy0'
+            });
+            await fetch('/api/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',subscription:sub})});
+          }catch(e){console.log('Push setup:',e);}
+        }
+      }
+    },5000);
+  }).catch(()=>{});
 }
 </script>
 </body>
