@@ -525,9 +525,8 @@ function App(){
 
   function sendChat(){
     if(!chatInput.trim())return;
-    // Check free daily limit
-    if(!premium&&aiMsgCount>=FREE_AI_LIMIT){setShowPaywall(true);
-      setChatMsgs(m=>[...m,{role:"skyla",text:"💎 You have used your 3 free daily questions! Upgrade to Skyla Premium for unlimited questions, voice briefings and more — just £3.69/month with a ! 🩷"}]);
+    // Ask Skyla is Pro-only, no free quota
+    if(!premium){setShowPaywall(true);
       setChatInput("");
       return;
     }
@@ -585,6 +584,7 @@ function App(){
     }catch(e){console.log("City search error:",e);}
   }
   async function searchCity(){
+    if(!premium){setShowPaywall(true);return;}
     const val=window._scity||"";
     if(!val.trim())return;
     setSearching(true);setSearchWx(null);
@@ -853,7 +853,11 @@ function App(){
           </div>
         </div>}
         {/* WEATHER WARNINGS */}
-        {alerts.length===0?(
+        {!premium?(
+          <div onClick={()=>setShowPaywall(true)} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(233,30,140,.12)",border:"1px solid rgba(233,30,140,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10,cursor:"pointer"}}>
+            <span>🔒</span><span style={{fontSize:12,fontWeight:700,color:S.acc}}>Weather Warnings is a Pro feature — tap to unlock</span>
+          </div>
+        ):alerts.length===0?(
           <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(5,150,105,.12)",border:"1px solid rgba(5,150,105,.3)",borderRadius:12,padding:"9px 14px",marginBottom:10}}>
             <span>✅</span><span style={{fontSize:12,fontWeight:600,color:"#059669"}}>No weather warnings for the next 7 days</span>
           </div>
@@ -1221,12 +1225,16 @@ function App(){
         )}
 
         {/* CHAT TAB */}
-        {tab==="chat"&&(
+        {tab==="chat"&&!premium&&(
+          <Card style={{textAlign:"center",padding:"32px 20px"}}>
+            <div style={{fontSize:40,marginBottom:10}}>💬</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:6}}>Ask Skyla is a Pro feature</div>
+            <div style={{fontSize:12,opacity:.6,marginBottom:16,lineHeight:1.5}}>Chat with Skyla about the weather, what to wear, and more with Skyla Pro.</div>
+            <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"12px 24px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer"}}>Unlock with Pro ⚡</button>
+          </Card>
+        )}
+        {tab==="chat"&&premium&&(
           <div>
-            {!premium&&<div style={{...G,padding:"10px 14px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <span style={{fontSize:11,fontWeight:700,color:S.sub}}>💬 Free questions today</span>
-              <span style={{fontSize:13,fontWeight:900,color:aiMsgCount>=FREE_AI_LIMIT?"#EF4444":S.acc}}>{Math.max(0,FREE_AI_LIMIT-aiMsgCount)+" / "+FREE_AI_LIMIT+" left"}</span>
-            </div>}
             <div style={{...G,padding:"14px",marginBottom:10,minHeight:280,maxHeight:380,overflowY:"auto",display:"flex",flexDirection:"column",gap:8}}>
               {chatMsgs.map((m,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
@@ -1250,7 +1258,15 @@ function App(){
         )}
 
         {/* SEARCH TAB */}
-        {tab==="search"&&(
+        {tab==="search"&&!premium&&(
+          <Card style={{textAlign:"center",padding:"32px 20px"}}>
+            <div style={{fontSize:40,marginBottom:10}}>🔍</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:6}}>City Search is a Pro feature</div>
+            <div style={{fontSize:12,opacity:.6,marginBottom:16,lineHeight:1.5}}>Check the weather anywhere in the world with Skyla Pro.</div>
+            <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"12px 24px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer"}}>Unlock with Pro ⚡</button>
+          </Card>
+        )}
+        {tab==="search"&&premium&&(
           <div>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
               <input id="scity" type="text" onInput={e=>{window._scity=e.target.value;}} onChange={e=>{window._scity=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&searchCity()} placeholder="Search any city..." autoComplete="off" autoCorrect="off" autoCapitalize="off" style={{flex:1,...G,padding:"12px 14px",fontSize:13,color:S.text,fontFamily:"'DM Sans',sans-serif",outline:"none",borderRadius:100}}/>
@@ -1601,7 +1617,7 @@ function App(){
           <ins className="adsbygoogle"
             style={{display:"block"}}
             data-ad-client="ca-pub-1496727398390856"
-            data-ad-slot="auto"
+            data-ad-slot="REPLACE_WITH_REAL_SLOT_ID"
             data-ad-format="auto"
             data-full-width-responsive="true"/>
           <script dangerouslySetInnerHTML={{__html:"(adsbygoogle = window.adsbygoogle || []).push({});"}}/>
