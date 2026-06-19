@@ -1275,7 +1275,15 @@ function App(){
         )}
 
         {/* EVENT TAB */}
-        {tab==="event"&&(
+        {tab==="event"&&!premium&&(
+          <Card style={{textAlign:"center",padding:"32px 20px"}}>
+            <div style={{fontSize:40,marginBottom:10}}>🗓️</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:6}}>Event Planner is a Pro feature</div>
+            <div style={{fontSize:12,opacity:.6,marginBottom:16,lineHeight:1.5}}>Plan weddings, BBQs and parties around the weather with Skyla Pro.</div>
+            <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"12px 24px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer"}}>Unlock with Pro ⚡</button>
+          </Card>
+        )}
+        {tab==="event"&&premium&&(
           <div>
             <Card>
               <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:14}}>Plan your event</div>
@@ -1306,7 +1314,15 @@ function App(){
         )}
 
         {/* HOLIDAY TAB */}
-        {tab==="holiday"&&(
+        {tab==="holiday"&&!premium&&(
+          <Card style={{textAlign:"center",padding:"32px 20px"}}>
+            <div style={{fontSize:40,marginBottom:10}}>✈️</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:6}}>Holiday Packing is a Pro feature</div>
+            <div style={{fontSize:12,opacity:.6,marginBottom:16,lineHeight:1.5}}>Get a personalised packing list based on your destination's weather with Skyla Pro.</div>
+            <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"12px 24px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer"}}>Unlock with Pro ⚡</button>
+          </Card>
+        )}
+        {tab==="holiday"&&premium&&(
           <div>
             <Card>
               <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:14}}>Plan your holiday</div>
@@ -1340,7 +1356,15 @@ function App(){
         )}
 
         {/* TRAVEL TAB */}
-        {tab==="travel"&&(
+        {tab==="travel"&&!premium&&(
+          <Card style={{textAlign:"center",padding:"32px 20px"}}>
+            <div style={{fontSize:40,marginBottom:10}}>🚌</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:6}}>Travel Updates is a Pro feature</div>
+            <div style={{fontSize:12,opacity:.6,marginBottom:16,lineHeight:1.5}}>Check weather-related travel disruptions for any location with Skyla Pro.</div>
+            <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"12px 24px",fontSize:13,fontWeight:800,color:"white",cursor:"pointer"}}>Unlock with Pro ⚡</button>
+          </Card>
+        )}
+        {tab==="travel"&&premium&&(
           <div>
             <Card style={{border:"1px solid "+S.acc+"35"}}>
               <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:900,marginBottom:6}}>Travel Updates</div>
@@ -1439,6 +1463,7 @@ function App(){
                 <div style={{fontSize:11,color:"rgba(255,255,255,.85)",marginTop:2}}>Your review helps others find Skyla!</div>
               </div>
             </button>
+            {premium?(
             <div style={{...G,padding:"18px",marginBottom:12,border:"1px solid "+S.acc+"35"}}>
               <Lbl>Morning Briefing</Lbl>
               <div style={{fontSize:12,opacity:.6,marginBottom:10}}>Get a daily weather briefing at your chosen time.</div>
@@ -1447,6 +1472,15 @@ function App(){
                 <button onClick={()=>{ss("skyla_briefing",briefingTime);setBriefingSaved(true);setTimeout(()=>setBriefingSaved(false),2500);}} style={{background:briefingSaved?"#10B981":S.acc,border:"none",borderRadius:12,padding:"11px 16px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{briefingSaved?"Saved!":"Set Time"}</button>
               </div>
             </div>
+            ):(
+            <Card style={{textAlign:"center",padding:"24px 20px",marginBottom:12}}>
+              <div style={{fontSize:32,marginBottom:8}}>☀️</div>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:900,marginBottom:4}}>Morning Briefing is a Pro feature</div>
+              <div style={{fontSize:11,opacity:.6,marginBottom:12,lineHeight:1.5}}>Get a daily weather briefing at your chosen time with Skyla Pro.</div>
+              <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"10px 20px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer"}}>Unlock with Pro ⚡</button>
+            </Card>
+            )}
+            {premium?(
             <Card>
               <Lbl>Family Weather</Lbl>
               {famMembers.map((m,i)=>(
@@ -1468,6 +1502,14 @@ function App(){
                 <button onClick={addFam} style={{background:S.acc,border:"none",borderRadius:10,padding:"9px 12px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Add</button>
               </div>
             </Card>
+            ):(
+            <Card style={{textAlign:"center",padding:"24px 20px"}}>
+              <div style={{fontSize:32,marginBottom:8}}>👨‍👩‍👧</div>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:900,marginBottom:4}}>Family Weather is a Pro feature</div>
+              <div style={{fontSize:11,opacity:.6,marginBottom:12,lineHeight:1.5}}>Track weather for your loved ones in other locations with Skyla Pro.</div>
+              <button onClick={()=>setShowPaywall(true)} style={{background:"linear-gradient(135deg,#E91E8C,#C2185B)",border:"none",borderRadius:100,padding:"10px 20px",fontSize:12,fontWeight:800,color:"white",cursor:"pointer"}}>Unlock with Pro ⚡</button>
+            </Card>
+            )}
             <Card>
               <Lbl>Personalise Skyla</Lbl>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
